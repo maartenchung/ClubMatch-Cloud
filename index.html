@@ -66,6 +66,8 @@ small{color:#666}
 .smalltable{font-size:13px}
 .backupgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .quality{margin-top:10px;padding:10px;border-radius:12px;background:#fff4db;border:1px solid #ead6a6;font-size:13px;color:#5e4a18}
+#exportExcelBtn{background:#56308f;margin-bottom:10px}
+.restoreNote{background:#ece2f7;border:1px solid #cfb8e8;color:#4b2672}
 @media(max-width:600px){.rankgrid,.kpis,.backupgrid{grid-template-columns:1fr 1fr}.seasonnav{grid-template-columns:1fr}}
 
 @media(max-width:600px){.grid,.liveboard{grid-template-columns:1fr}.rankgrid{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}}
@@ -100,6 +102,7 @@ small{color:#666}
     </small>
     <input id="manualMinute" type="number" min="0" placeholder="Optioneel: minuut corrigeren">
     <div id="status" class="status">Klaar.</div>
+    <small>✓ Lopende wedstrijd wordt automatisch bewaard. Browser vernieuwen wist hem niet.</small>
 
     <div id="confirmBox" class="confirm hidden">
       <div id="confirmText"></div>
@@ -140,6 +143,7 @@ small{color:#666}
 
   <div class="card" id="seasonCard">
     <h2>Seizoensdashboard</h2>
+    <button type="button" id="exportExcelBtn">📊 Exporteer volledige dashboard naar Excel</button>
     <div class="seasonnav">
       <button type="button" id="showSeasonBtn">🏆 Totaal & ranking</button>
       <button type="button" class="secondary" id="showMatchesBtn">📅 Wedstrijden</button>
@@ -196,6 +200,7 @@ small{color:#666}
   <div class="credit">Gemaakt door <strong>Maarten Chung</strong></div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <script>
 const roster = [{"name": "Boaz Vries", "team": "O16-1", "active": "Ja", "pos1": "Keeper", "pos2": "Keeper", "number": "1", "size": ""}, {"name": "Dani Faber", "team": "O16-1", "active": "Ja", "pos1": "Links Achter", "pos2": "Voor", "number": "5", "size": "Medium"}, {"name": "Wai Sam Chung", "team": "O16-1", "active": "Ja", "pos1": "Rechts Achter", "pos2": "Voor", "number": "13", "size": "Medium"}, {"name": "Siem Knossen", "team": "O16-1", "active": "Ja", "pos1": "Centrale Verdediger Links", "pos2": "Verdediger", "number": "10", "size": "Large"}, {"name": "Vigo Schreuder", "team": "O16-1", "active": "Ja", "pos1": "Centrale Verdediger Rechts", "pos2": "Verdediger", "number": "15", "size": "Medium"}, {"name": "Ben Jansen", "team": "O16-1", "active": "Ja", "pos1": "Centrale Verdediger Links", "pos2": "Verdediger", "number": "8", "size": "Large"}, {"name": "Shane Besselink", "team": "O16-1", "active": "Ja", "pos1": "Links Voor", "pos2": "Achter", "number": "9", "size": "Medium"}, {"name": "Maxim Boer", "team": "O16-1", "active": "Ja", "pos1": "Links Midden", "pos2": "Voor", "number": "16", "size": "Small"}, {"name": "Matz Buijsman", "team": "O16-1", "active": "Ja", "pos1": "Spits", "pos2": "Voor", "number": "7", "size": "Medium"}, {"name": "Luuk Buringa", "team": "O16-1", "active": "Ja", "pos1": "Rechts Midden", "pos2": "Voor", "number": "14", "size": "Medium"}, {"name": "Kayden Cramer", "team": "O16-1", "active": "Ja", "pos1": "Rechts Voor", "pos2": "Midden", "number": "3", "size": "Large"}, {"name": "Isaiah Eijndhoven", "team": "O16-1", "active": "Ja", "pos1": "Rechts Midden", "pos2": "Verdediger", "number": "4", "size": "Small"}, {"name": "Noah Oerip", "team": "O16-1", "active": "Ja", "pos1": "Links Midden", "pos2": "Voor", "number": "12", "size": "Small"}, {"name": "Shane Statia", "team": "O16-1", "active": "Ja", "pos1": "Links Voor", "pos2": "Midden", "number": "11", "size": "Medium"}, {"name": "Nolaï Williams", "team": "O16-1", "active": "Ja", "pos1": "Midden Midden", "pos2": "Midden", "number": "17", "size": "Large"}, {"name": "Eliah Wong Swie Sang", "team": "O16-1", "active": "Ja", "pos1": "Midden Midden", "pos2": "Midden", "number": "6", "size": "Large"}];
 let state = {
@@ -206,6 +211,31 @@ let state = {
 let timerId=null;
 let pendingSwap=null;
 const HISTORY_KEY='hercules_o16_match_history_v1';
+const LIVE_KEY='hercules_o16_live_match_v1';
+
+function saveLiveState(){
+  if(!state || !state.startMs)return;
+  try{ localStorage.setItem(LIVE_KEY,JSON.stringify(state)); }catch(e){}
+}
+
+function clearLiveState(){
+  try{ localStorage.removeItem(LIVE_KEY); }catch(e){}
+}
+
+function loadLiveState(){
+  try{
+    const raw=localStorage.getItem(LIVE_KEY);
+    if(!raw)return false;
+    const saved=JSON.parse(raw);
+    if(!saved || !saved.startMs)return false;
+    state=Object.assign({
+      team:'O16-1',opponent:'',startMs:null,finished:false,players:[],selected:[],
+      starters:[],events:[],duration:0,paused:false,pausedAt:null,pausedTotalMs:0
+    },saved);
+    return true;
+  }catch(e){ return false; }
+}
+
 
 function getHistory(){
   try{
@@ -230,21 +260,16 @@ function uid(){
 
 const SEED_KEY='hercules_o16_seed_20260822_v1';
 
-function seedAug22Match(){
-  if(localStorage.getItem(SEED_KEY))return;
-
+function seedOrMigrateAug22Match(){
   const hist=getHistory();
-  if(hist.some(x=>x.id==='match-2026-08-22-1115')){
-    localStorage.setItem(SEED_KEY,'1');
-    return;
-  }
+  const idx=hist.findIndex(x=>x.id==='match-2026-08-22-1115');
 
   const p=(name,number,play,bench,starter,pos1,pos2,size)=>({
     name:name,number:String(number),play:play,bench:bench,starter:starter,
     pos1:pos1||'',pos2:pos2||'',size:size||''
   });
 
-  const record={
+  const corrected={
     id:'match-2026-08-22-1115',
     savedAt:'2026-08-22T12:50:00+02:00',
     matchDate:'2026-08-22',
@@ -265,7 +290,7 @@ function seedAug22Match(){
       'Boaz Vries','Dani Faber','Siem Knossen','Vigo Schreuder','Wai Sam Chung',
       'Eliah Wong Swie Sang','Noah Oerip','Luuk Buringa','Matz Buijsman','Kayden Cramer','Shane Besselink'
     ],
-    rawNote:'Overgenomen uit handmatige wisseltabel. Isaiah: In 20-30 / Out 75 is geïnterpreteerd als speeltijd 20-75. Totaal geregistreerde speler-minuten 855; verwacht 880 bij 11 spelers x 80 min; verschil 25 min.',
+    rawNote:'Datacontrole OK: 880 speler-minuten = 11 spelers × 80 minuten. Correctie: Matz Buijsman speelde 80 minuten; de eerder genoteerde uit-wissel op 55 minuten was de ontbrekende 25 minuten.',
     events:[
       {minute:20,type:'WISSEL',out:'Vigo Schreuder',inn:'Nolaï Williams',text:'Vigo uit, Nolaï in'},
       {minute:20,type:'WISSEL',out:'Eliah Wong Swie Sang',inn:'Isaiah Eijndhoven',text:'Eliah uit, Isaiah in'},
@@ -274,9 +299,8 @@ function seedAug22Match(){
       {minute:30,type:'WISSEL',out:'Shane Besselink',inn:'Ben Jansen',text:'Shane B uit, Ben in'},
       {minute:55,type:'WISSEL',out:'Dani Faber',inn:'Vigo Schreuder',text:'Dani uit, Vigo in'},
       {minute:55,type:'WISSEL',out:'Siem Knossen',inn:'Eliah Wong Swie Sang',text:'Siem uit, Eliah in'},
-      {minute:55,type:'WISSEL',out:'Matz Buijsman',inn:'Noah Oerip',text:'Matz uit, Noah in'},
-      {minute:55,type:'WISSEL',out:'Kayden Cramer',inn:'Luuk Buringa',text:'Kayden uit, Luuk in'},
-      {minute:55,type:'WISSEL',out:'Nolaï Williams',inn:'',text:'Nolaï uit'},
+      {minute:55,type:'WISSEL',out:'Kayden Cramer',inn:'Noah Oerip',text:'Kayden uit, Noah in'},
+      {minute:55,type:'WISSEL',out:'Nolaï Williams',inn:'Luuk Buringa',text:'Nolaï uit, Luuk in'},
       {minute:60,type:'WISSEL',out:'Wai Sam Chung',inn:'Shane Besselink',text:'Wai Sam uit, Shane B in'},
       {minute:75,type:'WISSEL',out:'Ben Jansen',inn:'Dani Faber',text:'Ben uit, Dani in'},
       {minute:75,type:'WISSEL',out:'Isaiah Eijndhoven',inn:'Siem Knossen',text:'Isaiah uit, Siem in'},
@@ -292,7 +316,7 @@ function seedAug22Match(){
       p('Eliah Wong Swie Sang',6,45,35,true,'Midden Midden','Midden','Large'),
       p('Noah Oerip',12,45,35,true,'Links Midden','Voor','Small'),
       p('Luuk Buringa',14,45,35,true,'Rechts Midden','Voor','Medium'),
-      p('Matz Buijsman',7,55,25,true,'Spits','Voor','Medium'),
+      p('Matz Buijsman',7,80,0,true,'Spits','Voor','Medium'),
       p('Kayden Cramer',3,60,20,true,'Rechts Voor','Midden','Large'),
       p('Shane Besselink',9,50,30,true,'Links Voor','Achter','Medium'),
       p('Nolaï Williams',17,40,40,false,'Midden Midden','Midden','Large'),
@@ -303,9 +327,10 @@ function seedAug22Match(){
     ]
   };
 
-  hist.push(record);
+  if(idx>=0) hist[idx]=corrected;
+  else hist.push(corrected);
+
   setHistory(hist);
-  localStorage.setItem(SEED_KEY,'1');
 }
 
 
@@ -383,6 +408,7 @@ function togglePause(){
     status.className='status ok';
     status.textContent=`Wedstrijd hervat vanaf ${nowMinute()}'.`;
   }
+  saveLiveState();
   render();
 }
 
@@ -416,6 +442,7 @@ function startMatch(){
 
   ['liveCard','liveDashboardCard','dashboardCard','logCard'].forEach(id=>document.getElementById(id).classList.remove('hidden'));
   timerId=setInterval(()=>{document.getElementById('minute').textContent=nowMinute();render();},1000);
+  saveLiveState();
   render();
 }
 
@@ -537,6 +564,7 @@ function confirmSwap(){
     `Minuut ${pendingSwap.minute}: ${pendingSwap.out} eruit → ${pendingSwap.inn} erin`;
   pendingSwap=null;
   document.getElementById('confirmBox').classList.add('hidden');
+  saveLiveState();
   render();
 }
 
@@ -635,6 +663,7 @@ function undo(){
     if(state.events[i].type==='WISSEL'){
       state.events.splice(i,1);
       document.getElementById('status').textContent='Laatste wissel verwijderd.';
+      saveLiveState();
       render(); return;
     }
   }
@@ -653,6 +682,7 @@ function finish(){
   document.getElementById('status').className='status ok';
   document.getElementById('status').textContent=`Wedstrijd beëindigd op ${state.duration} minuten. Klik nu op "Bewaar wedstrijd & nieuwe wedstrijd".`;
   document.getElementById('saveMatchBtn').classList.remove('hidden');
+  saveLiveState();
 }
 
 function saveFinishedMatch(){
@@ -687,6 +717,7 @@ function saveFinishedMatch(){
   const hist=getHistory();
   hist.push(record);
   setHistory(hist);
+  clearLiveState();
   renderSeasonDashboard();
 
   alert('Wedstrijd is bewaard in het seizoensdashboard.');
@@ -857,6 +888,38 @@ function clearHistory(){
   renderSeasonDashboard();
 }
 
+
+function restoreLiveMatch(){
+  if(!loadLiveState())return;
+
+  document.getElementById('team').value=state.team||'O16-1';
+  document.getElementById('opponent').value=state.opponent||'';
+  loadPlayers();
+
+  ['liveCard','liveDashboardCard','dashboardCard','logCard'].forEach(id=>{
+    document.getElementById(id).classList.remove('hidden');
+  });
+
+  if(state.finished){
+    document.getElementById('saveMatchBtn').classList.remove('hidden');
+    document.getElementById('status').className='status restoreNote';
+    document.getElementById('status').textContent='Afgeronde wedstrijd hersteld na vernieuwen. Bewaar hem in het seizoensdashboard.';
+  }else{
+    document.getElementById('status').className='status restoreNote';
+    document.getElementById('status').textContent=state.paused
+      ? `Wedstrijd hersteld. Rust/pauze staat nog aan op ${nowMinute()}'.`
+      : `Wedstrijd hersteld na vernieuwen. Klok loopt verder vanaf ${nowMinute()}'.`;
+
+    if(state.paused) document.getElementById('pauseBtn').textContent='▶ Hervat tweede helft';
+
+    timerId=setInterval(()=>{
+      document.getElementById('minute').textContent=nowMinute();
+      render();
+    },1000);
+  }
+  render();
+}
+
 function exportCsv(){
   const x=calcTimes();
   const rows=[['Team','Tegenstander','Nummer','Speler','Positie 1','Positie 2','Maat','Speeltijd','Banktijd','Status einde']];
@@ -879,6 +942,182 @@ function exportCsv(){
   URL.revokeObjectURL(a.href);
 }
 
+
+async function exportFullExcel(){
+  if(typeof ExcelJS==='undefined'){
+    alert('Excel-module kon niet worden geladen. Controleer internet en probeer opnieuw.');
+    return;
+  }
+
+  const hist=getHistory().slice().sort((a,b)=>new Date(a.savedAt)-new Date(b.savedAt));
+  if(!hist.length){
+    alert('Er zijn nog geen opgeslagen wedstrijden.');
+    return;
+  }
+
+  const data=aggregateSeason();
+  const wb=new ExcelJS.Workbook();
+  wb.creator='Maarten Chung';
+  wb.title='Hercules O16 Wedstrijddashboard';
+
+  const PURPLE='6F42C1', DARK='4B2672', LIGHT='EADFF5', PALE='F6F1FB',
+        WHITE='FFFFFF', GREEN='DFF3E4', GREY='666666';
+
+  function styleTitle(ws,range,title){
+    ws.mergeCells(range);
+    const c=ws.getCell(range.split(':')[0]);
+    c.value=title;
+    c.font={bold:true,size:18,color:{argb:WHITE}};
+    c.fill={type:'pattern',pattern:'solid',fgColor:{argb:DARK}};
+    c.alignment={vertical:'middle',horizontal:'left'};
+    ws.getRow(c.row).height=28;
+  }
+
+  function styleHeader(row){
+    row.eachCell(cell=>{
+      cell.font={bold:true,color:{argb:WHITE}};
+      cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:PURPLE}};
+      cell.alignment={vertical:'middle',horizontal:'center'};
+    });
+    row.height=22;
+  }
+
+  function setWidths(ws,widths){
+    widths.forEach((w,i)=>ws.getColumn(i+1).width=w);
+  }
+
+  function thinBorders(ws,startRow,endRow,startCol,endCol){
+    for(let r=startRow;r<=endRow;r++){
+      for(let c=startCol;c<=endCol;c++){
+        ws.getCell(r,c).border={bottom:{style:'hair',color:{argb:'E5D9EF'}}};
+      }
+    }
+  }
+
+  const agg=data.players.slice().sort((a,b)=>b.play-a.play || a.name.localeCompare(b.name));
+
+  // Dashboard
+  const dash=wb.addWorksheet('Dashboard',{views:[{showGridLines:false}]});
+  styleTitle(dash,'A1:H1','Hercules O16 – Seizoensdashboard');
+  dash.getCell('A2').value='Gemaakt door Maarten Chung';
+  dash.getCell('A2').font={italic:true,color:{argb:GREY}};
+
+  const totalPlay=agg.reduce((s,p)=>s+p.play,0);
+  const totalBench=agg.reduce((s,p)=>s+p.bench,0);
+  const kpis=[
+    ['Wedstrijden',hist.length],['Spelers gebruikt',agg.length],
+    ['Speelminuten',totalPlay],['Bankminuten',totalBench]
+  ];
+
+  kpis.forEach((x,i)=>{
+    const col=1+i*2;
+    dash.mergeCells(4,col,4,col+1);
+    dash.mergeCells(5,col,5,col+1);
+    const a=dash.getCell(4,col), b=dash.getCell(5,col);
+    a.value=x[0]; b.value=x[1];
+    a.font={bold:true,color:{argb:DARK}};
+    b.font={bold:true,size:18,color:{argb:DARK}};
+    a.fill={type:'pattern',pattern:'solid',fgColor:{argb:LIGHT}};
+    b.fill={type:'pattern',pattern:'solid',fgColor:{argb:PALE}};
+    a.alignment=b.alignment={horizontal:'center',vertical:'middle'};
+  });
+
+  dash.getRow(8).values=['Rank','#','Speler','Speeltijd','Rank','#','Speler','Banktijd'];
+  styleHeader(dash.getRow(8));
+  const benchRank=agg.slice().sort((a,b)=>a.bench-b.bench || b.play-a.play);
+  for(let i=0;i<Math.max(agg.length,benchRank.length);i++){
+    const p=agg[i], q=benchRank[i];
+    dash.addRow([
+      p?i+1:'',p?p.number:'',p?p.name:'',p?p.play:'',
+      q?i+1:'',q?q.number:'',q?q.name:'',q?q.bench:''
+    ]);
+  }
+  setWidths(dash,[8,6,28,14,8,6,28,14]);
+
+  // Season totals
+  const season=wb.addWorksheet('Seizoen totaal',{views:[{showGridLines:false,state:'frozen',ySplit:3}]});
+  styleTitle(season,'A1:I1','Seizoen totaal per speler');
+  season.getRow(3).values=['Rank','#','Speler','Wedstrijden','Basis','Speeltijd','Banktijd','Gem. speeltijd','Speel%'];
+  styleHeader(season.getRow(3));
+  agg.forEach((p,i)=>{
+    const avg=p.matches?Math.round(p.play/p.matches):0;
+    const pct=p.available?p.play/p.available:0;
+    season.addRow([i+1,p.number,p.name,p.matches,p.starts,p.play,p.bench,avg,pct]);
+  });
+  season.getColumn(9).numFmt='0%';
+  thinBorders(season,4,3+agg.length,1,9);
+  setWidths(season,[8,6,28,12,10,14,14,16,11]);
+
+  // Match index
+  const mi=wb.addWorksheet('Wedstrijden',{views:[{showGridLines:false,state:'frozen',ySplit:3}]});
+  styleTitle(mi,'A1:H1','Wedstrijdhistorie');
+  mi.getRow(3).values=['Nr','Datum','Team','Tegenstander','Speeltijd','Rust','Start-einde','Spelers'];
+  styleHeader(mi.getRow(3));
+  hist.forEach((m,i)=>{
+    mi.addRow([
+      i+1,m.matchDate||fmtDate(m.savedAt),m.team,m.opponent,m.duration,m.pauseMinutes||0,
+      m.startLabel&&m.endLabel?`${m.startLabel}-${m.endLabel}`:'',(m.players||[]).length
+    ]);
+  });
+  thinBorders(mi,4,3+hist.length,1,8);
+  setWidths(mi,[6,13,10,30,12,10,18,10]);
+
+  // One sheet per match
+  hist.forEach((m,i)=>{
+    const dateShort=(m.matchDate||'').slice(5).split('-').reverse().join('-');
+    const ws=wb.addWorksheet((`W${String(i+1).padStart(2,'0')} ${dateShort||i+1}`).slice(0,31),
+      {views:[{showGridLines:false,state:'frozen',ySplit:4}]});
+    styleTitle(ws,'A1:H1',`${m.team} vs ${m.opponent}`);
+    ws.getCell('A2').value=`Datum: ${m.matchDate||fmtDate(m.savedAt)}`;
+    ws.getCell('C2').value=`Speeltijd: ${m.duration} min`;
+    ws.getCell('E2').value=`Rust: ${m.pauseMinutes||0} min`;
+    ws.getCell('G2').value=m.startLabel&&m.endLabel?`Tijd: ${m.startLabel}-${m.endLabel}`:'';
+
+    ws.getRow(4).values=['Rank','#','Speler','Basis','Speeltijd','Banktijd','Speel%','Positie'];
+    styleHeader(ws.getRow(4));
+
+    const rp=(m.players||[]).slice().sort((a,b)=>b.play-a.play || a.name.localeCompare(b.name));
+    rp.forEach((p,rank)=>{
+      const total=(Number(p.play)||0)+(Number(p.bench)||0);
+      ws.addRow([rank+1,p.number,p.name,p.starter?'Ja':'Nee',p.play,p.bench,total?p.play/total:0,p.pos1||'']);
+    });
+    ws.getColumn(7).numFmt='0%';
+    thinBorders(ws,5,4+rp.length,1,8);
+
+    let row=ws.rowCount+2;
+    ws.getCell(`A${row}`).value='Wissels';
+    ws.getCell(`A${row}`).font={bold:true,size:14,color:{argb:DARK}};
+    row++;
+    ws.getRow(row).values=['Minuut','Uit #','Uit speler','In #','In speler','Transcript','',''];
+    styleHeader(ws.getRow(row));
+
+    (m.events||[]).filter(e=>e.type==='WISSEL').forEach(e=>{
+      const out=(m.players||[]).find(p=>p.name===e.out)||playerObj(e.out);
+      const inn=(m.players||[]).find(p=>p.name===e.inn)||playerObj(e.inn);
+      ws.addRow([e.minute,out.number||'',e.out||'',inn.number||'',e.inn||'',e.text||'','','']);
+    });
+
+    if(m.rawNote){
+      row=ws.rowCount+2;
+      ws.mergeCells(`A${row}:H${row+1}`);
+      const c=ws.getCell(`A${row}`);
+      c.value=m.rawNote;
+      c.alignment={wrapText:true,vertical:'top'};
+      c.fill={type:'pattern',pattern:'solid',fgColor:{argb:GREEN}};
+      c.font={color:{argb:DARK}};
+    }
+    setWidths(ws,[8,7,28,10,14,14,11,24]);
+  });
+
+  const buffer=await wb.xlsx.writeBuffer();
+  const blob=new Blob([buffer],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`Hercules_O16_dashboard_${new Date().toISOString().slice(0,10)}.xlsx`;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+
 document.getElementById('team').addEventListener('change',loadPlayers);
 document.getElementById('startBtn').onclick=startMatch;
 document.getElementById('micBtn').onclick=listen;
@@ -888,6 +1127,7 @@ document.getElementById('cancelBtn').onclick=cancelSwap;
 document.getElementById('undoBtn').onclick=undo;
 document.getElementById('finishBtn').onclick=finish;
 document.getElementById('saveMatchBtn').onclick=saveFinishedMatch;
+document.getElementById('exportExcelBtn').onclick=exportFullExcel;
 document.getElementById('showSeasonBtn').onclick=()=>showSeasonView('seasonTotalView');
 document.getElementById('showMatchesBtn').onclick=()=>showSeasonView('matchesView');
 document.getElementById('showBackupBtn').onclick=()=>showSeasonView('backupView');
@@ -900,8 +1140,9 @@ document.getElementById('importFile').addEventListener('change',e=>{
 document.getElementById('clearHistoryBtn').onclick=clearHistory;
 document.getElementById('exportBtn').onclick=exportCsv;
 loadPlayers();
-seedAug22Match();
+seedOrMigrateAug22Match();
 renderSeasonDashboard();
+restoreLiveMatch();
 </script>
 </body>
 </html>
