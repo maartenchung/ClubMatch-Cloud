@@ -65,6 +65,7 @@ small{color:#666}
 .kpi span{font-size:11px;color:#666}
 .smalltable{font-size:13px}
 .backupgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.quality{margin-top:10px;padding:10px;border-radius:12px;background:#fff4db;border:1px solid #ead6a6;font-size:13px;color:#5e4a18}
 @media(max-width:600px){.rankgrid,.kpis,.backupgrid{grid-template-columns:1fr 1fr}.seasonnav{grid-template-columns:1fr}}
 
 @media(max-width:600px){.grid,.liveboard{grid-template-columns:1fr}.rankgrid{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}}
@@ -92,6 +93,7 @@ small{color:#666}
   <div class="card hidden" id="liveCard">
     <div class="timer"><span id="minute">0</span>'</div>
     <button id="micBtn">🎤 Spreek wissel in</button>
+    <button class="secondary" id="pauseBtn">⏸ Rust / pauze starten</button>
     <small>
       Werkt met namen én nummers, bijvoorbeeld:<br>
       “Wai Sam eruit, Matz erin” · “13 eruit, 7 erin” · “Wissel Wai Sam voor 7”
@@ -198,7 +200,8 @@ small{color:#666}
 const roster = [{"name": "Boaz Vries", "team": "O16-1", "active": "Ja", "pos1": "Keeper", "pos2": "Keeper", "number": "1", "size": ""}, {"name": "Dani Faber", "team": "O16-1", "active": "Ja", "pos1": "Links Achter", "pos2": "Voor", "number": "5", "size": "Medium"}, {"name": "Wai Sam Chung", "team": "O16-1", "active": "Ja", "pos1": "Rechts Achter", "pos2": "Voor", "number": "13", "size": "Medium"}, {"name": "Siem Knossen", "team": "O16-1", "active": "Ja", "pos1": "Centrale Verdediger Links", "pos2": "Verdediger", "number": "10", "size": "Large"}, {"name": "Vigo Schreuder", "team": "O16-1", "active": "Ja", "pos1": "Centrale Verdediger Rechts", "pos2": "Verdediger", "number": "15", "size": "Medium"}, {"name": "Ben Jansen", "team": "O16-1", "active": "Ja", "pos1": "Centrale Verdediger Links", "pos2": "Verdediger", "number": "8", "size": "Large"}, {"name": "Shane Besselink", "team": "O16-1", "active": "Ja", "pos1": "Links Voor", "pos2": "Achter", "number": "9", "size": "Medium"}, {"name": "Maxim Boer", "team": "O16-1", "active": "Ja", "pos1": "Links Midden", "pos2": "Voor", "number": "16", "size": "Small"}, {"name": "Matz Buijsman", "team": "O16-1", "active": "Ja", "pos1": "Spits", "pos2": "Voor", "number": "7", "size": "Medium"}, {"name": "Luuk Buringa", "team": "O16-1", "active": "Ja", "pos1": "Rechts Midden", "pos2": "Voor", "number": "14", "size": "Medium"}, {"name": "Kayden Cramer", "team": "O16-1", "active": "Ja", "pos1": "Rechts Voor", "pos2": "Midden", "number": "3", "size": "Large"}, {"name": "Isaiah Eijndhoven", "team": "O16-1", "active": "Ja", "pos1": "Rechts Midden", "pos2": "Verdediger", "number": "4", "size": "Small"}, {"name": "Noah Oerip", "team": "O16-1", "active": "Ja", "pos1": "Links Midden", "pos2": "Voor", "number": "12", "size": "Small"}, {"name": "Shane Statia", "team": "O16-1", "active": "Ja", "pos1": "Links Voor", "pos2": "Midden", "number": "11", "size": "Medium"}, {"name": "Nolaï Williams", "team": "O16-1", "active": "Ja", "pos1": "Midden Midden", "pos2": "Midden", "number": "17", "size": "Large"}, {"name": "Eliah Wong Swie Sang", "team": "O16-1", "active": "Ja", "pos1": "Midden Midden", "pos2": "Midden", "number": "6", "size": "Large"}];
 let state = {
   team:'O16-1', opponent:'', startMs:null, finished:false,
-  players:[], selected:[], starters:[], events:[], duration:0
+  players:[], selected:[], starters:[], events:[], duration:0,
+  paused:false, pausedAt:null, pausedTotalMs:0
 };
 let timerId=null;
 let pendingSwap=null;
@@ -223,6 +226,86 @@ function fmtDate(iso){
 
 function uid(){
   return Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8);
+}
+
+const SEED_KEY='hercules_o16_seed_20260822_v1';
+
+function seedAug22Match(){
+  if(localStorage.getItem(SEED_KEY))return;
+
+  const hist=getHistory();
+  if(hist.some(x=>x.id==='match-2026-08-22-1115')){
+    localStorage.setItem(SEED_KEY,'1');
+    return;
+  }
+
+  const p=(name,number,play,bench,starter,pos1,pos2,size)=>({
+    name:name,number:String(number),play:play,bench:bench,starter:starter,
+    pos1:pos1||'',pos2:pos2||'',size:size||''
+  });
+
+  const record={
+    id:'match-2026-08-22-1115',
+    savedAt:'2026-08-22T12:50:00+02:00',
+    matchDate:'2026-08-22',
+    startLabel:'11:15',
+    halftimeStart:'11:55',
+    halftimeEnd:'12:10',
+    endLabel:'12:50',
+    pauseMinutes:15,
+    team:'O16-1',
+    opponent:'Tegenstander nog invullen',
+    duration:80,
+    selected:[
+      'Boaz Vries','Dani Faber','Siem Knossen','Vigo Schreuder','Wai Sam Chung',
+      'Eliah Wong Swie Sang','Noah Oerip','Luuk Buringa','Matz Buijsman','Kayden Cramer',
+      'Shane Besselink','Nolaï Williams','Ben Jansen','Isaiah Eijndhoven','Shane Statia','Maxim Boer'
+    ],
+    starters:[
+      'Boaz Vries','Dani Faber','Siem Knossen','Vigo Schreuder','Wai Sam Chung',
+      'Eliah Wong Swie Sang','Noah Oerip','Luuk Buringa','Matz Buijsman','Kayden Cramer','Shane Besselink'
+    ],
+    rawNote:'Overgenomen uit handmatige wisseltabel. Isaiah: In 20-30 / Out 75 is geïnterpreteerd als speeltijd 20-75. Totaal geregistreerde speler-minuten 855; verwacht 880 bij 11 spelers x 80 min; verschil 25 min.',
+    events:[
+      {minute:20,type:'WISSEL',out:'Vigo Schreuder',inn:'Nolaï Williams',text:'Vigo uit, Nolaï in'},
+      {minute:20,type:'WISSEL',out:'Eliah Wong Swie Sang',inn:'Isaiah Eijndhoven',text:'Eliah uit, Isaiah in'},
+      {minute:20,type:'WISSEL',out:'Noah Oerip',inn:'Shane Statia',text:'Noah uit, Shane S in'},
+      {minute:20,type:'WISSEL',out:'Luuk Buringa',inn:'Maxim Boer',text:'Luuk uit, Maxim in'},
+      {minute:30,type:'WISSEL',out:'Shane Besselink',inn:'Ben Jansen',text:'Shane B uit, Ben in'},
+      {minute:55,type:'WISSEL',out:'Dani Faber',inn:'Vigo Schreuder',text:'Dani uit, Vigo in'},
+      {minute:55,type:'WISSEL',out:'Siem Knossen',inn:'Eliah Wong Swie Sang',text:'Siem uit, Eliah in'},
+      {minute:55,type:'WISSEL',out:'Matz Buijsman',inn:'Noah Oerip',text:'Matz uit, Noah in'},
+      {minute:55,type:'WISSEL',out:'Kayden Cramer',inn:'Luuk Buringa',text:'Kayden uit, Luuk in'},
+      {minute:55,type:'WISSEL',out:'Nolaï Williams',inn:'',text:'Nolaï uit'},
+      {minute:60,type:'WISSEL',out:'Wai Sam Chung',inn:'Shane Besselink',text:'Wai Sam uit, Shane B in'},
+      {minute:75,type:'WISSEL',out:'Ben Jansen',inn:'Dani Faber',text:'Ben uit, Dani in'},
+      {minute:75,type:'WISSEL',out:'Isaiah Eijndhoven',inn:'Siem Knossen',text:'Isaiah uit, Siem in'},
+      {minute:75,type:'WISSEL',out:'Shane Statia',inn:'Kayden Cramer',text:'Shane S uit, Kayden in'},
+      {minute:75,type:'WISSEL',out:'Maxim Boer',inn:'Nolaï Williams',text:'Maxim uit, Nolaï in'}
+    ],
+    players:[
+      p('Boaz Vries',1,80,0,true,'Keeper','Keeper',''),
+      p('Dani Faber',5,60,20,true,'Links Achter','Voor','Medium'),
+      p('Siem Knossen',10,60,20,true,'Centrale Verdediger Links','Verdediger','Large'),
+      p('Vigo Schreuder',15,45,35,true,'Centrale Verdediger Rechts','Verdediger','Medium'),
+      p('Wai Sam Chung',13,60,20,true,'Rechts Achter','Voor','Medium'),
+      p('Eliah Wong Swie Sang',6,45,35,true,'Midden Midden','Midden','Large'),
+      p('Noah Oerip',12,45,35,true,'Links Midden','Voor','Small'),
+      p('Luuk Buringa',14,45,35,true,'Rechts Midden','Voor','Medium'),
+      p('Matz Buijsman',7,55,25,true,'Spits','Voor','Medium'),
+      p('Kayden Cramer',3,60,20,true,'Rechts Voor','Midden','Large'),
+      p('Shane Besselink',9,50,30,true,'Links Voor','Achter','Medium'),
+      p('Nolaï Williams',17,40,40,false,'Midden Midden','Midden','Large'),
+      p('Ben Jansen',8,45,35,false,'Centrale Verdediger Links','Verdediger','Large'),
+      p('Isaiah Eijndhoven',4,55,25,false,'Rechts Midden','Verdediger','Small'),
+      p('Shane Statia',11,55,25,false,'Links Voor','Midden','Medium'),
+      p('Maxim Boer',16,55,25,false,'Links Midden','Voor','Small')
+    ]
+  };
+
+  hist.push(record);
+  setHistory(hist);
+  localStorage.setItem(SEED_KEY,'1');
 }
 
 
@@ -267,9 +350,40 @@ function loadPlayers(){
   });
 }
 
-function nowMinute(){
+function activeElapsedMs(){
   if(!state.startMs)return 0;
-  return Math.max(0,Math.floor((Date.now()-state.startMs)/60000));
+  let pausedNow=0;
+  if(state.paused && state.pausedAt){
+    pausedNow=Date.now()-state.pausedAt;
+  }
+  return Math.max(0,Date.now()-state.startMs-(state.pausedTotalMs||0)-pausedNow);
+}
+
+function nowMinute(){
+  return Math.floor(activeElapsedMs()/60000);
+}
+
+function togglePause(){
+  if(!state.startMs || state.finished)return;
+
+  const btn=document.getElementById('pauseBtn');
+  const status=document.getElementById('status');
+
+  if(!state.paused){
+    state.paused=true;
+    state.pausedAt=Date.now();
+    btn.textContent='▶ Hervat tweede helft';
+    status.className='status ok';
+    status.textContent=`Rust/pauze gestart op ${nowMinute()}'. De klok staat stil.`;
+  }else{
+    state.pausedTotalMs=(state.pausedTotalMs||0)+(Date.now()-state.pausedAt);
+    state.paused=false;
+    state.pausedAt=null;
+    btn.textContent='⏸ Rust / pauze starten';
+    status.className='status ok';
+    status.textContent=`Wedstrijd hervat vanaf ${nowMinute()}'.`;
+  }
+  render();
 }
 
 function startMatch(){
@@ -293,7 +407,10 @@ function startMatch(){
     selected:selected,
     starters:starters,
     events:[],
-    duration:0
+    duration:0,
+    paused:false,
+    pausedAt:null,
+    pausedTotalMs:0
   };
   starters.forEach(p=>state.events.push({minute:0,type:'START',inn:p,out:'',text:'Basis'}));
 
@@ -525,6 +642,11 @@ function undo(){
 
 function finish(){
   state.duration=nowMinute();
+  if(state.paused && state.pausedAt){
+    state.pausedTotalMs=(state.pausedTotalMs||0)+(Date.now()-state.pausedAt);
+    state.paused=false;
+    state.pausedAt=null;
+  }
   state.finished=true;
   clearInterval(timerId);
   render();
@@ -546,6 +668,8 @@ function saveFinishedMatch(){
     team:state.team,
     opponent:state.opponent,
     duration:state.duration,
+    startClock:new Date(state.startMs).toISOString(),
+    pauseMinutes:Math.round((state.pausedTotalMs||0)/60000),
     selected:state.selected.slice(),
     starters:state.starters.slice(),
     events:state.events.map(e=>Object.assign({},e)),
@@ -575,7 +699,8 @@ function saveFinishedMatch(){
 
   state={
     team:document.getElementById('team').value, opponent:'', startMs:null, finished:false,
-    players:[], selected:[], starters:[], events:[], duration:0
+    players:[], selected:[], starters:[], events:[], duration:0,
+    paused:false, pausedAt:null, pausedTotalMs:0
   };
   window.scrollTo({top:0,behavior:'smooth'});
 }
@@ -648,7 +773,7 @@ function renderSeasonDashboard(){
     d.className='matchcard';
     d.innerHTML=
       `<div class="matchtop"><div><div class="matchtitle">${esc(m.team)} vs ${esc(m.opponent)}</div>`+
-      `<div class="matchmeta">${fmtDate(m.savedAt)} · ${m.duration} min · ${m.players.length} spelers</div></div>`+
+      `<div class="matchmeta">${fmtDate(m.savedAt)}${m.startLabel?' · '+m.startLabel+'-'+m.endLabel:''} · ${m.duration} speelmin${m.pauseMinutes?' · '+m.pauseMinutes+' min rust':''} · ${m.players.length} spelers</div></div>`+
       `<span class="badge">Wedstrijd ${rank}</span></div>`+
       `<div class="miniActions"><button type="button" class="secondary viewMatchBtn" data-id="${esc(m.id)}">Bekijk details</button>`+
       `<button type="button" class="secondary deleteMatchBtn" data-id="${esc(m.id)}">Verwijder</button></div>`;
@@ -672,7 +797,9 @@ function showMatchDetail(id){
       const total=(Number(p.play)||0)+(Number(p.bench)||0);
       const pct=total?Math.round((p.play/total)*100):0;
       return `<tr><td>${i+1}</td><td>${esc(p.number)}</td><td>${esc(p.name)}</td><td>${p.starter?'Ja':'Nee'}</td><td>${p.play}</td><td>${p.bench}</td><td>${pct}%</td></tr>`;
-    }).join('')}</tbody></table></div></div>`;
+    }).join('')}</tbody></table></div>`+
+    (m.rawNote?`<div class="quality"><b>Datacontrole:</b> ${esc(m.rawNote)}</div>`:'')+
+    `</div>`;
 }
 
 function deleteMatch(id){
@@ -755,6 +882,7 @@ function exportCsv(){
 document.getElementById('team').addEventListener('change',loadPlayers);
 document.getElementById('startBtn').onclick=startMatch;
 document.getElementById('micBtn').onclick=listen;
+document.getElementById('pauseBtn').onclick=togglePause;
 document.getElementById('confirmBtn').onclick=confirmSwap;
 document.getElementById('cancelBtn').onclick=cancelSwap;
 document.getElementById('undoBtn').onclick=undo;
@@ -772,6 +900,7 @@ document.getElementById('importFile').addEventListener('change',e=>{
 document.getElementById('clearHistoryBtn').onclick=clearHistory;
 document.getElementById('exportBtn').onclick=exportCsv;
 loadPlayers();
+seedAug22Match();
 renderSeasonDashboard();
 </script>
 </body>
