@@ -1,55 +1,60 @@
 <!doctype html>
 <html lang="nl">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-<title>Hercules O16 Voice Match Tracker</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Hercules O16 Voice Match Tracker – Maarten Chung</title>
 <style>
-:root{font-family:Arial,Helvetica,sans-serif;color:#111;background:#f3f4f6}
-body{margin:0;background:#f3f4f6}
-.wrap{max-width:720px;margin:auto;padding:14px}
-.card{background:#fff;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,.08)}
-h1{font-size:22px;margin:0 0 12px}
-h2{font-size:18px;margin:0 0 10px}
-input,select,button,textarea{width:100%;box-sizing:border-box;font-size:17px;padding:13px;border-radius:12px;border:1px solid #c9c9c9;margin:6px 0}
-button{font-weight:700;background:#111;color:#fff;border:none}
-button.secondary{background:#e9e9e9;color:#111}
-button.danger{background:#7d1111}
-.timer{font-size:52px;font-weight:800;text-align:center;margin:6px 0 12px}
-.status{padding:10px;border-radius:10px;background:#f2f2f2;margin-top:8px;white-space:pre-wrap}
-.ok{background:#e8f6e8}
-.warn{background:#fff4db}
-.playerrow{display:flex;gap:8px;align-items:center;margin:4px 0}
-.playerrow input[type=checkbox]{width:auto;transform:scale(1.3)}
-.playerrow input[type=text]{margin:0}
+:root{font-family:Arial,Helvetica,sans-serif;color:#241633;background:#f6f1fb}
+body{margin:0;background:linear-gradient(180deg,#f6f1fb 0%,#eee3f8 100%)}
+.wrap{max-width:760px;margin:auto;padding:14px}
+.card{background:#fff;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 4px 18px rgba(93,46,132,.14);border:1px solid #eadcf5}
+h1{font-size:22px;margin:0 0 12px} h2{font-size:18px;margin:0 0 10px}
+input,select,button{width:100%;box-sizing:border-box;font-size:17px;padding:13px;border-radius:12px;border:1px solid #c9c9c9;margin:6px 0}
+button{font-weight:700;background:#6f42c1;color:#fff;border:none;box-shadow:0 2px 8px rgba(111,66,193,.22)} button.secondary{background:#eadff5;color:#4b2672;box-shadow:none} button.danger{background:#8e2f6f}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#efefef;font-size:12px;margin-right:4px}
-table{width:100%;border-collapse:collapse;font-size:14px}
-th,td{text-align:left;padding:8px;border-bottom:1px solid #ddd}
+.roster{display:grid;gap:7px}
+.playerrow{display:grid;grid-template-columns:36px 42px 1fr;gap:8px;align-items:center;border:1px solid #e5e5e5;border-radius:12px;padding:9px}
+.playerrow input{width:auto;transform:scale(1.25);margin:auto}
+.num{font-weight:800;text-align:center}
+.name{font-weight:700} .meta{font-size:12px;color:#666;margin-top:2px}
+.timer{font-size:52px;font-weight:800;text-align:center;margin:6px 0 12px}
+.status{padding:10px;border-radius:10px;background:#f1e9f8;margin-top:8px;white-space:pre-wrap;border:1px solid #e4d4f2}
+.ok{background:#ece2f7} .warn{background:#f8e8f2} .hidden{display:none}
+.badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#eadff5;color:#4b2672;font-size:12px;margin-right:4px;margin-bottom:4px}
+table{width:100%;border-collapse:collapse;font-size:14px} th,td{text-align:left;padding:8px;border-bottom:1px solid #ddd}
 small{color:#666}
-.hidden{display:none}
+
+.brand{font-size:13px;font-weight:700;color:#6f42c1;letter-spacing:.04em;text-transform:uppercase;margin-bottom:6px}
+.credit{text-align:center;color:#5b3a75;font-size:13px;padding:8px 0 22px}
+.credit strong{color:#4b2672}
+@media(max-width:520px){.grid{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="card">
+    <div class="brand">Hercules O16 Voice Match Tracker</div>
     <h1>Hercules O16 – wedstrijd</h1>
     <div class="grid">
-      <select id="team"><option>O16-1</option><option>O16-2</option></select>
-      <input id="opponent" placeholder="Tegenstander" />
+      <select id="team">
+        <option value="O16-1">O16-1</option>
+        <option value="O16-2">O16-2</option>
+      </select>
+      <input id="opponent" placeholder="Tegenstander">
     </div>
-    <h2>Spelers</h2>
-    <div id="players"></div>
-    <button class="secondary" id="addPlayer">+ Speler toevoegen</button>
+    <h2>Basis selecteren</h2>
+    <div id="players" class="roster"></div>
     <button id="startBtn">Start wedstrijd</button>
-    <small>Tip: vul de spelers één keer in. Ze blijven op deze telefoon bewaard.</small>
+    <small>O16-1 staat al vooraf ingevuld. Vink alleen de basisspelers aan.</small>
   </div>
 
   <div class="card hidden" id="liveCard">
     <div class="timer"><span id="minute">0</span>'</div>
     <button id="micBtn">🎤 Spreek wissel in</button>
-    <small>Zeg bijvoorbeeld: “Wai Sam eruit, Milan erin” of “Wissel Wai Sam voor Milan”.</small>
-    <input id="manualMinute" type="number" min="0" placeholder="Optioneel: minuut corrigeren" />
+    <small>Zeg bijvoorbeeld: “Wai Sam eruit, Matz erin”.</small>
+    <input id="manualMinute" type="number" min="0" placeholder="Optioneel: minuut corrigeren">
     <div id="status" class="status">Klaar.</div>
     <button class="secondary" id="undoBtn">↶ Laatste wissel ongedaan maken</button>
     <button class="danger" id="finishBtn">Einde wedstrijd</button>
@@ -59,7 +64,7 @@ small{color:#666}
     <h2>Speeltijd</h2>
     <div id="summary"></div>
     <table>
-      <thead><tr><th>Speler</th><th>Minuten</th><th>Status</th></tr></thead>
+      <thead><tr><th>#</th><th>Speler</th><th>Min.</th><th>Status</th></tr></thead>
       <tbody id="minutesBody"></tbody>
     </table>
   </div>
@@ -67,143 +72,148 @@ small{color:#666}
   <div class="card hidden" id="logCard">
     <h2>Wissellog</h2>
     <table>
-      <thead><tr><th>Min</th><th>Actie</th></tr></thead>
+      <thead><tr><th>Min.</th><th>Actie</th></tr></thead>
       <tbody id="logBody"></tbody>
     </table>
-    <button class="secondary" id="exportBtn">Exporteer CSV</button>
+    <button class="secondary" id="exportBtn">Exporteer voor Excel (CSV)</button>
   </div>
+  <div class="credit">Gemaakt door <strong>Maarten Chung</strong></div>
 </div>
-<script>
-const defaultPlayers = ['Wai Sam'];
-let state = {
-  team: 'O16-1', opponent:'', startMs:null, finished:false,
-  players: [], starters: [], events: [], duration:0
-};
-let timerId = null;
 
-function esc(s){return String(s).replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]));}
-function savePlayers(){
-  const arr=[...document.querySelectorAll('.playerName')].map(x=>x.value.trim()).filter(Boolean);
-  localStorage.setItem('hercules_players',JSON.stringify(arr));
-}
+<script>
+const roster = [{"name": "Boaz Vries", "team": "O16-1", "active": "Ja", "pos1": "Keeper", "pos2": "Keeper", "number": "1", "size": ""}, {"name": "Dani Faber", "team": "O16-1", "active": "Ja", "pos1": "Links Achter", "pos2": "Voor", "number": "5", "size": "Medium"}, {"name": "Wai Sam Chung", "team": "O16-1", "active": "Ja", "pos1": "Rechts Achter", "pos2": "Voor", "number": "13", "size": "Medium"}, {"name": "Siem Knossen", "team": "O16-1", "active": "Ja", "pos1": "Centrale Verdediger Links", "pos2": "Verdediger", "number": "10", "size": "Large"}, {"name": "Vigo Schreuder", "team": "O16-1", "active": "Ja", "pos1": "Centrale Verdediger Rechts", "pos2": "Verdediger", "number": "15", "size": "Medium"}, {"name": "Ben Jansen", "team": "O16-1", "active": "Ja", "pos1": "Centrale Verdediger Links", "pos2": "Verdediger", "number": "8", "size": "Large"}, {"name": "Shane Besselink", "team": "O16-1", "active": "Ja", "pos1": "Links Voor", "pos2": "Achter", "number": "9", "size": "Medium"}, {"name": "Maxim Boer", "team": "O16-1", "active": "Ja", "pos1": "Links Midden", "pos2": "Voor", "number": "16", "size": "Small"}, {"name": "Matz Buijsman", "team": "O16-1", "active": "Ja", "pos1": "Spits", "pos2": "Voor", "number": "7", "size": "Medium"}, {"name": "Luuk Buringa", "team": "O16-1", "active": "Ja", "pos1": "Rechts Midden", "pos2": "Voor", "number": "14", "size": "Medium"}, {"name": "Kayden Cramer", "team": "O16-1", "active": "Ja", "pos1": "Rechts Voor", "pos2": "Midden", "number": "3", "size": "Large"}, {"name": "Isaiah Eijndhoven", "team": "O16-1", "active": "Ja", "pos1": "Rechts Midden", "pos2": "Verdediger", "number": "4", "size": "Small"}, {"name": "Noah Oerip", "team": "O16-1", "active": "Ja", "pos1": "Links Midden", "pos2": "Voor", "number": "12", "size": "Small"}, {"name": "Shane Statia", "team": "O16-1", "active": "Ja", "pos1": "Links Voor", "pos2": "Midden", "number": "11", "size": "Medium"}, {"name": "Nolaï Williams", "team": "O16-1", "active": "Ja", "pos1": "Midden Midden", "pos2": "Midden", "number": "17", "size": "Large"}, {"name": "Eliah Wong Swie Sang", "team": "O16-1", "active": "Ja", "pos1": "Midden Midden", "pos2": "Midden", "number": "6", "size": "Large"}];
+let state = {
+  team:'O16-1', opponent:'', startMs:null, finished:false,
+  players:[], starters:[], events:[], duration:0
+};
+let timerId=null;
+
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function teamRoster(){return roster.filter(p=>p.team===document.getElementById('team').value && p.active==='Ja');}
+function playerObj(name){return roster.find(p=>p.name===name)||{name:name,number:'',pos1:'',pos2:'',size:''};}
 function loadPlayers(){
-  let arr=[]; try{arr=JSON.parse(localStorage.getItem('hercules_players')||'[]')}catch(e){}
-  if(!arr.length) arr=[...defaultPlayers];
+  const arr=teamRoster();
   const box=document.getElementById('players'); box.innerHTML='';
-  arr.forEach(addPlayerRow);
+  if(!arr.length){
+    box.innerHTML='<div class="status warn">Voor dit team zijn nog geen spelers ingevoerd.</div>';
+    return;
+  }
+  arr.forEach(p=>{
+    const d=document.createElement('label');
+    d.className='playerrow';
+    d.innerHTML=`<input type="checkbox" class="starter" value="${esc(p.name)}">
+      <div class="num">${esc(p.number)}</div>
+      <div><div class="name">${esc(p.name)}</div><div class="meta">${esc(p.pos1)} · 2e: ${esc(p.pos2)}${p.size?' · '+esc(p.size):''}</div></div>`;
+    box.appendChild(d);
+  });
 }
-function addPlayerRow(name=''){
-  const d=document.createElement('div'); d.className='playerrow';
-  d.innerHTML=`<input type="checkbox" class="starter"><input class="playerName" type="text" value="${esc(name)}" placeholder="Naam speler">`;
-  document.getElementById('players').appendChild(d);
-}
-function nowMinute(){
-  if(!state.startMs) return 0;
-  return Math.max(0,Math.floor((Date.now()-state.startMs)/60000));
-}
-function normalizeName(s){
-  return s.trim().replace(/\s+/g,' ').replace(/\b\w/g,m=>m.toUpperCase());
+function nowMinute(){if(!state.startMs)return 0;return Math.max(0,Math.floor((Date.now()-state.startMs)/60000));}
+function clean(s){
+  return s.toLowerCase()
+   .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+   .replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
 }
 function parseVoice(text){
-  const raw=text.trim();
-  const t=raw.toLowerCase().replace(/[.,;:!?]/g,' ').replace(/\s+/g,' ').trim();
-  let m=t.match(/(.+?)\s+eruit\s+(?:en\s+)?(.+?)\s+erin$/);
-  if(m) return {ok:true,out:normalizeName(m[1]),inn:normalizeName(m[2])};
+  const t=clean(text); let m;
+  m=t.match(/(.+?)\s+eruit\s+(?:en\s+)?(.+?)\s+erin$/);
+  if(m)return{ok:true,out:m[1],inn:m[2]};
   m=t.match(/(?:wissel\s+)?(.+?)\s+voor\s+(.+)$/);
-  if(m) return {ok:true,out:normalizeName(m[1].replace(/^wissel\s+/,'')),inn:normalizeName(m[2])};
+  if(m)return{ok:true,out:m[1].replace(/^wissel\s+/,''),inn:m[2]};
   m=t.match(/(.+?)\s+erin\s+voor\s+(.+)$/);
-  if(m) return {ok:true,out:normalizeName(m[2]),inn:normalizeName(m[1])};
-  return {ok:false};
+  if(m)return{ok:true,out:m[2],inn:m[1]};
+  return{ok:false};
 }
-function fuzzyKnown(name){
+function resolveName(spoken){
+  const q=clean(spoken);
   const names=state.players;
-  const low=name.toLowerCase();
-  let exact=names.find(n=>n.toLowerCase()===low); if(exact) return exact;
-  let incl=names.find(n=>n.toLowerCase().includes(low)||low.includes(n.toLowerCase()));
-  return incl || name;
+  let exact=names.find(n=>clean(n)===q); if(exact)return exact;
+  let incl=names.find(n=>clean(n).includes(q)||q.includes(clean(n))); if(incl)return incl;
+  const qparts=q.split(' ').filter(Boolean);
+  let best=null,bestScore=0;
+  names.forEach(n=>{
+    const nparts=clean(n).split(' ');
+    const score=qparts.filter(x=>nparts.includes(x)).length;
+    if(score>bestScore){best=n;bestScore=score;}
+  });
+  return bestScore>0?best:spoken;
 }
 function startMatch(){
-  savePlayers();
-  const players=[...document.querySelectorAll('.playerName')].map(x=>x.value.trim()).filter(Boolean);
-  const checks=[...document.querySelectorAll('.starter')];
-  const starters=[];
-  checks.forEach((c,i)=>{if(c.checked && players[i]) starters.push(players[i]);});
+  const arr=teamRoster();
+  const starters=[...document.querySelectorAll('.starter:checked')].map(x=>x.value);
   const opponent=document.getElementById('opponent').value.trim();
   if(!opponent){alert('Vul de tegenstander in.');return;}
   if(!starters.length){alert('Vink de basisspelers aan.');return;}
-  state={team:document.getElementById('team').value,opponent,startMs:Date.now(),finished:false,players,starters,events:[],duration:0};
+  state={team:document.getElementById('team').value,opponent:opponent,startMs:Date.now(),finished:false,
+    players:arr.map(p=>p.name),starters:starters,events:[],duration:0};
   starters.forEach(p=>state.events.push({minute:0,type:'START',inn:p,out:'',text:'Basis'}));
-  document.getElementById('liveCard').classList.remove('hidden');
-  document.getElementById('dashboardCard').classList.remove('hidden');
-  document.getElementById('logCard').classList.remove('hidden');
-  timerId=setInterval(()=>{document.getElementById('minute').textContent=nowMinute(); render();},1000);
+  ['liveCard','dashboardCard','logCard'].forEach(id=>document.getElementById(id).classList.remove('hidden'));
+  timerId=setInterval(()=>{document.getElementById('minute').textContent=nowMinute();render();},1000);
   render();
 }
 function addVoiceEvent(text){
-  const parsed=parseVoice(text);
-  const status=document.getElementById('status');
-  if(!parsed.ok){status.className='status warn';status.textContent=`Niet goed begrepen: “${text}”. Probeer: “Naam eruit, Naam erin”.`;return;}
-  const out=fuzzyKnown(parsed.out), inn=fuzzyKnown(parsed.inn);
-  const manual=document.getElementById('manualMinute').value;
-  const minute=manual!==''?Number(manual):nowMinute();
-  state.events.push({minute,type:'WISSEL',out,inn,text});
+  const parsed=parseVoice(text),status=document.getElementById('status');
+  if(!parsed.ok){status.className='status warn';status.textContent=`Niet goed begrepen: “${text}”. Zeg: “Naam eruit, Naam erin”.`;return;}
+  const out=resolveName(parsed.out),inn=resolveName(parsed.inn);
+  const minute=document.getElementById('manualMinute').value!==''?Number(document.getElementById('manualMinute').value):nowMinute();
+  state.events.push({minute:minute,type:'WISSEL',out:out,inn:inn,text:text});
   document.getElementById('manualMinute').value='';
   status.className='status ok';status.textContent=`Minuut ${minute}: ${out} eruit → ${inn} erin`;
   render();
 }
 function listen(){
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  const status=document.getElementById('status');
-  if(!SR){status.className='status warn';status.textContent='Deze browser ondersteunt spraakherkenning niet. Gebruik Chrome op Android.';return;}
-  const r=new SR(); r.lang='nl-NL'; r.interimResults=false; r.maxAlternatives=1;
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition,status=document.getElementById('status');
+  if(!SR){status.className='status warn';status.textContent='Gebruik Chrome op Android voor spraakherkenning.';return;}
+  const r=new SR();r.lang='nl-NL';r.interimResults=false;r.maxAlternatives=1;
   status.className='status';status.textContent='Luisteren…';
   r.onresult=e=>{const text=e.results[0][0].transcript;status.textContent='Gehoord: '+text;addVoiceEvent(text);};
-  r.onerror=e=>{status.className='status warn';status.textContent='Spraakfout: '+e.error+'\nControleer microfoontoegang voor deze site in Chrome.';};
+  r.onerror=e=>{status.className='status warn';status.textContent='Spraakfout: '+e.error;};
   r.start();
 }
 function calcTotals(){
-  const end=state.finished?state.duration:nowMinute();
-  const open={}; const totals={};
+  const end=state.finished?state.duration:nowMinute(),open={},totals={};
   state.events.slice().sort((a,b)=>a.minute-b.minute).forEach(e=>{
-    if(e.type==='START'&&e.inn) open[e.inn]=0;
+    if(e.type==='START'&&e.inn)open[e.inn]=0;
     if(e.type==='WISSEL'){
-      if(e.out && open[e.out]!==undefined){totals[e.out]=(totals[e.out]||0)+Math.max(0,e.minute-open[e.out]);delete open[e.out];}
-      if(e.inn) open[e.inn]=e.minute;
+      if(e.out&&open[e.out]!==undefined){totals[e.out]=(totals[e.out]||0)+Math.max(0,e.minute-open[e.out]);delete open[e.out];}
+      if(e.inn)open[e.inn]=e.minute;
     }
   });
   Object.keys(open).forEach(p=>totals[p]=(totals[p]||0)+Math.max(0,end-open[p]));
-  state.players.forEach(p=>{if(totals[p]===undefined) totals[p]=0;});
-  return {totals,open,end};
+  state.players.forEach(p=>{if(totals[p]===undefined)totals[p]=0;});
+  return{totals:totals,open:open,end:end};
 }
 function render(){
-  const {totals,open,end}=calcTotals();
-  document.getElementById('minute').textContent=end;
-  const body=document.getElementById('minutesBody'); body.innerHTML='';
-  Object.keys(totals).sort((a,b)=>totals[b]-totals[a]).forEach(p=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${esc(p)}</td><td>${totals[p]}</td><td>${open[p]!==undefined?'In veld':'Bank/uit'}</td>`;body.appendChild(tr);
+  const x=calcTotals(),body=document.getElementById('minutesBody');body.innerHTML='';
+  document.getElementById('minute').textContent=x.end;
+  Object.keys(x.totals).sort((a,b)=>x.totals[b]-x.totals[a]).forEach(p=>{
+    const po=playerObj(p),tr=document.createElement('tr');
+    tr.innerHTML=`<td>${esc(po.number)}</td><td>${esc(p)}</td><td>${x.totals[p]}</td><td>${x.open[p]!==undefined?'In veld':'Bank/uit'}</td>`;
+    body.appendChild(tr);
   });
-  document.getElementById('summary').innerHTML=`<span class="badge">${esc(state.team)}</span><span class="badge">vs ${esc(state.opponent)}</span><span class="badge">${end} min</span>`;
+  document.getElementById('summary').innerHTML=`<span class="badge">${esc(state.team)}</span><span class="badge">vs ${esc(state.opponent)}</span><span class="badge">${x.end} min</span>`;
   const log=document.getElementById('logBody');log.innerHTML='';
   state.events.filter(e=>e.type==='WISSEL').slice().sort((a,b)=>a.minute-b.minute).forEach(e=>{
     const tr=document.createElement('tr');tr.innerHTML=`<td>${e.minute}'</td><td>${esc(e.out)} → ${esc(e.inn)}</td>`;log.appendChild(tr);
   });
 }
 function undo(){
-  for(let i=state.events.length-1;i>=0;i--){if(state.events[i].type==='WISSEL'){state.events.splice(i,1);document.getElementById('status').className='status';document.getElementById('status').textContent='Laatste wissel verwijderd.';render();return;}}
+  for(let i=state.events.length-1;i>=0;i--)if(state.events[i].type==='WISSEL'){state.events.splice(i,1);document.getElementById('status').textContent='Laatste wissel verwijderd.';render();return;}
 }
 function finish(){
-  state.duration=nowMinute();state.finished=true;clearInterval(timerId);render();document.getElementById('status').className='status ok';document.getElementById('status').textContent=`Wedstrijd beëindigd op ${state.duration} minuten.`;
+  state.duration=nowMinute();state.finished=true;clearInterval(timerId);render();
+  document.getElementById('status').className='status ok';document.getElementById('status').textContent=`Wedstrijd beëindigd op ${state.duration} minuten.`;
 }
 function exportCsv(){
-  const {totals}=calcTotals();
-  const rows=[['Team','Tegenstander','Speler','Minuten'],...Object.keys(totals).map(p=>[state.team,state.opponent,p,totals[p]])];
+  const x=calcTotals();
+  const rows=[['Team','Tegenstander','Nummer','Speler','Positie 1','Positie 2','Maat','Minuten']];
+  Object.keys(x.totals).forEach(n=>{const p=playerObj(n);rows.push([state.team,state.opponent,p.number,n,p.pos1,p.pos2,p.size,x.totals[n]]);});
   rows.push([]);rows.push(['Minuut','Uit','In','Transcript']);
   state.events.filter(e=>e.type==='WISSEL').forEach(e=>rows.push([e.minute,e.out,e.inn,e.text]));
-  const csv=rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\n');
-  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${state.team}_${state.opponent}_wedstrijd.csv`;a.click();URL.revokeObjectURL(a.href);
+  const csv='\ufeff'+rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download=`${state.team}_${state.opponent}_wedstrijd.csv`;a.click();URL.revokeObjectURL(a.href);
 }
-document.getElementById('addPlayer').onclick=()=>addPlayerRow('');
+document.getElementById('team').addEventListener('change',loadPlayers);
 document.getElementById('startBtn').onclick=startMatch;
 document.getElementById('micBtn').onclick=listen;
 document.getElementById('undoBtn').onclick=undo;
