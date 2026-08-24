@@ -3,218 +3,187 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Hercules O16 Voice Match Tracker – Maarten Chung</title>
+<title>Hercules O16 Match Manager – Maarten Chung</title>
 <style>
-:root{font-family:Arial,Helvetica,sans-serif;color:#241633;background:#f6f1fb}
-body{margin:0;background:linear-gradient(180deg,#f6f1fb 0%,#eee3f8 100%)}
-.wrap{max-width:820px;margin:auto;padding:14px}
-.card{background:#fff;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 4px 18px rgba(93,46,132,.14);border:1px solid #eadcf5}
-h1{font-size:22px;margin:0 0 12px} h2{font-size:18px;margin:0 0 10px}
-input,select,button{width:100%;box-sizing:border-box;font-size:17px;padding:13px;border-radius:12px;border:1px solid #c9c9c9;margin:6px 0}
-button{font-weight:700;background:#6f42c1;color:#fff;border:none;box-shadow:0 2px 8px rgba(111,66,193,.22)}
-button.secondary{background:#eadff5;color:#4b2672;box-shadow:none}
-button.danger{background:#8e2f6f}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.roster{display:grid;gap:7px}
-.playerrow{display:grid;grid-template-columns:34px 34px 42px 1fr;gap:8px;align-items:center;border:1px solid #e5e5e5;border-radius:12px;padding:9px}
-.playerrow input{width:auto;transform:scale(1.2);margin:auto}
-.num{font-weight:800;text-align:center}
-.name{font-weight:700} .meta{font-size:12px;color:#666;margin-top:2px}
-.timer{font-size:52px;font-weight:800;text-align:center;margin:6px 0 12px}
-.status{padding:10px;border-radius:10px;background:#f1e9f8;margin-top:8px;white-space:pre-wrap;border:1px solid #e4d4f2}
-.ok{background:#ece2f7} .warn{background:#f8e8f2} .hidden{display:none}
-.badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#eadff5;color:#4b2672;font-size:12px;margin-right:4px;margin-bottom:4px}
-table{width:100%;border-collapse:collapse;font-size:14px} th,td{text-align:left;padding:8px;border-bottom:1px solid #ddd}
-small{color:#666}
-.brand{font-size:13px;font-weight:700;color:#6f42c1;letter-spacing:.04em;text-transform:uppercase;margin-bottom:6px}
-.credit{text-align:center;color:#5b3a75;font-size:13px;padding:8px 0 22px}
-.credit strong{color:#4b2672}
-.liveboard{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.liveplayer{border:1px solid #e4d4f2;border-radius:14px;padding:10px;background:#fbf8fe}
-.liveplayer.field{border:2px solid #6f42c1;background:#f3ebfa}
-.liveplayer.bench{opacity:.9}
-.livehead{display:flex;justify-content:space-between;gap:8px;align-items:center}
-.liveplayer .pname{font-weight:800;font-size:15px}
-.liveplayer .pnum{font-weight:800;color:#6f42c1}
-.livemeta{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;font-size:13px}
-.metric{background:#fff;border-radius:9px;padding:7px;border:1px solid #eee}
-.metric b{display:block;font-size:18px}
-.statepill{font-size:12px;padding:4px 7px;border-radius:999px;background:#eadff5;color:#4b2672}
-.confirm{margin-top:10px;border:2px solid #6f42c1;border-radius:14px;padding:12px;background:#fbf8fe}
-.confirmline{font-size:18px;font-weight:800;margin:5px 0}
+:root{--purple:#6f42c1;--dark:#4b2672;--light:#eadff5;--pale:#f6f1fb;--text:#241633;--green:#1f8b4c;--red:#9b2d62;font-family:Arial,Helvetica,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(180deg,#f6f1fb,#eee3f8);color:var(--text)}
+.wrap{max-width:900px;margin:auto;padding:14px}
+.card{background:#fff;border:1px solid #eadcf5;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 4px 18px rgba(93,46,132,.13)}
+.brand{font-size:12px;text-transform:uppercase;font-weight:800;letter-spacing:.05em;color:var(--purple);margin-bottom:5px}
+h1{font-size:23px;margin:0 0 12px}h2{font-size:19px;margin:0 0 10px}h3{font-size:16px;margin:12px 0 8px;color:var(--dark)}
+input,select,button{font-size:16px;border-radius:11px;border:1px solid #c9c9c9;padding:11px}
+input,select{width:100%;background:#fff}
+button{width:100%;background:var(--purple);color:#fff;border:0;font-weight:800;margin:6px 0;min-height:44px}
+button.secondary{background:var(--light);color:var(--dark);box-shadow:none}
+button.danger{background:var(--red)}
+button.small{width:auto;min-height:36px;padding:7px 10px;font-size:13px;margin:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 120px;gap:9px}
+.hidden{display:none!important}
+.smalltxt{font-size:12px;color:#666}
+.status{padding:10px;border-radius:10px;background:#f1e9f8;border:1px solid #e4d4f2;margin-top:8px;white-space:pre-wrap}
+.ok{background:#e2f4e7;border-color:#b8dfc3;color:#245a33}
+.warn{background:#fff4db;border-color:#ead6a6;color:#6a531c}
+.timer{font-size:52px;text-align:center;font-weight:900;color:var(--dark)}
+.score{display:flex;align-items:center;justify-content:center;gap:12px;font-size:21px;font-weight:900;margin:5px 0 10px;flex-wrap:wrap}
+.score b{font-size:30px;color:var(--dark)}
+.rosterHead,.rosterRow{display:grid;grid-template-columns:52px 52px 52px 42px minmax(135px,1fr) 145px;gap:6px;align-items:center}
+.rosterHead{font-size:11px;font-weight:800;color:#666;padding:4px 7px}
+.rosterRow{border:1px solid #e8e0ee;border-radius:11px;padding:7px;margin:5px 0;background:#fff}
+.rosterRow input[type=checkbox]{width:auto;transform:scale(1.15);margin:auto}
+.rosterName{font-weight:800;font-size:14px}.rosterMeta{font-size:11px;color:#777}
+.pitch{position:relative;width:100%;aspect-ratio:68/105;max-height:600px;background:linear-gradient(90deg,#438b57 0 10%,#4b985f 10% 20%,#438b57 20% 30%,#4b985f 30% 40%,#438b57 40% 50%,#4b985f 50% 60%,#438b57 60% 70%,#4b985f 70% 80%,#438b57 80% 90%,#4b985f 90%);border:3px solid #fff;border-radius:14px;overflow:hidden;box-shadow:inset 0 0 0 2px rgba(0,0,0,.12)}
+.pitch:before{content:"";position:absolute;left:5%;right:5%;top:50%;border-top:2px solid rgba(255,255,255,.8)}
+.pitch:after{content:"";position:absolute;width:22%;aspect-ratio:1;border:2px solid rgba(255,255,255,.8);border-radius:50%;left:39%;top:calc(50% - 11%)}
+.boxTop,.boxBottom{position:absolute;left:25%;width:50%;height:14%;border:2px solid rgba(255,255,255,.8)}
+.boxTop{top:-2px}.boxBottom{bottom:-2px}
+.pitchSlot{position:absolute;transform:translate(-50%,-50%);text-align:center;min-width:62px}
+.slotLabel{font-size:9px;color:rgba(255,255,255,.85);font-weight:800;text-shadow:0 1px 2px #000}
+.playerDot{width:42px;height:42px;border-radius:50%;background:var(--dark);color:#fff;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-weight:900;margin:auto;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.playerPitchName{font-size:10px;background:rgba(255,255,255,.92);color:var(--dark);font-weight:800;border-radius:6px;padding:2px 4px;margin-top:2px;max-width:86px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.liveGroup{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.liveplayer{border:1px solid #e4d4f2;border-radius:13px;padding:9px;background:#fbf8fe}
+.liveplayer.field{border:2px solid var(--purple);background:#f3ebfa}
+.livehead{display:flex;justify-content:space-between;gap:6px;align-items:center}
+.pnum{color:var(--purple);font-weight:900}.pname{font-size:14px;font-weight:800}
+.pill{font-size:11px;padding:3px 7px;border-radius:999px;background:var(--light);color:var(--dark);font-weight:800}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:7px}
+.metric{border:1px solid #eee;background:#fff;border-radius:8px;padding:6px;font-size:11px}
+.metric b{display:block;font-size:17px}
+.actionBox{border:2px solid var(--purple);border-radius:14px;padding:11px;background:#fbf8fe;margin-top:12px}
+.confirm{border:2px solid var(--purple);border-radius:14px;padding:11px;background:#fbf8fe;margin-top:10px}
 .confirmbuttons{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-
-.seasonnav{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0 14px}
-.seasonnav button{margin:0;padding:10px 7px;font-size:14px}
-.rankgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.rankcard{border:1px solid #e4d4f2;border-radius:14px;padding:11px;background:#fbf8fe}
-.rankcard h3{margin:0 0 8px;font-size:15px;color:#4b2672}
-.rankrow{display:grid;grid-template-columns:28px 1fr auto;gap:7px;padding:6px 0;border-bottom:1px solid #eee;align-items:center}
-.rankrow:last-child{border-bottom:0}
-.rankno{font-weight:800;color:#6f42c1;text-align:center}
-.rankvalue{font-weight:800}
-.matchcard{border:1px solid #e4d4f2;border-radius:13px;padding:10px;margin:8px 0;background:#fff}
-.matchtop{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
-.matchtitle{font-weight:800}
-.matchmeta{font-size:12px;color:#666;margin-top:3px}
-.miniActions{display:flex;gap:7px;margin-top:8px;flex-wrap:wrap}
-.miniActions button{width:auto;margin:0;padding:8px 10px;font-size:13px}
-.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0}
-.kpi{border:1px solid #eadcf5;border-radius:12px;padding:9px;text-align:center;background:#fbf8fe}
-.kpi b{display:block;font-size:20px;color:#4b2672}
-.kpi span{font-size:11px;color:#666}
-.smalltable{font-size:13px}
-.backupgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.quality{margin-top:10px;padding:10px;border-radius:12px;background:#fff4db;border:1px solid #ead6a6;font-size:13px;color:#5e4a18}
-#exportExcelBtn{background:#56308f;margin-bottom:10px}
-.restoreNote{background:#ece2f7;border:1px solid #cfb8e8;color:#4b2672}
-@media(max-width:600px){.rankgrid,.kpis,.backupgrid{grid-template-columns:1fr 1fr}.seasonnav{grid-template-columns:1fr}}
-
-
-.tabletools{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
-.tabletools input,.tabletools select{width:auto;min-width:160px;flex:1;margin:0;padding:9px;font-size:14px}
-.sortable th{cursor:pointer;user-select:none;white-space:nowrap}
-.sortable th:hover{background:#56308f}
-.sortable th::after{content:" ↕";font-size:10px;opacity:.65}
-.sortable th[data-dir="asc"]::after{content:" ▲"}
-.sortable th[data-dir="desc"]::after{content:" ▼"}
-.editPanel{margin-top:12px;border:2px solid #6f42c1;border-radius:14px;padding:12px;background:#fbf8fe}
-.editGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.editPlayers{overflow-x:auto;margin-top:10px}
-.editPlayers input,.editPlayers select{padding:7px;font-size:14px;margin:0;min-width:70px}
-.editPlayers input[type="checkbox"]{width:auto;min-width:0;transform:scale(1.15)}
-.validationOk{background:#e2f4e7;border:1px solid #b8dfc3;color:#245a33}
-.validationWarn{background:#fff4db;border:1px solid #ead6a6;color:#6a531c}
-@media(max-width:600px){.editGrid{grid-template-columns:1fr}.tabletools{display:grid;grid-template-columns:1fr}}
-
-@media(max-width:600px){.grid,.liveboard{grid-template-columns:1fr}.rankgrid{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}.editGrid{grid-template-columns:1fr}}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:7px;border-bottom:1px solid #e5dcec;text-align:left}th{background:var(--purple);color:#fff;cursor:pointer;white-space:nowrap}th::after{content:" ↕";font-size:9px;opacity:.65}th[data-dir=asc]::after{content:" ▲"}th[data-dir=desc]::after{content:" ▼"}
+.tabletools{display:flex;gap:8px;margin:7px 0;flex-wrap:wrap}.tabletools input{flex:1;min-width:180px}
+.rankgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}.rankcard{border:1px solid #e4d4f2;border-radius:12px;padding:9px;background:#fbf8fe}.rankrow{display:grid;grid-template-columns:25px 1fr auto;gap:5px;padding:5px 0;border-bottom:1px solid #eee}.rankrow:last-child{border:0}.rankno,.rankval{font-weight:900;color:var(--dark)}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin:9px 0}.kpi{text-align:center;background:#fbf8fe;border:1px solid #eadcf5;border-radius:11px;padding:8px}.kpi b{display:block;font-size:19px;color:var(--dark)}.kpi span{font-size:10px;color:#666}
+.matchcard{border:1px solid #e4d4f2;border-radius:12px;padding:10px;margin:7px 0}.matchtop{display:flex;justify-content:space-between;gap:7px;align-items:center;flex-wrap:wrap}.miniActions{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+.editPanel{border:2px solid var(--purple);border-radius:14px;padding:12px;background:#fbf8fe;margin-top:10px}.editPlayers{overflow:auto}.editPlayers input,.editPlayers select{padding:6px;font-size:13px;min-width:70px}
+.credit{text-align:center;color:#5b3a75;font-size:12px;padding:8px 0 20px}
+@media(max-width:700px){.grid2,.grid3,.rankgrid{grid-template-columns:1fr}.rosterHead{display:none}.rosterRow{grid-template-columns:38px 38px 38px 35px 1fr;gap:4px}.rosterRow .posSetup{grid-column:1/-1}.liveGroup{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="card">
-    <div class="brand">Hercules O16 Voice Match Tracker</div>
-    <h1>Hercules O16 – wedstrijd</h1>
-    <div class="grid">
-      <select id="team">
-        <option value="O16-1">O16-1</option>
-        <option value="O16-2">O16-2</option>
-      </select>
-      <input id="opponent" placeholder="Tegenstander">
+    <div class="brand">Hercules O16 Match Manager</div>
+    <h1>Wedstrijd voorbereiden</h1>
+    <div class="grid2">
+      <label>Team<select id="team"><option>O16-1</option><option>O16-2</option></select></label>
+      <label>Tegenstander<input id="opponent" placeholder="Bijv. DEM O16-2"></label>
+      <label>Wedstrijddatum<input id="matchDate" type="date"></label>
+      <label>Formatie<select id="formation"></select></label>
     </div>
-
-    <h2>1. Selectie & basis</h2>
-    <small>Vink <b>Sel.</b> aan als een speler bij de wedstrijdselectie zit. Vink <b>Basis</b> aan als hij start.</small>
-    <div id="players" class="roster"></div>
+    <h3>Aanwezigheid, selectie, basis & positie</h3>
+    <div class="smalltxt">Aanw. = aanwezig bij de wedstrijd. Sel. = in de wedstrijdselectie. Basis = start op het veld. Shirtmaat staat alleen ter informatie.</div>
+    <div class="rosterHead"><div>Aanw.</div><div>Sel.</div><div>Basis</div><div>#</div><div>Speler</div><div>Startpositie</div></div>
+    <div id="rosterBox"></div>
     <button id="startBtn">Start wedstrijd</button>
   </div>
 
+  <div class="card" id="setupPitchCard">
+    <h2>Basisopstelling</h2>
+    <div id="setupPitch" class="pitch"><div class="boxTop"></div><div class="boxBottom"></div></div>
+  </div>
+
   <div class="card hidden" id="liveCard">
+    <div class="score"><span>Hercules <span id="liveTeam"></span></span><b id="scoreHome">0</b><span>-</span><b id="scoreAway">0</b><span id="liveOpponent"></span></div>
     <div class="timer"><span id="minute">0</span>'</div>
-    <button id="micBtn">🎤 Spreek wissel in</button>
+    <button id="voiceBtn">🎤 Spreek wissel of doelpunt in</button>
     <button class="secondary" id="pauseBtn">⏸ Rust / pauze starten</button>
-    <small>
-      Werkt met namen én nummers, bijvoorbeeld:<br>
-      “Wai Sam eruit, Matz erin” · “13 eruit, 7 erin” · “Wissel Wai Sam voor 7”
-    </small>
-    <input id="manualMinute" type="number" min="0" placeholder="Optioneel: minuut corrigeren">
     <div id="status" class="status">Klaar.</div>
-    <small>✓ Lopende wedstrijd wordt automatisch bewaard. Browser vernieuwen wist hem niet.</small>
+    <div class="smalltxt">✓ Lopende wedstrijd wordt automatisch bewaard. Vernieuwen van de browser wist de wedstrijd niet.</div>
+
+    <div class="actionBox">
+      <h3>Handmatige wissel</h3>
+      <div class="grid3">
+        <label>Speler UIT<select id="swapOut"></select></label>
+        <label>Speler IN<select id="swapIn"></select></label>
+        <label>Minuut<input id="swapMinute" type="number" min="0"></label>
+      </div>
+      <label>Positie invaller<select id="swapPosition"></select></label>
+      <button id="manualSwapBtn">Wissel registreren</button>
+    </div>
+
+    <div class="actionBox">
+      <h3>Doelpunt</h3>
+      <div class="grid3">
+        <label>Maker<select id="goalScorer"></select></label>
+        <label>Voor wie?<select id="goalSide"><option value="home">Hercules</option><option value="away">Tegenstander</option></select></label>
+        <label>Minuut<input id="goalMinute" type="number" min="0"></label>
+      </div>
+      <button id="goalBtn">⚽ Doelpunt registreren</button>
+    </div>
+
+    <div class="actionBox">
+      <h3>Positie wijzigen</h3>
+      <div class="grid3">
+        <label>Speler<select id="positionPlayer"></select></label>
+        <label>Nieuwe positie<select id="newPosition"></select></label>
+        <label>Minuut<input id="positionMinute" type="number" min="0"></label>
+      </div>
+      <button id="positionBtn">Positie opslaan</button>
+    </div>
 
     <div id="confirmBox" class="confirm hidden">
       <div id="confirmText"></div>
-      <div class="confirmbuttons">
-        <button id="confirmBtn">✓ Klopt</button>
-        <button class="secondary" id="cancelBtn">↶ Niet goed</button>
-      </div>
+      <label id="confirmPosWrap">Positie<select id="confirmPosition"></select></label>
+      <div class="confirmbuttons"><button id="confirmBtn">✓ Klopt</button><button class="secondary" id="cancelBtn">Niet goed</button></div>
     </div>
 
-    <button class="secondary" id="undoBtn">↶ Laatste wissel ongedaan maken</button>
+    <button class="secondary" id="undoBtn">↶ Laatste actie ongedaan maken</button>
     <button class="danger" id="finishBtn">Einde wedstrijd</button>
     <button class="hidden" id="saveMatchBtn">💾 Bewaar wedstrijd & nieuwe wedstrijd</button>
   </div>
 
+  <div class="card hidden" id="livePitchCard">
+    <h2>Live veldopstelling</h2>
+    <div class="smalltxt"><span id="liveFormationLabel"></span> · positie verandert automatisch mee met een wissel.</div>
+    <div id="livePitch" class="pitch"><div class="boxTop"></div><div class="boxBottom"></div></div>
+  </div>
+
   <div class="card hidden" id="liveDashboardCard">
     <h2>Live speeltijd & banktijd</h2>
-    <div id="liveSummary"></div>
-    <div id="liveBoard" class="liveboard"></div>
+    <h3>IN VELD <span id="fieldCount" class="pill"></span></h3><div id="fieldBoard" class="liveGroup"></div>
+    <h3>BANK <span id="benchCount" class="pill"></span></h3><div id="benchBoard" class="liveGroup"></div>
+    <h3>AFWEZIG / NIET IN SELECTIE</h3><div id="absentBoard" class="liveGroup"></div>
   </div>
 
-  <div class="card hidden" id="dashboardCard">
-    <h2>Overzicht</h2>
-    <table>
-      <thead><tr><th>#</th><th>Speler</th><th>Speeltijd</th><th>Bank</th><th>Status</th></tr></thead>
-      <tbody id="minutesBody"></tbody>
-    </table>
+  <div class="card hidden" id="eventCard">
+    <h2>Wedstrijdlog</h2>
+    <div style="overflow:auto"><table id="eventTable"><thead><tr><th>Min.</th><th>Type</th><th>Actie</th></tr></thead><tbody id="eventBody"></tbody></table></div>
   </div>
-
-  <div class="card hidden" id="logCard">
-    <h2>Wissellog</h2>
-    <table>
-      <thead><tr><th>Min.</th><th>Actie</th></tr></thead>
-      <tbody id="logBody"></tbody>
-    </table>
-    <button class="secondary" id="exportBtn">Exporteer voor Excel (CSV)</button>
-  </div>
-
 
   <div class="card" id="seasonCard">
     <h2>Seizoensdashboard</h2>
-    <button type="button" id="exportExcelBtn">📊 Exporteer volledige dashboard naar Excel</button>
-    <div class="seasonnav">
-      <button type="button" id="showSeasonBtn">🏆 Totaal & ranking</button>
-      <button type="button" class="secondary" id="showMatchesBtn">📅 Wedstrijden</button>
-      <button type="button" class="secondary" id="showBackupBtn">💾 Backup</button>
+    <button id="exportExcelBtn">📊 Exporteer volledige dashboard naar Excel</button>
+    <div class="grid2">
+      <button class="secondary" id="showSeasonBtn">🏆 Totaal & ranking</button>
+      <button class="secondary" id="showMatchesBtn">📅 Wedstrijden / corrigeren</button>
     </div>
+    <div class="grid2">
+      <button class="secondary" id="backupBtn">💾 Download backup</button>
+      <button class="secondary" id="importBtn">📥 Importeer backup</button>
+    </div>
+    <input id="importFile" type="file" accept=".json,application/json" class="hidden">
 
-    <div id="seasonTotalView">
+    <div id="seasonView">
       <div id="seasonKpis" class="kpis"></div>
-
       <div class="rankgrid">
-        <div class="rankcard">
-          <h3>🏆 Ranking speeltijd</h3>
-          <div id="playRanking"></div>
-        </div>
-        <div class="rankcard">
-          <h3>🪑 Ranking banktijd</h3>
-          <div id="benchRanking"></div>
-        </div>
+        <div class="rankcard"><h3>🏆 Speeltijd</h3><div id="playRanking"></div></div>
+        <div class="rankcard"><h3>⚽ Doelpunten</h3><div id="goalRanking"></div></div>
+        <div class="rankcard"><h3>✅ Aanwezigheid</h3><div id="attendanceRanking"></div></div>
       </div>
-
-      <h3 style="margin:16px 0 8px">Totaal per speler</h3>
-      <div class="tabletools">
-        <input id="seasonFilter" placeholder="🔎 Filter spelers..." aria-label="Filter spelers">
-      </div>
-      <div style="overflow-x:auto">
-        <table class="smalltable sortable" id="seasonPlayersTable">
-          <thead>
-            <tr>
-              <th>#</th><th>Speler</th><th>Wed.</th><th>Basis</th>
-              <th>Speeltijd</th><th>Bank</th><th>Gem.</th><th>Speel%</th>
-            </tr>
-          </thead>
-          <tbody id="seasonPlayersBody"></tbody>
-        </table>
-      </div>
+      <h3>Totaal per speler</h3>
+      <div class="tabletools"><input id="seasonFilter" placeholder="🔎 Filter spelers..."></div>
+      <div style="overflow:auto"><table id="seasonTable"><thead><tr><th>Rank</th><th>#</th><th>Speler</th><th>Aanw.</th><th>Afw.</th><th>Basis</th><th>Speeltijd</th><th>Bank</th><th>Gem.</th><th>Speel%</th><th>Goals</th></tr></thead><tbody id="seasonBody"></tbody></table></div>
     </div>
 
     <div id="matchesView" class="hidden">
       <div id="matchesList"></div>
       <div id="matchDetail"></div>
-      <div id="editMatchPanel"></div>
-    </div>
-
-    <div id="backupView" class="hidden">
-      <p style="font-size:13px;color:#666">
-        De wedstrijdhistorie wordt op dit apparaat in deze browser bewaard.
-        Maak af en toe een backup zodat je de gegevens nooit kwijtraakt.
-      </p>
-      <div class="backupgrid">
-        <button type="button" id="backupBtn">Download backup</button>
-        <button type="button" class="secondary" id="importBtn">Importeer backup</button>
-      </div>
-      <input type="file" id="importFile" accept=".json,application/json" class="hidden">
-      <button type="button" class="danger" id="clearHistoryBtn">Wis alle wedstrijdhistorie</button>
+      <div id="editPanel"></div>
     </div>
   </div>
 
@@ -223,1135 +192,469 @@ small{color:#666}
 
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <script>
-const roster = [{"name": "Boaz Vries", "team": "O16-1", "active": "Ja", "pos1": "Keeper", "pos2": "Keeper", "number": "1", "size": ""}, {"name": "Dani Faber", "team": "O16-1", "active": "Ja", "pos1": "Links Achter", "pos2": "Voor", "number": "5", "size": "Medium"}, {"name": "Wai Sam Chung", "team": "O16-1", "active": "Ja", "pos1": "Rechts Achter", "pos2": "Voor", "number": "13", "size": "Medium"}, {"name": "Siem Knossen", "team": "O16-1", "active": "Ja", "pos1": "Centrale Verdediger Links", "pos2": "Verdediger", "number": "10", "size": "Large"}, {"name": "Vigo Schreuder", "team": "O16-1", "active": "Ja", "pos1": "Centrale Verdediger Rechts", "pos2": "Verdediger", "number": "15", "size": "Medium"}, {"name": "Ben Jansen", "team": "O16-1", "active": "Ja", "pos1": "Centrale Verdediger Links", "pos2": "Verdediger", "number": "8", "size": "Large"}, {"name": "Shane Besselink", "team": "O16-1", "active": "Ja", "pos1": "Links Voor", "pos2": "Achter", "number": "9", "size": "Medium"}, {"name": "Maxim Boer", "team": "O16-1", "active": "Ja", "pos1": "Links Midden", "pos2": "Voor", "number": "16", "size": "Small"}, {"name": "Matz Buijsman", "team": "O16-1", "active": "Ja", "pos1": "Spits", "pos2": "Voor", "number": "7", "size": "Medium"}, {"name": "Luuk Buringa", "team": "O16-1", "active": "Ja", "pos1": "Rechts Midden", "pos2": "Voor", "number": "14", "size": "Medium"}, {"name": "Kayden Cramer", "team": "O16-1", "active": "Ja", "pos1": "Rechts Voor", "pos2": "Midden", "number": "3", "size": "Large"}, {"name": "Isaiah Eijndhoven", "team": "O16-1", "active": "Ja", "pos1": "Rechts Midden", "pos2": "Verdediger", "number": "4", "size": "Small"}, {"name": "Noah Oerip", "team": "O16-1", "active": "Ja", "pos1": "Links Midden", "pos2": "Voor", "number": "12", "size": "Small"}, {"name": "Shane Statia", "team": "O16-1", "active": "Ja", "pos1": "Links Voor", "pos2": "Midden", "number": "11", "size": "Medium"}, {"name": "Nolaï Williams", "team": "O16-1", "active": "Ja", "pos1": "Midden Midden", "pos2": "Midden", "number": "17", "size": "Large"}, {"name": "Eliah Wong Swie Sang", "team": "O16-1", "active": "Ja", "pos1": "Midden Midden", "pos2": "Midden", "number": "6", "size": "Large"}];
-let state = {
-  team:'O16-1', opponent:'', startMs:null, finished:false,
-  players:[], selected:[], starters:[], events:[], duration:0,
-  paused:false, pausedAt:null, pausedTotalMs:0
-};
-let timerId=null;
-let pendingSwap=null;
+const roster=[{"name": "Boaz Vries", "team": "O16-1", "active": "Ja", "defaultPos": "GK", "number": "1", "size": ""}, {"name": "Dani Faber", "team": "O16-1", "active": "Ja", "defaultPos": "LB", "number": "5", "size": "Medium"}, {"name": "Wai Sam Chung", "team": "O16-1", "active": "Ja", "defaultPos": "RB", "number": "13", "size": "Medium"}, {"name": "Siem Knossen", "team": "O16-1", "active": "Ja", "defaultPos": "LCB", "number": "10", "size": "Large"}, {"name": "Vigo Schreuder", "team": "O16-1", "active": "Ja", "defaultPos": "RCB", "number": "15", "size": "Medium"}, {"name": "Ben Jansen", "team": "O16-1", "active": "Ja", "defaultPos": "LCB", "number": "8", "size": "Large"}, {"name": "Shane Besselink", "team": "O16-1", "active": "Ja", "defaultPos": "LW", "number": "9", "size": "Medium"}, {"name": "Maxim Boer", "team": "O16-1", "active": "Ja", "defaultPos": "LCM", "number": "16", "size": "Small"}, {"name": "Matz Buijsman", "team": "O16-1", "active": "Ja", "defaultPos": "ST", "number": "7", "size": "Medium"}, {"name": "Luuk Buringa", "team": "O16-1", "active": "Ja", "defaultPos": "RCM", "number": "14", "size": "Medium"}, {"name": "Kayden Cramer", "team": "O16-1", "active": "Ja", "defaultPos": "RW", "number": "3", "size": "Large"}, {"name": "Isaiah Eijndhoven", "team": "O16-1", "active": "Ja", "defaultPos": "RCM", "number": "4", "size": "Small"}, {"name": "Noah Oerip", "team": "O16-1", "active": "Ja", "defaultPos": "LCM", "number": "12", "size": "Small"}, {"name": "Shane Statia", "team": "O16-1", "active": "Ja", "defaultPos": "LW", "number": "11", "size": "Medium"}, {"name": "Nolaï Williams", "team": "O16-1", "active": "Ja", "defaultPos": "CM", "number": "17", "size": "Large"}, {"name": "Eliah Wong Swie Sang", "team": "O16-1", "active": "Ja", "defaultPos": "CM", "number": "6", "size": "Large"}];
+const FORMATIONS={"4-3-3": [{"code": "GK", "label": "Keeper", "x": 50, "y": 90}, {"code": "LB", "label": "Linksback", "x": 14, "y": 72}, {"code": "LCB", "label": "CV links", "x": 38, "y": 73}, {"code": "RCB", "label": "CV rechts", "x": 62, "y": 73}, {"code": "RB", "label": "Rechtsback", "x": 86, "y": 72}, {"code": "LCM", "label": "Midden links", "x": 25, "y": 50}, {"code": "CM", "label": "Midden", "x": 50, "y": 46}, {"code": "RCM", "label": "Midden rechts", "x": 75, "y": 50}, {"code": "LW", "label": "Linksvoor", "x": 19, "y": 24}, {"code": "ST", "label": "Spits", "x": 50, "y": 18}, {"code": "RW", "label": "Rechtsvoor", "x": 81, "y": 24}], "4-2-3-1": [{"code": "GK", "label": "Keeper", "x": 50, "y": 90}, {"code": "LB", "label": "Linksback", "x": 14, "y": 72}, {"code": "LCB", "label": "CV links", "x": 38, "y": 73}, {"code": "RCB", "label": "CV rechts", "x": 62, "y": 73}, {"code": "RB", "label": "Rechtsback", "x": 86, "y": 72}, {"code": "LDM", "label": "Controlerend links", "x": 36, "y": 55}, {"code": "RDM", "label": "Controlerend rechts", "x": 64, "y": 55}, {"code": "LW", "label": "Links aanvallend", "x": 20, "y": 34}, {"code": "CAM", "label": "Nummer 10", "x": 50, "y": 34}, {"code": "RW", "label": "Rechts aanvallend", "x": 80, "y": 34}, {"code": "ST", "label": "Spits", "x": 50, "y": 16}], "4-4-2": [{"code": "GK", "label": "Keeper", "x": 50, "y": 90}, {"code": "LB", "label": "Linksback", "x": 14, "y": 72}, {"code": "LCB", "label": "CV links", "x": 38, "y": 73}, {"code": "RCB", "label": "CV rechts", "x": 62, "y": 73}, {"code": "RB", "label": "Rechtsback", "x": 86, "y": 72}, {"code": "LM", "label": "Linksmidden", "x": 16, "y": 48}, {"code": "LCM", "label": "Midden links", "x": 39, "y": 49}, {"code": "RCM", "label": "Midden rechts", "x": 61, "y": 49}, {"code": "RM", "label": "Rechtsmidden", "x": 84, "y": 48}, {"code": "LS", "label": "Spits links", "x": 38, "y": 20}, {"code": "RS", "label": "Spits rechts", "x": 62, "y": 20}], "3-4-3": [{"code": "GK", "label": "Keeper", "x": 50, "y": 90}, {"code": "LCB", "label": "CV links", "x": 25, "y": 71}, {"code": "CB", "label": "CV midden", "x": 50, "y": 74}, {"code": "RCB", "label": "CV rechts", "x": 75, "y": 71}, {"code": "LM", "label": "Linksmidden", "x": 15, "y": 49}, {"code": "LCM", "label": "Midden links", "x": 39, "y": 50}, {"code": "RCM", "label": "Midden rechts", "x": 61, "y": 50}, {"code": "RM", "label": "Rechtsmidden", "x": 85, "y": 49}, {"code": "LW", "label": "Linksvoor", "x": 20, "y": 23}, {"code": "ST", "label": "Spits", "x": 50, "y": 17}, {"code": "RW", "label": "Rechtsvoor", "x": 80, "y": 23}], "3-5-2": [{"code": "GK", "label": "Keeper", "x": 50, "y": 90}, {"code": "LCB", "label": "CV links", "x": 25, "y": 71}, {"code": "CB", "label": "CV midden", "x": 50, "y": 74}, {"code": "RCB", "label": "CV rechts", "x": 75, "y": 71}, {"code": "LWB", "label": "Wingback links", "x": 12, "y": 50}, {"code": "LCM", "label": "Midden links", "x": 35, "y": 49}, {"code": "CM", "label": "Midden", "x": 50, "y": 43}, {"code": "RCM", "label": "Midden rechts", "x": 65, "y": 49}, {"code": "RWB", "label": "Wingback rechts", "x": 88, "y": 50}, {"code": "LS", "label": "Spits links", "x": 38, "y": 19}, {"code": "RS", "label": "Spits rechts", "x": 62, "y": 19}]};
 const HISTORY_KEY='hercules_o16_match_history_v1';
 const LIVE_KEY='hercules_o16_live_match_v1';
+const MIGRATION_KEY='hercules_o16_v11_migrated';
 
-function saveLiveState(){
-  if(!state || !state.startMs)return;
-  try{ localStorage.setItem(LIVE_KEY,JSON.stringify(state)); }catch(e){}
+let state=emptyState();
+let timerId=null;
+let pending=null;
+
+function emptyState(){
+  return {team:'O16-1',opponent:'',matchDate:'',formation:'4-3-3',startMs:null,finished:false,duration:0,
+    paused:false,pausedAt:null,pausedTotalMs:0,attendance:{},selected:[],starters:[],
+    startingPositions:{},events:[]};
+}
+function esc(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function clean(s){return String(s??'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();}
+function playerObj(n){return roster.find(p=>p.name===n)||{name:n,number:'',size:'',defaultPos:''};}
+function getHistory(){try{const x=JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]');return Array.isArray(x)?x:[]}catch(e){return []}}
+function setHistory(x){localStorage.setItem(HISTORY_KEY,JSON.stringify(x));}
+function saveLive(){if(state.startMs)localStorage.setItem(LIVE_KEY,JSON.stringify(state));}
+function clearLive(){localStorage.removeItem(LIVE_KEY);}
+function uid(){return Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8);}
+function fmtDate(x){const d=new Date(x);return isNaN(d)?String(x):d.toLocaleDateString('nl-NL',{day:'2-digit',month:'2-digit',year:'numeric'});}
+function todayLocal(){const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');}
+
+function formationSlots(name){return FORMATIONS[name]||FORMATIONS['4-3-3'];}
+function slotLabel(form,code){return formationSlots(form).find(s=>s.code===code)?.label||code;}
+function positionOptions(form,selected=''){return '<option value="">Kies positie</option>'+formationSlots(form).map(s=>`<option value="${s.code}" ${s.code===selected?'selected':''}>${s.code} · ${s.label}</option>`).join('');}
+
+function initFormation(){
+  const sel=document.getElementById('formation');
+  sel.innerHTML=Object.keys(FORMATIONS).map(x=>`<option>${x}</option>`).join('');
+  sel.value='4-3-3';
+  document.getElementById('matchDate').value=todayLocal();
 }
 
-function clearLiveState(){
-  try{ localStorage.removeItem(LIVE_KEY); }catch(e){}
-}
-
-function loadLiveState(){
-  try{
-    const raw=localStorage.getItem(LIVE_KEY);
-    if(!raw)return false;
-    const saved=JSON.parse(raw);
-    if(!saved || !saved.startMs)return false;
-    state=Object.assign({
-      team:'O16-1',opponent:'',startMs:null,finished:false,players:[],selected:[],
-      starters:[],events:[],duration:0,paused:false,pausedAt:null,pausedTotalMs:0
-    },saved);
-    return true;
-  }catch(e){ return false; }
-}
-
-
-function getHistory(){
-  try{
-    const raw=localStorage.getItem(HISTORY_KEY);
-    const x=raw?JSON.parse(raw):[];
-    return Array.isArray(x)?x:[];
-  }catch(e){ return []; }
-}
-
-function setHistory(items){
-  localStorage.setItem(HISTORY_KEY,JSON.stringify(items));
-}
-
-function fmtDate(iso){
-  const d=new Date(iso);
-  return d.toLocaleDateString('nl-NL',{day:'2-digit',month:'2-digit',year:'numeric'});
-}
-
-function uid(){
-  return Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8);
-}
-
-const SEED_KEY='hercules_o16_seed_20260822_v1';
-
-function seedOrMigrateAug22Match(){
-  const hist=getHistory();
-  const idx=hist.findIndex(x=>x.id==='match-2026-08-22-1115');
-
-  const p=(name,number,play,bench,starter,pos1,pos2,size)=>({
-    name:name,number:String(number),play:play,bench:bench,starter:starter,
-    pos1:pos1||'',pos2:pos2||'',size:size||''
+function loadRoster(){
+  const box=document.getElementById('rosterBox'); box.innerHTML='';
+  const form=document.getElementById('formation').value;
+  roster.filter(p=>p.team===document.getElementById('team').value).forEach(p=>{
+    const row=document.createElement('div');row.className='rosterRow';row.dataset.player=p.name;
+    row.innerHTML=`
+      <input class="att" type="checkbox" checked title="Aanwezig">
+      <input class="sel" type="checkbox" checked title="Selectie">
+      <input class="starter" type="checkbox" title="Basis">
+      <div style="font-weight:900;text-align:center">#${esc(p.number)}</div>
+      <div><div class="rosterName">${esc(p.name)}</div><div class="rosterMeta">${p.size?'Shirt: '+esc(p.size):'Shirtmaat onbekend'}</div></div>
+      <select class="posSetup">${positionOptions(form,p.defaultPos)}</select>`;
+    box.appendChild(row);
   });
-
-  const corrected={
-    id:'match-2026-08-22-1115',
-    savedAt:'2026-08-22T12:50:00+02:00',
-    matchDate:'2026-08-22',
-    startLabel:'11:15',
-    halftimeStart:'11:55',
-    halftimeEnd:'12:10',
-    endLabel:'12:50',
-    pauseMinutes:15,
-    team:'O16-1',
-    opponent:'Tegenstander nog invullen',
-    duration:80,
-    selected:[
-      'Boaz Vries','Dani Faber','Siem Knossen','Vigo Schreuder','Wai Sam Chung',
-      'Eliah Wong Swie Sang','Noah Oerip','Luuk Buringa','Matz Buijsman','Kayden Cramer',
-      'Shane Besselink','Nolaï Williams','Ben Jansen','Isaiah Eijndhoven','Shane Statia','Maxim Boer'
-    ],
-    starters:[
-      'Boaz Vries','Dani Faber','Siem Knossen','Vigo Schreuder','Wai Sam Chung',
-      'Eliah Wong Swie Sang','Noah Oerip','Luuk Buringa','Matz Buijsman','Kayden Cramer','Shane Besselink'
-    ],
-    rawNote:'Datacontrole OK: 880 speler-minuten = 11 spelers × 80 minuten. Correctie: Matz Buijsman speelde 80 minuten; de eerder genoteerde uit-wissel op 55 minuten was de ontbrekende 25 minuten.',
-    events:[
-      {minute:20,type:'WISSEL',out:'Vigo Schreuder',inn:'Nolaï Williams',text:'Vigo uit, Nolaï in'},
-      {minute:20,type:'WISSEL',out:'Eliah Wong Swie Sang',inn:'Isaiah Eijndhoven',text:'Eliah uit, Isaiah in'},
-      {minute:20,type:'WISSEL',out:'Noah Oerip',inn:'Shane Statia',text:'Noah uit, Shane S in'},
-      {minute:20,type:'WISSEL',out:'Luuk Buringa',inn:'Maxim Boer',text:'Luuk uit, Maxim in'},
-      {minute:30,type:'WISSEL',out:'Shane Besselink',inn:'Ben Jansen',text:'Shane B uit, Ben in'},
-      {minute:55,type:'WISSEL',out:'Dani Faber',inn:'Vigo Schreuder',text:'Dani uit, Vigo in'},
-      {minute:55,type:'WISSEL',out:'Siem Knossen',inn:'Eliah Wong Swie Sang',text:'Siem uit, Eliah in'},
-      {minute:55,type:'WISSEL',out:'Kayden Cramer',inn:'Noah Oerip',text:'Kayden uit, Noah in'},
-      {minute:55,type:'WISSEL',out:'Nolaï Williams',inn:'Luuk Buringa',text:'Nolaï uit, Luuk in'},
-      {minute:60,type:'WISSEL',out:'Wai Sam Chung',inn:'Shane Besselink',text:'Wai Sam uit, Shane B in'},
-      {minute:75,type:'WISSEL',out:'Ben Jansen',inn:'Dani Faber',text:'Ben uit, Dani in'},
-      {minute:75,type:'WISSEL',out:'Isaiah Eijndhoven',inn:'Siem Knossen',text:'Isaiah uit, Siem in'},
-      {minute:75,type:'WISSEL',out:'Shane Statia',inn:'Kayden Cramer',text:'Shane S uit, Kayden in'},
-      {minute:75,type:'WISSEL',out:'Maxim Boer',inn:'Nolaï Williams',text:'Maxim uit, Nolaï in'}
-    ],
-    players:[
-      p('Boaz Vries',1,80,0,true,'Keeper','Keeper',''),
-      p('Dani Faber',5,60,20,true,'Links Achter','Voor','Medium'),
-      p('Siem Knossen',10,60,20,true,'Centrale Verdediger Links','Verdediger','Large'),
-      p('Vigo Schreuder',15,45,35,true,'Centrale Verdediger Rechts','Verdediger','Medium'),
-      p('Wai Sam Chung',13,60,20,true,'Rechts Achter','Voor','Medium'),
-      p('Eliah Wong Swie Sang',6,45,35,true,'Midden Midden','Midden','Large'),
-      p('Noah Oerip',12,45,35,true,'Links Midden','Voor','Small'),
-      p('Luuk Buringa',14,45,35,true,'Rechts Midden','Voor','Medium'),
-      p('Matz Buijsman',7,80,0,true,'Spits','Voor','Medium'),
-      p('Kayden Cramer',3,60,20,true,'Rechts Voor','Midden','Large'),
-      p('Shane Besselink',9,50,30,true,'Links Voor','Achter','Medium'),
-      p('Nolaï Williams',17,40,40,false,'Midden Midden','Midden','Large'),
-      p('Ben Jansen',8,45,35,false,'Centrale Verdediger Links','Verdediger','Large'),
-      p('Isaiah Eijndhoven',4,55,25,false,'Rechts Midden','Verdediger','Small'),
-      p('Shane Statia',11,55,25,false,'Links Voor','Midden','Medium'),
-      p('Maxim Boer',16,55,25,false,'Links Midden','Voor','Small')
-    ]
-  };
-
-  if(idx>=0) hist[idx]=corrected;
-  else hist.push(corrected);
-
-  setHistory(hist);
+  box.querySelectorAll('.starter').forEach(x=>x.addEventListener('change',e=>{
+    const r=e.target.closest('.rosterRow');
+    if(e.target.checked){r.querySelector('.att').checked=true;r.querySelector('.sel').checked=true;}
+    renderSetupPitch();
+  }));
+  box.querySelectorAll('.att').forEach(x=>x.addEventListener('change',e=>{
+    const r=e.target.closest('.rosterRow');
+    if(!e.target.checked){r.querySelector('.sel').checked=false;r.querySelector('.starter').checked=false;}
+    renderSetupPitch();
+  }));
+  box.querySelectorAll('.sel').forEach(x=>x.addEventListener('change',e=>{
+    const r=e.target.closest('.rosterRow');
+    if(e.target.checked)r.querySelector('.att').checked=true;
+    else r.querySelector('.starter').checked=false;
+    renderSetupPitch();
+  }));
+  box.querySelectorAll('.posSetup').forEach(x=>x.addEventListener('change',renderSetupPitch));
+  renderSetupPitch();
 }
 
-
-function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
-function teamRoster(){return roster.filter(p=>p.team===document.getElementById('team').value && p.active==='Ja');}
-function playerObj(name){return roster.find(p=>p.name===name)||{name:name,number:'',pos1:'',pos2:'',size:''};}
-function clean(s){
-  return String(s||'').toLowerCase()
-   .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-   .replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+function renderPitch(el,formation,positions){
+  const root=typeof el==='string'?document.getElementById(el):el;
+  root.querySelectorAll('.pitchSlot').forEach(x=>x.remove());
+  formationSlots(formation).forEach(slot=>{
+    const name=Object.keys(positions||{}).find(n=>positions[n]===slot.code);
+    const d=document.createElement('div');d.className='pitchSlot';d.style.left=slot.x+'%';d.style.top=slot.y+'%';
+    d.innerHTML=name
+      ? `<div class="playerDot">${esc(playerObj(name).number)}</div><div class="playerPitchName">${esc(name.split(' ')[0])}</div><div class="slotLabel">${esc(slot.code)}</div>`
+      : `<div class="slotLabel">${esc(slot.code)}<br>${esc(slot.label)}</div>`;
+    root.appendChild(d);
+  });
 }
 
-function loadPlayers(){
-  const arr=teamRoster();
-  const box=document.getElementById('players'); box.innerHTML='';
-  if(!arr.length){
-    box.innerHTML='<div class="status warn">Voor dit team zijn nog geen spelers ingevoerd.</div>';
-    return;
-  }
-  arr.forEach(p=>{
-    const d=document.createElement('div');
-    d.className='playerrow';
-    d.innerHTML=`
-      <input type="checkbox" class="selected" value="${esc(p.name)}" title="Selectie">
-      <input type="checkbox" class="starter" value="${esc(p.name)}" title="Basis">
-      <div class="num">${esc(p.number)}</div>
-      <div>
-        <div class="name">${esc(p.name)}</div>
-        <div class="meta">${esc(p.pos1)} · 2e: ${esc(p.pos2)}${p.size?' · '+esc(p.size):''}</div>
-      </div>`;
-    box.appendChild(d);
+function renderSetupPitch(){
+  const pos={};
+  document.querySelectorAll('.rosterRow').forEach(r=>{
+    if(r.querySelector('.starter').checked)pos[r.dataset.player]=r.querySelector('.posSetup').value;
   });
+  renderPitch('setupPitch',document.getElementById('formation').value,pos);
+}
 
-  // basis implies selected
-  [...document.querySelectorAll('.starter')].forEach(ch=>{
-    ch.addEventListener('change',e=>{
-      if(e.target.checked){
-        const sel=[...document.querySelectorAll('.selected')].find(x=>x.value===e.target.value);
-        if(sel) sel.checked=true;
-      }
-    });
+function setupFormationChanged(){
+  const f=document.getElementById('formation').value;
+  document.querySelectorAll('.posSetup').forEach(sel=>{
+    const row=sel.closest('.rosterRow');const p=playerObj(row.dataset.player);const old=sel.value;
+    sel.innerHTML=positionOptions(f,formationSlots(f).some(s=>s.code===old)?old:p.defaultPos);
   });
+  renderSetupPitch();
 }
 
 function activeElapsedMs(){
   if(!state.startMs)return 0;
-  let pausedNow=0;
-  if(state.paused && state.pausedAt){
-    pausedNow=Date.now()-state.pausedAt;
-  }
-  return Math.max(0,Date.now()-state.startMs-(state.pausedTotalMs||0)-pausedNow);
+  const pauseNow=state.paused&&state.pausedAt?Date.now()-state.pausedAt:0;
+  return Math.max(0,Date.now()-state.startMs-(state.pausedTotalMs||0)-pauseNow);
 }
-
-function nowMinute(){
-  return Math.floor(activeElapsedMs()/60000);
-}
-
-function togglePause(){
-  if(!state.startMs || state.finished)return;
-
-  const btn=document.getElementById('pauseBtn');
-  const status=document.getElementById('status');
-
-  if(!state.paused){
-    state.paused=true;
-    state.pausedAt=Date.now();
-    btn.textContent='▶ Hervat tweede helft';
-    status.className='status ok';
-    status.textContent=`Rust/pauze gestart op ${nowMinute()}'. De klok staat stil.`;
-  }else{
-    state.pausedTotalMs=(state.pausedTotalMs||0)+(Date.now()-state.pausedAt);
-    state.paused=false;
-    state.pausedAt=null;
-    btn.textContent='⏸ Rust / pauze starten';
-    status.className='status ok';
-    status.textContent=`Wedstrijd hervat vanaf ${nowMinute()}'.`;
-  }
-  saveLiveState();
-  render();
-}
+function nowMinute(){return Math.floor(activeElapsedMs()/60000);}
 
 function startMatch(){
-  const arr=teamRoster();
-  const selected=[...document.querySelectorAll('.selected:checked')].map(x=>x.value);
-  const starters=[...document.querySelectorAll('.starter:checked')].map(x=>x.value);
   const opponent=document.getElementById('opponent').value.trim();
-
   if(!opponent){alert('Vul de tegenstander in.');return;}
-  if(!selected.length){alert('Vink de wedstrijdselectie aan.');return;}
-  if(!starters.length){alert('Vink de basisspelers aan.');return;}
-  const invalid=starters.filter(x=>!selected.includes(x));
-  if(invalid.length){alert('Iedere basisspeler moet ook in de selectie staan.');return;}
-
-  state={
-    team:document.getElementById('team').value,
-    opponent:opponent,
-    startMs:Date.now(),
-    finished:false,
-    players:arr.map(p=>p.name),
-    selected:selected,
-    starters:starters,
-    events:[],
-    duration:0,
-    paused:false,
-    pausedAt:null,
-    pausedTotalMs:0
-  };
-  starters.forEach(p=>state.events.push({minute:0,type:'START',inn:p,out:'',text:'Basis'}));
-
-  ['liveCard','liveDashboardCard','dashboardCard','logCard'].forEach(id=>document.getElementById(id).classList.remove('hidden'));
-  timerId=setInterval(()=>{document.getElementById('minute').textContent=nowMinute();render();},1000);
-  saveLiveState();
-  render();
-}
-
-function numberWordsToDigits(s){
-  const map={
-    'een':'1','één':'1','twee':'2','drie':'3','vier':'4','vijf':'5','zes':'6','zeven':'7','acht':'8','negen':'9',
-    'tien':'10','elf':'11','twaalf':'12','dertien':'13','veertien':'14','vijftien':'15','zestien':'16','zeventien':'17'
-  };
-  let out=' '+clean(s)+' ';
-  Object.keys(map).forEach(k=>{out=out.replace(new RegExp('\\b'+k+'\\b','g'),map[k]);});
-  return out.trim();
-}
-
-function parseVoice(text){
-  const t=numberWordsToDigits(text);
-  let m;
-  m=t.match(/(.+?)\s+eruit\s+(?:en\s+)?(.+?)\s+erin$/);
-  if(m)return{ok:true,out:m[1],inn:m[2]};
-  m=t.match(/(?:wissel\s+)?(.+?)\s+voor\s+(.+)$/);
-  if(m)return{ok:true,out:m[1].replace(/^wissel\s+/,''),inn:m[2]};
-  m=t.match(/(.+?)\s+erin\s+voor\s+(.+)$/);
-  if(m)return{ok:true,out:m[2],inn:m[1]};
-  return{ok:false};
-}
-
-function resolvePlayer(spoken){
-  const q=numberWordsToDigits(spoken);
-  const selectedObjs=roster.filter(p=>state.selected.includes(p.name));
-
-  // Exact jersey number
-  const numberMatch=q.match(/\b(\d{1,2})\b/);
-  if(numberMatch){
-    const p=selectedObjs.find(x=>String(x.number)===numberMatch[1]);
-    if(p)return p;
-  }
-
-  // Exact full name
-  const exact=selectedObjs.find(p=>clean(p.name)===clean(q));
-  if(exact)return exact;
-
-  // First name / surname / partial name
-  const qparts=clean(q).split(' ').filter(Boolean);
-  let best=null,bestScore=0;
-  selectedObjs.forEach(p=>{
-    const nparts=clean(p.name).split(' ');
-    let score=0;
-    qparts.forEach(x=>{
-      if(nparts.includes(x))score+=3;
-      else if(nparts.some(n=>n.startsWith(x)||x.startsWith(n)))score+=1;
-    });
-    if(score>bestScore){best=p;bestScore=score;}
+  const rows=[...document.querySelectorAll('.rosterRow')];
+  const attendance={},selected=[],starters=[],startingPositions={};
+  rows.forEach(r=>{
+    const n=r.dataset.player;attendance[n]=r.querySelector('.att').checked;
+    if(r.querySelector('.sel').checked)selected.push(n);
+    if(r.querySelector('.starter').checked){starters.push(n);startingPositions[n]=r.querySelector('.posSetup').value;}
   });
-  return bestScore>0?best:null;
+  if(starters.length!==11){alert(`Selecteer precies 11 basisspelers. Nu: ${starters.length}.`);return;}
+  const missing=starters.filter(n=>!startingPositions[n]);
+  if(missing.length){alert('Geef iedere basisspeler een positie.');return;}
+  const vals=Object.values(startingPositions);
+  if(new Set(vals).size!==vals.length){alert('Iedere basispositie mag maar één keer gebruikt worden.');return;}
+  state={team:document.getElementById('team').value,opponent:opponent,matchDate:document.getElementById('matchDate').value,
+    formation:document.getElementById('formation').value,startMs:Date.now(),finished:false,duration:0,paused:false,pausedAt:null,pausedTotalMs:0,
+    attendance:attendance,selected:selected,starters:starters,startingPositions:startingPositions,events:[]};
+  ['liveCard','livePitchCard','liveDashboardCard','eventCard'].forEach(id=>document.getElementById(id).classList.remove('hidden'));
+  document.getElementById('liveTeam').textContent=state.team;document.getElementById('liveOpponent').textContent=state.opponent;
+  document.getElementById('liveFormationLabel').textContent=state.formation;
+  saveLive();startTimer();renderLive();
+  window.scrollTo({top:document.getElementById('liveCard').offsetTop,behavior:'smooth'});
 }
 
-function listen(){
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  const status=document.getElementById('status');
-  if(!SR){status.className='status warn';status.textContent='Gebruik Chrome op Android voor spraakherkenning.';return;}
-
-  const r=new SR();
-  r.lang='nl-NL'; r.interimResults=false; r.maxAlternatives=3;
-
-  status.className='status';
-  status.textContent='Luisteren…';
-
-  r.onresult=e=>{
-    const alternatives=[...e.results[0]].map(x=>x.transcript);
-    let found=null;
-
-    for(const text of alternatives){
-      const parsed=parseVoice(text);
-      if(!parsed.ok)continue;
-      const out=resolvePlayer(parsed.out);
-      const inn=resolvePlayer(parsed.inn);
-      if(out&&inn){found={text:text,out:out,inn:inn};break;}
-    }
-
-    if(!found){
-      const heard=alternatives[0]||'';
-      status.className='status warn';
-      status.textContent='Niet goed herkend: “'+heard+'”. Probeer naam of rugnummer.';
-      return;
-    }
-
-    const minute=document.getElementById('manualMinute').value!==''?Number(document.getElementById('manualMinute').value):nowMinute();
-    pendingSwap={minute:minute,out:found.out.name,inn:found.inn.name,text:found.text};
-    showConfirmation();
-  };
-
-  r.onerror=e=>{
-    status.className='status warn';
-    status.textContent='Spraakfout: '+e.error;
-  };
-  r.start();
+function startTimer(){clearInterval(timerId);timerId=setInterval(()=>renderLive(),1000);}
+function togglePause(){
+  if(!state.startMs||state.finished)return;
+  if(!state.paused){state.paused=true;state.pausedAt=Date.now();document.getElementById('pauseBtn').textContent='▶ Hervat tweede helft';setStatus(`Rust/pauze gestart op ${nowMinute()}'.`,true);}
+  else{state.pausedTotalMs+=(Date.now()-state.pausedAt);state.paused=false;state.pausedAt=null;document.getElementById('pauseBtn').textContent='⏸ Rust / pauze starten';setStatus(`Wedstrijd hervat vanaf ${nowMinute()}'.`,true);}
+  saveLive();renderLive();
 }
+function setStatus(t,ok=false){const b=document.getElementById('status');b.className='status '+(ok?'ok':'');b.textContent=t;}
 
-function showConfirmation(){
-  if(!pendingSwap)return;
-  const a=playerObj(pendingSwap.out), b=playerObj(pendingSwap.inn);
-  document.getElementById('confirmText').innerHTML=
-    `<div class="confirmline">🔴 UIT: #${esc(a.number)} ${esc(a.name)}</div>`+
-    `<div class="confirmline">🟢 IN: #${esc(b.number)} ${esc(b.name)}</div>`+
-    `<small>Minuut ${pendingSwap.minute} · gehoord: “${esc(pendingSwap.text)}”</small>`;
-  document.getElementById('confirmBox').classList.remove('hidden');
-  document.getElementById('status').className='status ok';
-  document.getElementById('status').textContent='Controleer de wissel en bevestig.';
-}
-
-function confirmSwap(){
-  if(!pendingSwap)return;
-  state.events.push({
-    minute:pendingSwap.minute,type:'WISSEL',
-    out:pendingSwap.out,inn:pendingSwap.inn,text:pendingSwap.text
-  });
-  document.getElementById('manualMinute').value='';
-  document.getElementById('status').className='status ok';
-  document.getElementById('status').textContent=
-    `Minuut ${pendingSwap.minute}: ${pendingSwap.out} eruit → ${pendingSwap.inn} erin`;
-  pendingSwap=null;
-  document.getElementById('confirmBox').classList.add('hidden');
-  saveLiveState();
-  render();
-}
-
-function cancelSwap(){
-  pendingSwap=null;
-  document.getElementById('confirmBox').classList.add('hidden');
-  document.getElementById('status').className='status warn';
-  document.getElementById('status').textContent='Wissel niet opgeslagen. Spreek opnieuw in.';
-}
-
-function calcTimes(){
+function sortedEvents(){return state.events.slice().sort((a,b)=>(a.minute-b.minute)||((a.seq||0)-(b.seq||0)));}
+function gameSnapshot(){
   const end=state.finished?state.duration:nowMinute();
-  const onField={}, play={}, bench={};
-
-  state.selected.forEach(p=>{play[p]=0;bench[p]=0;});
-  state.starters.forEach(p=>{onField[p]=0;});
-
-  const evs=state.events.filter(e=>e.type==='WISSEL').slice().sort((a,b)=>a.minute-b.minute);
-
-  evs.forEach(e=>{
-    if(onField[e.out]!==undefined){
-      play[e.out]+=Math.max(0,e.minute-onField[e.out]);
-      delete onField[e.out];
-    }
-    if(state.selected.includes(e.inn)){
-      onField[e.inn]=e.minute;
+  const play={},open={},positions={...state.startingPositions};
+  state.selected.forEach(n=>play[n]=0);state.starters.forEach(n=>open[n]=0);
+  sortedEvents().forEach(e=>{
+    if(e.type==='WISSEL'){
+      if(open[e.out]!==undefined){play[e.out]+=Math.max(0,e.minute-open[e.out]);delete open[e.out];}
+      const oldPos=positions[e.out]||e.position;
+      delete positions[e.out];open[e.inn]=e.minute;positions[e.inn]=e.position||oldPos||'';
+    } else if(e.type==='POSITIE'){
+      if(e.other){const p1=positions[e.player],p2=positions[e.other];positions[e.player]=e.position;positions[e.other]=p1||p2;}
+      else positions[e.player]=e.position;
     }
   });
-
-  Object.keys(onField).forEach(p=>{
-    play[p]+=Math.max(0,end-onField[p]);
-  });
-
-  state.selected.forEach(p=>{
-    bench[p]=Math.max(0,end-play[p]);
-  });
-
-  return{end:end,play:play,bench:bench,onField:onField};
+  Object.keys(open).forEach(n=>play[n]+=Math.max(0,end-open[n]));
+  const bench={};state.selected.forEach(n=>bench[n]=Math.max(0,end-(play[n]||0)));
+  const goals=sortedEvents().filter(e=>e.type==='GOAL');
+  return {end,play,bench,open,positions,homeGoals:goals.filter(g=>g.side==='home').length,awayGoals:goals.filter(g=>g.side==='away').length};
 }
 
-function render(){
-  const x=calcTimes();
-  document.getElementById('minute').textContent=x.end;
+function updateActionControls(snap){
+  const field=state.selected.filter(n=>snap.open[n]!==undefined).sort((a,b)=>Number(playerObj(a).number)-Number(playerObj(b).number));
+  const bench=state.selected.filter(n=>snap.open[n]===undefined).sort((a,b)=>Number(playerObj(a).number)-Number(playerObj(b).number));
+  const opt=arr=>arr.map(n=>`<option value="${esc(n)}">#${esc(playerObj(n).number)} ${esc(n)}</option>`).join('');
+  const out=document.getElementById('swapOut'),inn=document.getElementById('swapIn');const oldOut=out.value,oldIn=inn.value;
+  out.innerHTML=opt(field);inn.innerHTML=opt(bench);
+  if(field.includes(oldOut))out.value=oldOut;if(bench.includes(oldIn))inn.value=oldIn;
+  const scorer=document.getElementById('goalScorer');const oldS=scorer.value;scorer.innerHTML=opt(field);if(field.includes(oldS))scorer.value=oldS;
+  const pp=document.getElementById('positionPlayer');const oldP=pp.value;pp.innerHTML=opt(field);if(field.includes(oldP))pp.value=oldP;
+  ['swapPosition','newPosition','confirmPosition'].forEach(id=>{const el=document.getElementById(id),old=el.value;el.innerHTML=positionOptions(state.formation,old);});
+  const outName=out.value;if(outName&&snap.positions[outName]&&!document.getElementById('swapPosition').value)document.getElementById('swapPosition').value=snap.positions[outName];
+  [['swapMinute',snap.end],['goalMinute',snap.end],['positionMinute',snap.end]].forEach(([id,v])=>{const el=document.getElementById(id);if(document.activeElement!==el)el.value=v;});
+}
 
-  const summary=document.getElementById('liveSummary');
-  summary.innerHTML=`<span class="badge">${esc(state.team)}</span><span class="badge">vs ${esc(state.opponent)}</span><span class="badge">${x.end} min</span>`;
-
-  const live=document.getElementById('liveBoard');
-  live.innerHTML='';
-
-  state.selected
-    .slice()
-    .sort((a,b)=>{
-      const af=x.onField[a]!==undefined?0:1;
-      const bf=x.onField[b]!==undefined?0:1;
-      if(af!==bf)return af-bf;
-      return Number(playerObj(a).number)-Number(playerObj(b).number);
-    })
-    .forEach(p=>{
-      const po=playerObj(p), inField=x.onField[p]!==undefined;
-      const d=document.createElement('div');
-      d.className='liveplayer '+(inField?'field':'bench');
-      d.innerHTML=`
-        <div class="livehead">
-          <div><span class="pnum">#${esc(po.number)}</span> <span class="pname">${esc(p)}</span></div>
-          <span class="statepill">${inField?'IN VELD':'BANK'}</span>
-        </div>
-        <div class="livemeta">
-          <div class="metric">Speeltijd<b>${x.play[p]} min</b></div>
-          <div class="metric">Banktijd<b>${x.bench[p]} min</b></div>
-        </div>`;
-      live.appendChild(d);
+function renderLive(){
+  if(!state.startMs)return;
+  const s=gameSnapshot();
+  document.getElementById('minute').textContent=s.end;document.getElementById('scoreHome').textContent=s.homeGoals;document.getElementById('scoreAway').textContent=s.awayGoals;
+  renderPitch('livePitch',state.formation,s.positions);
+  const field=state.selected.filter(n=>s.open[n]!==undefined),bench=state.selected.filter(n=>s.open[n]===undefined);
+  document.getElementById('fieldCount').textContent=field.length+' spelers';document.getElementById('benchCount').textContent=bench.length+' spelers';
+  function cards(arr,target,inField){
+    const root=document.getElementById(target);root.innerHTML='';
+    arr.sort((a,b)=>Number(playerObj(a).number)-Number(playerObj(b).number)).forEach(n=>{
+      const p=playerObj(n),d=document.createElement('div');d.className='liveplayer '+(inField?'field':'');
+      d.innerHTML=`<div class="livehead"><div><span class="pnum">#${esc(p.number)}</span> <span class="pname">${esc(n)}</span></div><span class="pill">${inField?esc(s.positions[n]||'VELD'):'BANK'}</span></div>
+      <div class="metrics"><div class="metric">Speeltijd<b>${s.play[n]||0} min</b></div><div class="metric">Banktijd<b>${s.bench[n]||0} min</b></div></div>`;
+      root.appendChild(d);
     });
-
-  const body=document.getElementById('minutesBody');
-  body.innerHTML='';
-  state.selected.forEach(p=>{
-    const po=playerObj(p), inField=x.onField[p]!==undefined;
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${esc(po.number)}</td><td>${esc(p)}</td><td>${x.play[p]} min</td><td>${x.bench[p]} min</td><td>${inField?'In veld':'Bank'}</td>`;
-    body.appendChild(tr);
-  });
-
-  const log=document.getElementById('logBody');
-  log.innerHTML='';
-  state.events.filter(e=>e.type==='WISSEL').slice().sort((a,b)=>a.minute-b.minute).forEach(e=>{
-    const a=playerObj(e.out),b=playerObj(e.inn);
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${e.minute}'</td><td>#${esc(a.number)} ${esc(a.name)} → #${esc(b.number)} ${esc(b.name)}</td>`;
-    log.appendChild(tr);
-  });
-}
-
-function undo(){
-  for(let i=state.events.length-1;i>=0;i--){
-    if(state.events[i].type==='WISSEL'){
-      state.events.splice(i,1);
-      document.getElementById('status').textContent='Laatste wissel verwijderd.';
-      saveLiveState();
-      render(); return;
-    }
   }
-}
-
-function finish(){
-  state.duration=nowMinute();
-  if(state.paused && state.pausedAt){
-    state.pausedTotalMs=(state.pausedTotalMs||0)+(Date.now()-state.pausedAt);
-    state.paused=false;
-    state.pausedAt=null;
-  }
-  state.finished=true;
-  clearInterval(timerId);
-  render();
-  document.getElementById('status').className='status ok';
-  document.getElementById('status').textContent=`Wedstrijd beëindigd op ${state.duration} minuten. Klik nu op "Bewaar wedstrijd & nieuwe wedstrijd".`;
-  document.getElementById('saveMatchBtn').classList.remove('hidden');
-  saveLiveState();
-}
-
-function saveFinishedMatch(){
-  if(!state.finished){
-    alert('Beëindig eerst de wedstrijd.');
-    return;
-  }
-
-  const x=calcTimes();
-  const record={
-    id:uid(),
-    savedAt:new Date().toISOString(),
-    team:state.team,
-    opponent:state.opponent,
-    duration:state.duration,
-    startClock:new Date(state.startMs).toISOString(),
-    pauseMinutes:Math.round((state.pausedTotalMs||0)/60000),
-    selected:state.selected.slice(),
-    starters:state.starters.slice(),
-    events:state.events.map(e=>Object.assign({},e)),
-    players:state.selected.map(name=>{
-      const p=playerObj(name);
-      return {
-        name:name, number:p.number, pos1:p.pos1, pos2:p.pos2, size:p.size,
-        play:x.play[name]||0,
-        bench:x.bench[name]||0,
-        starter:state.starters.includes(name)
-      };
-    })
-  };
-
-  const hist=getHistory();
-  hist.push(record);
-  setHistory(hist);
-  clearLiveState();
-  renderSeasonDashboard();
-
-  alert('Wedstrijd is bewaard in het seizoensdashboard.');
-
-  document.getElementById('opponent').value='';
-  ['liveCard','liveDashboardCard','dashboardCard','logCard'].forEach(id=>document.getElementById(id).classList.add('hidden'));
-  document.getElementById('saveMatchBtn').classList.add('hidden');
-  document.querySelectorAll('.starter').forEach(x=>x.checked=false);
-  document.querySelectorAll('.selected').forEach(x=>x.checked=false);
-
-  state={
-    team:document.getElementById('team').value, opponent:'', startMs:null, finished:false,
-    players:[], selected:[], starters:[], events:[], duration:0,
-    paused:false, pausedAt:null, pausedTotalMs:0
-  };
-  window.scrollTo({top:0,behavior:'smooth'});
-}
-
-function aggregateSeason(){
-  const hist=getHistory();
-  const agg={};
-
-  hist.forEach(m=>{
-    (m.players||[]).forEach(p=>{
-      if(!agg[p.name]){
-        agg[p.name]={
-          name:p.name, number:p.number, matches:0, starts:0,
-          play:0, bench:0, available:0
-        };
-      }
-      const a=agg[p.name];
-      a.matches+=1;
-      a.starts+=p.starter?1:0;
-      a.play+=Number(p.play)||0;
-      a.bench+=Number(p.bench)||0;
-      a.available+=(Number(p.play)||0)+(Number(p.bench)||0);
-    });
+  cards(field,'fieldBoard',true);cards(bench,'benchBoard',false);
+  const absent=document.getElementById('absentBoard');absent.innerHTML='';
+  roster.filter(p=>p.team===state.team&&!state.selected.includes(p.name)).forEach(p=>{
+    const d=document.createElement('div');d.className='liveplayer';d.innerHTML=`<div class="livehead"><div><span class="pnum">#${p.number}</span> <span class="pname">${esc(p.name)}</span></div><span class="pill">${state.attendance[p.name]?'NIET SELECTIE':'AFWEZIG'}</span></div>`;absent.appendChild(d);
   });
-
-  return {history:hist,players:Object.values(agg)};
+  updateActionControls(s);renderEventLog();saveLive();
 }
 
+function currentMinuteFromInput(id){const n=Math.max(0,Number(document.getElementById(id).value)||0);if(n>nowMinute()){alert(`Minuut ${n} ligt in de toekomst. Maximaal ${nowMinute()}.`);return null}return n;}
 
-function parseSortValue(v){
-  const s=String(v||'').trim().replace('%','').replace(',','.');
-  if(s!=='' && !isNaN(Number(s))) return Number(s);
-  return s.toLocaleLowerCase('nl-NL');
+function prepareSwap(out,inn,minute,position,text){
+  const s=gameSnapshot();
+  if(s.open[out]===undefined){setStatus(`${out} staat niet in het veld.`);return}
+  if(s.open[inn]!==undefined){setStatus(`${inn} staat al in het veld.`);return}
+  pending={type:'WISSEL',out,inn,minute,position:position||s.positions[out]||'',text};
+  document.getElementById('confirmText').innerHTML=`<b>UIT:</b> #${esc(playerObj(out).number)} ${esc(out)}<br><b>IN:</b> #${esc(playerObj(inn).number)} ${esc(inn)}<br><b>Minuut:</b> ${minute}'`;
+  document.getElementById('confirmPosWrap').classList.remove('hidden');document.getElementById('confirmPosition').value=pending.position;
+  document.getElementById('confirmBox').classList.remove('hidden');
+}
+function manualSwap(){
+  const m=currentMinuteFromInput('swapMinute');if(m===null)return;
+  prepareSwap(document.getElementById('swapOut').value,document.getElementById('swapIn').value,m,document.getElementById('swapPosition').value,'Handmatig');
 }
 
-function sortHtmlTable(table, colIndex, dir){
-  const tbody=table.tBodies[0];
-  if(!tbody)return;
-  const rows=[...tbody.rows];
-  rows.sort((a,b)=>{
-    const av=parseSortValue(a.cells[colIndex]?.innerText);
-    const bv=parseSortValue(b.cells[colIndex]?.innerText);
-    let cmp=0;
-    if(typeof av==='number' && typeof bv==='number') cmp=av-bv;
-    else cmp=String(av).localeCompare(String(bv),'nl',{numeric:true,sensitivity:'base'});
-    return dir==='asc'?cmp:-cmp;
-  });
-  rows.forEach(r=>tbody.appendChild(r));
+function registerGoal(side,scorer,minute,text){
+  state.events.push({type:'GOAL',side,scorer:side==='home'?scorer:'Tegenstander',minute,seq:Date.now(),text});
+  setStatus(`⚽ Doelpunt ${side==='home'?scorer:state.opponent} in minuut ${minute}.`,true);saveLive();renderLive();
+}
+function manualGoal(){
+  const m=currentMinuteFromInput('goalMinute');if(m===null)return;const side=document.getElementById('goalSide').value;
+  registerGoal(side,document.getElementById('goalScorer').value,m,'Handmatig');
 }
 
-function enableSortable(table){
-  if(!table || table.dataset.sortReady==='1')return;
-  table.dataset.sortReady='1';
-  [...table.tHead?.rows[0]?.cells||[]].forEach((th,i)=>{
-    th.addEventListener('click',()=>{
-      const current=th.dataset.dir;
-      [...th.parentElement.cells].forEach(x=>delete x.dataset.dir);
-      const dir=current==='asc'?'desc':'asc';
-      th.dataset.dir=dir;
-      sortHtmlTable(table,i,dir);
-    });
-  });
+function changePosition(){
+  const m=currentMinuteFromInput('positionMinute');if(m===null)return;
+  const player=document.getElementById('positionPlayer').value,pos=document.getElementById('newPosition').value;if(!player||!pos)return;
+  const s=gameSnapshot();const other=Object.keys(s.positions).find(n=>n!==player&&s.positions[n]===pos)||'';
+  state.events.push({type:'POSITIE',player,position:pos,other,minute:m,seq:Date.now(),text:'Handmatig'});
+  setStatus(other?`${player} naar ${pos}; positie geruild met ${other}.`:`${player} naar ${pos}.`,true);saveLive();renderLive();
 }
 
-function filterTable(table, query){
-  const q=clean(query);
-  if(!table || !table.tBodies[0])return;
-  [...table.tBodies[0].rows].forEach(r=>{
-    r.style.display=clean(r.innerText).includes(q)?'':'none';
-  });
+function numberWords(t){
+  const map={een:'1',twee:'2',drie:'3',vier:'4',vijf:'5',zes:'6',zeven:'7',acht:'8',negen:'9',tien:'10',elf:'11',twaalf:'12',dertien:'13',veertien:'14',vijftien:'15',zestien:'16',zeventien:'17'};
+  let x=' '+clean(t)+' ';Object.keys(map).forEach(k=>x=x.replace(new RegExp('\\b'+k+'\\b','g'),map[k]));return x.trim();
 }
-
-function initDynamicTables(){
-  document.querySelectorAll('table.sortable').forEach(enableSortable);
+function resolvePlayer(q,allowed){
+  const t=numberWords(q);const arr=(allowed||state.selected).map(playerObj);
+  const nm=t.match(/\b(\d{1,2})\b/);if(nm){const p=arr.find(x=>String(x.number)===nm[1]);if(p)return p.name;}
+  let p=arr.find(x=>clean(x.name)===clean(t));if(p)return p.name;
+  const parts=clean(t).split(' ').filter(Boolean);let best=null,score=0;
+  arr.forEach(x=>{const np=clean(x.name).split(' ');let s=0;parts.forEach(z=>{if(np.includes(z))s+=3;else if(np.some(n=>n.startsWith(z)||z.startsWith(n)))s++});if(s>score){best=x.name;score=s}});
+  return score?best:null;
 }
-
-function renderSeasonDashboard(){
-  const data=aggregateSeason();
-  const hist=data.history;
-  const ps=data.players;
-
-  const totalMatchMinutes=hist.reduce((s,m)=>s+(Number(m.duration)||0),0);
-  const totalPlay=ps.reduce((s,p)=>s+p.play,0);
-  const totalBench=ps.reduce((s,p)=>s+p.bench,0);
-
-  document.getElementById('seasonKpis').innerHTML=
-    `<div class="kpi"><b>${hist.length}</b><span>wedstrijden</span></div>`+
-    `<div class="kpi"><b>${ps.length}</b><span>spelers gebruikt</span></div>`+
-    `<div class="kpi"><b>${totalPlay}</b><span>speelminuten</span></div>`+
-    `<div class="kpi"><b>${totalBench}</b><span>bankminuten</span></div>`;
-
-  const playRank=ps.slice().sort((a,b)=>b.play-a.play || a.name.localeCompare(b.name));
-  const benchRank=ps.slice().sort((a,b)=>b.bench-a.bench || a.name.localeCompare(b.name));
-
-  document.getElementById('playRanking').innerHTML=playRank.length
-    ? playRank.map((p,i)=>`<div class="rankrow"><div class="rankno">${i+1}</div><div>#${esc(p.number)} ${esc(p.name)}</div><div class="rankvalue">${p.play} min</div></div>`).join('')
-    : '<div class="meta">Nog geen wedstrijden bewaard.</div>';
-
-  document.getElementById('benchRanking').innerHTML=benchRank.length
-    ? benchRank.map((p,i)=>`<div class="rankrow"><div class="rankno">${i+1}</div><div>#${esc(p.number)} ${esc(p.name)}</div><div class="rankvalue">${p.bench} min</div></div>`).join('')
-    : '<div class="meta">Nog geen wedstrijden bewaard.</div>';
-
-  const body=document.getElementById('seasonPlayersBody');
-  body.innerHTML='';
-  playRank.forEach((p,i)=>{
-    const avg=p.matches?Math.round(p.play/p.matches):0;
-    const pct=p.available?Math.round((p.play/p.available)*100):0;
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${i+1}</td><td>#${esc(p.number)} ${esc(p.name)}</td><td>${p.matches}</td><td>${p.starts}</td><td>${p.play}</td><td>${p.bench}</td><td>${avg}</td><td>${pct}%</td>`;
-    body.appendChild(tr);
-  });
-
-  const list=document.getElementById('matchesList');
-  list.innerHTML='';
-  hist.slice().reverse().forEach((m,idx)=>{
-    const rank=hist.length-idx;
-    const d=document.createElement('div');
-    d.className='matchcard';
-    d.innerHTML=
-      `<div class="matchtop"><div><div class="matchtitle">${esc(m.team)} vs ${esc(m.opponent)}</div>`+
-      `<div class="matchmeta">${fmtDate(m.savedAt)}${m.startLabel?' · '+m.startLabel+'-'+m.endLabel:''} · ${m.duration} speelmin${m.pauseMinutes?' · '+m.pauseMinutes+' min rust':''} · ${m.players.length} spelers</div></div>`+
-      `<span class="badge">Wedstrijd ${rank}</span></div>`+
-      `<div class="miniActions"><button type="button" class="secondary viewMatchBtn" data-id="${esc(m.id)}">Bekijk details</button>`+
-      `<button type="button" class="secondary editMatchBtn" data-id="${esc(m.id)}">✏️ Corrigeer</button>`+
-      `<button type="button" class="secondary deleteMatchBtn" data-id="${esc(m.id)}">🗑 Verwijder</button></div>`;
-    list.appendChild(d);
-  });
-
-  enableSortable(document.getElementById('seasonPlayersTable'));
-
-  document.querySelectorAll('.viewMatchBtn').forEach(b=>b.addEventListener('click',()=>showMatchDetail(b.dataset.id)));
-  document.querySelectorAll('.editMatchBtn').forEach(b=>b.addEventListener('click',()=>showEditMatch(b.dataset.id)));
-  document.querySelectorAll('.deleteMatchBtn').forEach(b=>b.addEventListener('click',()=>deleteMatch(b.dataset.id)));
-  initDynamicTables();
-}
-
-function showMatchDetail(id){
-  const m=getHistory().find(x=>x.id===id);
-  if(!m)return;
-
-  document.getElementById('editMatchPanel').innerHTML='';
-
-  const ranked=(m.players||[]).slice().sort((a,b)=>b.play-a.play || a.name.localeCompare(b.name));
-  const detail=document.getElementById('matchDetail');
-  detail.innerHTML=
-    `<div class="rankcard" style="margin-top:12px"><h3>${esc(m.team)} vs ${esc(m.opponent)} · ${fmtDate(m.savedAt)}</h3>`+
-    `<div class="tabletools"><input id="matchFilter" placeholder="🔎 Filter deze wedstrijd..."></div>`+
-    `<div style="overflow-x:auto"><table class="smalltable sortable" id="matchDetailTable"><thead><tr>`+
-    `<th>Rank</th><th>#</th><th>Speler</th><th>Basis</th><th>Speeltijd</th><th>Bank</th><th>Speel%</th></tr></thead>`+
-    `<tbody>${ranked.map((p,i)=>{
-      const total=(Number(p.play)||0)+(Number(p.bench)||0);
-      const pct=total?Math.round((p.play/total)*100):0;
-      return `<tr><td>${i+1}</td><td>${esc(p.number)}</td><td>${esc(p.name)}</td><td>${p.starter?'Ja':'Nee'}</td><td>${p.play}</td><td>${p.bench}</td><td>${pct}%</td></tr>`;
-    }).join('')}</tbody></table></div>`+
-    (m.rawNote?`<div class="quality"><b>Datacontrole:</b> ${esc(m.rawNote)}</div>`:'')+
-    `</div>`;
-
-  enableSortable(document.getElementById('matchDetailTable'));
-  document.getElementById('matchFilter').addEventListener('input',e=>filterTable(document.getElementById('matchDetailTable'),e.target.value));
-}
-
-function matchDataCheck(m){
-  const total=(m.players||[]).reduce((s,p)=>s+(Number(p.play)||0),0);
-  const expected=11*(Number(m.duration)||0);
-  const diff=total-expected;
-  return {total:total,expected:expected,diff:diff};
-}
-
-function showEditMatch(id){
-  const hist=getHistory();
-  const m=hist.find(x=>x.id===id);
-  if(!m)return;
-
-  document.getElementById('matchDetail').innerHTML='';
-
-  const panel=document.getElementById('editMatchPanel');
-  const dateVal=m.matchDate || new Date(m.savedAt).toISOString().slice(0,10);
-
-  panel.innerHTML=
-    `<div class="editPanel">
-      <h3 style="margin-top:0">✏️ Wedstrijd corrigeren</h3>
-      <div class="editGrid">
-        <label>Tegenstander<input id="editOpponent" value="${esc(m.opponent||'')}"></label>
-        <label>Datum<input id="editDate" type="date" value="${esc(dateVal)}"></label>
-        <label>Speelduur (min)<input id="editDuration" type="number" min="1" value="${Number(m.duration)||80}"></label>
-        <label>Rust (min)<input id="editPause" type="number" min="0" value="${Number(m.pauseMinutes)||0}"></label>
-        <label>Starttijd<input id="editStartLabel" type="time" value="${esc(m.startLabel||'')}"></label>
-        <label>Eindtijd<input id="editEndLabel" type="time" value="${esc(m.endLabel||'')}"></label>
-      </div>
-
-      <div class="editPlayers">
-        <table class="smalltable">
-          <thead><tr><th>#</th><th>Speler</th><th>Basis</th><th>Speeltijd</th><th>Banktijd</th></tr></thead>
-          <tbody>
-          ${(m.players||[]).map((p,i)=>`
-            <tr data-edit-player="${i}">
-              <td>${esc(p.number)}</td>
-              <td>${esc(p.name)}</td>
-              <td><input type="checkbox" class="epStarter" ${p.starter?'checked':''}></td>
-              <td><input type="number" min="0" class="epPlay" value="${Number(p.play)||0}"></td>
-              <td><input type="number" min="0" class="epBench" value="${Number(p.bench)||0}"></td>
-            </tr>`).join('')}
-          </tbody>
-        </table>
-      </div>
-
-      <div id="editValidation" class="status"></div>
-      <div class="confirmbuttons">
-        <button type="button" id="saveCorrectionBtn">✓ Correcties opslaan</button>
-        <button type="button" class="secondary" id="cancelCorrectionBtn">Annuleren</button>
-      </div>
-    </div>`;
-
-  function updateValidation(){
-    const duration=Math.max(1,Number(document.getElementById('editDuration').value)||0);
-    let total=0;
-    panel.querySelectorAll('.epPlay').forEach(x=>total+=Number(x.value)||0);
-    const expected=11*duration;
-    const box=document.getElementById('editValidation');
-    if(total===expected){
-      box.className='status validationOk';
-      box.textContent=`✓ Bezettingscontrole klopt: ${total} speler-minuten = 11 × ${duration}.`;
-    }else{
-      const d=total-expected;
-      box.className='status validationWarn';
-      box.textContent=`Let op: ${total} speler-minuten geregistreerd; verwacht ${expected}. Verschil ${d>0?'+':''}${d} minuten. Je mag wel opslaan, maar controleer de wissels/minuten.`;
-    }
+function parseVoice(text){
+  const t=numberWords(text);const minuteMatch=t.match(/minuut\s+(\d{1,2})/);const minute=minuteMatch?Number(minuteMatch[1]):nowMinute();
+  if(/doelpunt|goal|scoort/.test(t)){
+    if(/tegenstander|dem/.test(t))return {type:'GOAL',side:'away',minute};
+    let q=t.replace(/doelpunt|goal|scoort|minuut\s+\d{1,2}/g,' ').trim();return {type:'GOAL',side:'home',minute,q};
   }
-
-  panel.querySelectorAll('.epPlay,#editDuration').forEach(x=>x.addEventListener('input',updateValidation));
-  updateValidation();
-
-  document.getElementById('cancelCorrectionBtn').onclick=()=>panel.innerHTML='';
-
-  document.getElementById('saveCorrectionBtn').onclick=()=>{
-    const idx=hist.findIndex(x=>x.id===id);
-    if(idx<0)return;
-
-    const mm=hist[idx];
-    mm.opponent=document.getElementById('editOpponent').value.trim()||'Onbekend';
-    mm.matchDate=document.getElementById('editDate').value;
-    mm.duration=Math.max(1,Number(document.getElementById('editDuration').value)||80);
-    mm.pauseMinutes=Math.max(0,Number(document.getElementById('editPause').value)||0);
-    mm.startLabel=document.getElementById('editStartLabel').value;
-    mm.endLabel=document.getElementById('editEndLabel').value;
-
-    const rows=[...panel.querySelectorAll('tr[data-edit-player]')];
-    rows.forEach((row,i)=>{
-      const p=mm.players[i];
-      p.starter=row.querySelector('.epStarter').checked;
-      p.play=Math.max(0,Number(row.querySelector('.epPlay').value)||0);
-      p.bench=Math.max(0,Number(row.querySelector('.epBench').value)||0);
-    });
-
-    const check=matchDataCheck(mm);
-    mm.rawNote=check.diff===0
-      ? `Datacontrole OK: ${check.total} speler-minuten = 11 spelers × ${mm.duration} minuten.`
-      : `Datacontrole: ${check.total} speler-minuten geregistreerd; verwacht ${check.expected}. Verschil ${check.diff>0?'+':''}${check.diff} minuten.`;
-
-    setHistory(hist);
-    renderSeasonDashboard();
-    showMatchDetail(id);
-    panel.innerHTML='';
-    alert('Correcties opgeslagen.');
-  };
+  let m=t.match(/(.+?)\s+eruit\s+(?:en\s+)?(.+?)\s+erin/);if(m)return {type:'WISSEL',outQ:m[1],inQ:m[2],minute};
+  m=t.match(/(?:wissel\s+)?(.+?)\s+voor\s+(.+)/);if(m)return {type:'WISSEL',outQ:m[1].replace(/^wissel\s+/,''),inQ:m[2],minute};
+  return null;
 }
-
-function deleteMatch(id){
-  if(!confirm('Deze wedstrijd echt verwijderen uit de historie?'))return;
-  const hist=getHistory().filter(x=>x.id!==id);
-  setHistory(hist);
-  document.getElementById('matchDetail').innerHTML='';
-  renderSeasonDashboard();
-}
-
-function showSeasonView(which){
-  const ids=['seasonTotalView','matchesView','backupView'];
-  ids.forEach(id=>document.getElementById(id).classList.add('hidden'));
-  document.getElementById(which).classList.remove('hidden');
-}
-
-function downloadBackup(){
-  const data={
-    app:'Hercules O16 Voice Match Tracker',
-    version:6,
-    exportedAt:new Date().toISOString(),
-    history:getHistory()
-  };
-  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download='Hercules_O16_wedstrijdhistorie_backup.json';
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
-
-function importBackupFile(file){
-  const reader=new FileReader();
-  reader.onload=()=>{
-    try{
-      const data=JSON.parse(reader.result);
-      const hist=Array.isArray(data)?data:data.history;
-      if(!Array.isArray(hist))throw new Error('Geen geldige historie');
-      if(!confirm(`Backup bevat ${hist.length} wedstrijd(en). Bestaande historie vervangen?`))return;
-      setHistory(hist);
-      renderSeasonDashboard();
-      alert('Backup geïmporteerd.');
-    }catch(e){
-      alert('Dit is geen geldige Hercules-backup.');
-    }
-  };
-  reader.readAsText(file);
-}
-
-function clearHistory(){
-  if(!confirm('Alle bewaarde wedstrijden wissen? Dit kan niet ongedaan worden gemaakt zonder backup.'))return;
-  if(!confirm('Weet je het zeker?'))return;
-  localStorage.removeItem(HISTORY_KEY);
-  document.getElementById('matchDetail').innerHTML='';
-  renderSeasonDashboard();
-}
-
-
-function restoreLiveMatch(){
-  if(!loadLiveState())return;
-
-  document.getElementById('team').value=state.team||'O16-1';
-  document.getElementById('opponent').value=state.opponent||'';
-  loadPlayers();
-
-  ['liveCard','liveDashboardCard','dashboardCard','logCard'].forEach(id=>{
-    document.getElementById(id).classList.remove('hidden');
-  });
-
-  if(state.finished){
-    document.getElementById('saveMatchBtn').classList.remove('hidden');
-    document.getElementById('status').className='status restoreNote';
-    document.getElementById('status').textContent='Afgeronde wedstrijd hersteld na vernieuwen. Bewaar hem in het seizoensdashboard.';
-  }else{
-    document.getElementById('status').className='status restoreNote';
-    document.getElementById('status').textContent=state.paused
-      ? `Wedstrijd hersteld. Rust/pauze staat nog aan op ${nowMinute()}'.`
-      : `Wedstrijd hersteld na vernieuwen. Klok loopt verder vanaf ${nowMinute()}'.`;
-
-    if(state.paused) document.getElementById('pauseBtn').textContent='▶ Hervat tweede helft';
-
-    timerId=setInterval(()=>{
-      document.getElementById('minute').textContent=nowMinute();
-      render();
-    },1000);
-  }
-  render();
-}
-
-function exportCsv(){
-  const x=calcTimes();
-  const rows=[['Team','Tegenstander','Nummer','Speler','Positie 1','Positie 2','Maat','Speeltijd','Banktijd','Status einde']];
-  state.selected.forEach(n=>{
-    const p=playerObj(n);
-    rows.push([state.team,state.opponent,p.number,n,p.pos1,p.pos2,p.size,x.play[n],x.bench[n],x.onField[n]!==undefined?'In veld':'Bank']);
-  });
-  rows.push([]);
-  rows.push(['Minuut','Uit nummer','Uit speler','In nummer','In speler','Transcript']);
-  state.events.filter(e=>e.type==='WISSEL').forEach(e=>{
-    const a=playerObj(e.out),b=playerObj(e.inn);
-    rows.push([e.minute,a.number,a.name,b.number,b.name,e.text]);
-  });
-  const csv='\ufeff'+rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\n');
-  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download=`${state.team}_${state.opponent}_wedstrijd.csv`;
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
-
-
-async function exportFullExcel(){
-  if(typeof ExcelJS==='undefined'){
-    alert('Excel-module kon niet worden geladen. Controleer internet en probeer opnieuw.');
-    return;
-  }
-
-  const hist=getHistory().slice().sort((a,b)=>new Date(a.savedAt)-new Date(b.savedAt));
-  if(!hist.length){
-    alert('Er zijn nog geen opgeslagen wedstrijden.');
-    return;
-  }
-
-  const data=aggregateSeason();
-  const wb=new ExcelJS.Workbook();
-  wb.creator='Maarten Chung';
-  wb.title='Hercules O16 Wedstrijddashboard';
-
-  const PURPLE='6F42C1', DARK='4B2672', LIGHT='EADFF5', PALE='F6F1FB',
-        WHITE='FFFFFF', GREEN='DFF3E4', GREY='666666';
-
-  function styleTitle(ws,range,title){
-    ws.mergeCells(range);
-    const c=ws.getCell(range.split(':')[0]);
-    c.value=title;
-    c.font={bold:true,size:18,color:{argb:WHITE}};
-    c.fill={type:'pattern',pattern:'solid',fgColor:{argb:DARK}};
-    c.alignment={vertical:'middle',horizontal:'left'};
-    ws.getRow(c.row).height=28;
-  }
-
-  function styleHeader(row){
-    row.eachCell(cell=>{
-      cell.font={bold:true,color:{argb:WHITE}};
-      cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:PURPLE}};
-      cell.alignment={vertical:'middle',horizontal:'center'};
-    });
-    row.height=22;
-  }
-
-  function setWidths(ws,widths){
-    widths.forEach((w,i)=>ws.getColumn(i+1).width=w);
-  }
-
-  function thinBorders(ws,startRow,endRow,startCol,endCol){
-    for(let r=startRow;r<=endRow;r++){
-      for(let c=startCol;c<=endCol;c++){
-        ws.getCell(r,c).border={bottom:{style:'hair',color:{argb:'E5D9EF'}}};
+function voiceAction(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){setStatus('Spraakherkenning niet beschikbaar. Gebruik de handmatige knoppen.');return}
+  const r=new SR();r.lang='nl-NL';r.interimResults=false;r.maxAlternatives=3;setStatus('Luisteren…');
+  r.onresult=e=>{
+    const s=gameSnapshot(),field=state.selected.filter(n=>s.open[n]!==undefined),bench=state.selected.filter(n=>s.open[n]===undefined);
+    for(const alt of [...e.results[0]]){
+      const p=parseVoice(alt.transcript);if(!p)continue;
+      if(p.minute>nowMinute())p.minute=nowMinute();
+      if(p.type==='GOAL'){
+        if(p.side==='away'){registerGoal('away','',p.minute,alt.transcript);return}
+        const scorer=resolvePlayer(p.q,field);if(scorer){registerGoal('home',scorer,p.minute,alt.transcript);return}
+      } else {
+        const out=resolvePlayer(p.outQ,field),inn=resolvePlayer(p.inQ,bench);
+        if(out&&inn){prepareSwap(out,inn,p.minute,s.positions[out],alt.transcript);return}
       }
     }
-  }
-
-  function addExcelTable(ws,name,ref){
-    try{
-      ws.addTable({
-        name:name.replace(/[^A-Za-z0-9_]/g,'_'),
-        ref:ref,
-        headerRow:true,
-        totalsRow:false,
-        style:{theme:'TableStyleMedium4',showRowStripes:true}
-      });
-    }catch(e){}
-  }
-
-
-  const agg=data.players.slice().sort((a,b)=>b.play-a.play || a.name.localeCompare(b.name));
-
-  // Dashboard
-  const dash=wb.addWorksheet('Dashboard',{views:[{showGridLines:false}]});
-  styleTitle(dash,'A1:H1','Hercules O16 – Seizoensdashboard');
-  dash.getCell('A2').value='Gemaakt door Maarten Chung';
-  dash.getCell('A2').font={italic:true,color:{argb:GREY}};
-
-  const totalPlay=agg.reduce((s,p)=>s+p.play,0);
-  const totalBench=agg.reduce((s,p)=>s+p.bench,0);
-  const kpis=[
-    ['Wedstrijden',hist.length],['Spelers gebruikt',agg.length],
-    ['Speelminuten',totalPlay],['Bankminuten',totalBench]
-  ];
-
-  kpis.forEach((x,i)=>{
-    const col=1+i*2;
-    dash.mergeCells(4,col,4,col+1);
-    dash.mergeCells(5,col,5,col+1);
-    const a=dash.getCell(4,col), b=dash.getCell(5,col);
-    a.value=x[0]; b.value=x[1];
-    a.font={bold:true,color:{argb:DARK}};
-    b.font={bold:true,size:18,color:{argb:DARK}};
-    a.fill={type:'pattern',pattern:'solid',fgColor:{argb:LIGHT}};
-    b.fill={type:'pattern',pattern:'solid',fgColor:{argb:PALE}};
-    a.alignment=b.alignment={horizontal:'center',vertical:'middle'};
-  });
-
-  dash.getRow(8).values=['Rank','#','Speler','Speeltijd','Rank','#','Speler','Banktijd'];
-  styleHeader(dash.getRow(8));
-  const benchRank=agg.slice().sort((a,b)=>a.bench-b.bench || b.play-a.play);
-  for(let i=0;i<Math.max(agg.length,benchRank.length);i++){
-    const p=agg[i], q=benchRank[i];
-    dash.addRow([
-      p?i+1:'',p?p.number:'',p?p.name:'',p?p.play:'',
-      q?i+1:'',q?q.number:'',q?q.name:'',q?q.bench:''
-    ]);
-  }
-  setWidths(dash,[8,6,28,14,8,6,28,14]);
-  addExcelTable(dash,'DashboardRanking',`A8:H${8+Math.max(agg.length,benchRank.length)}`);
-
-  // Season totals
-  const season=wb.addWorksheet('Seizoen totaal',{views:[{showGridLines:false,state:'frozen',ySplit:3}]});
-  styleTitle(season,'A1:I1','Seizoen totaal per speler');
-  season.getRow(3).values=['Rank','#','Speler','Wedstrijden','Basis','Speeltijd','Banktijd','Gem. speeltijd','Speel%'];
-  styleHeader(season.getRow(3));
-  agg.forEach((p,i)=>{
-    const avg=p.matches?Math.round(p.play/p.matches):0;
-    const pct=p.available?p.play/p.available:0;
-    season.addRow([i+1,p.number,p.name,p.matches,p.starts,p.play,p.bench,avg,pct]);
-  });
-  season.getColumn(9).numFmt='0%';
-  thinBorders(season,4,3+agg.length,1,9);
-  setWidths(season,[8,6,28,12,10,14,14,16,11]);
-  addExcelTable(season,'SeizoenTotaal',`A3:I${3+agg.length}`);
-
-  // Match index
-  const mi=wb.addWorksheet('Wedstrijden',{views:[{showGridLines:false,state:'frozen',ySplit:3}]});
-  styleTitle(mi,'A1:H1','Wedstrijdhistorie');
-  mi.getRow(3).values=['Nr','Datum','Team','Tegenstander','Speeltijd','Rust','Start-einde','Spelers'];
-  styleHeader(mi.getRow(3));
-  hist.forEach((m,i)=>{
-    mi.addRow([
-      i+1,m.matchDate||fmtDate(m.savedAt),m.team,m.opponent,m.duration,m.pauseMinutes||0,
-      m.startLabel&&m.endLabel?`${m.startLabel}-${m.endLabel}`:'',(m.players||[]).length
-    ]);
-  });
-  thinBorders(mi,4,3+hist.length,1,8);
-  setWidths(mi,[6,13,10,30,12,10,18,10]);
-  addExcelTable(mi,'WedstrijdIndex',`A3:H${3+hist.length}`);
-
-  // One sheet per match
-  hist.forEach((m,i)=>{
-    const dateShort=(m.matchDate||'').slice(5).split('-').reverse().join('-');
-    const ws=wb.addWorksheet((`W${String(i+1).padStart(2,'0')} ${dateShort||i+1}`).slice(0,31),
-      {views:[{showGridLines:false,state:'frozen',ySplit:4}]});
-    styleTitle(ws,'A1:H1',`${m.team} vs ${m.opponent}`);
-    ws.getCell('A2').value=`Datum: ${m.matchDate||fmtDate(m.savedAt)}`;
-    ws.getCell('C2').value=`Speeltijd: ${m.duration} min`;
-    ws.getCell('E2').value=`Rust: ${m.pauseMinutes||0} min`;
-    ws.getCell('G2').value=m.startLabel&&m.endLabel?`Tijd: ${m.startLabel}-${m.endLabel}`:'';
-
-    ws.getRow(4).values=['Rank','#','Speler','Basis','Speeltijd','Banktijd','Speel%','Positie'];
-    styleHeader(ws.getRow(4));
-
-    const rp=(m.players||[]).slice().sort((a,b)=>b.play-a.play || a.name.localeCompare(b.name));
-    rp.forEach((p,rank)=>{
-      const total=(Number(p.play)||0)+(Number(p.bench)||0);
-      ws.addRow([rank+1,p.number,p.name,p.starter?'Ja':'Nee',p.play,p.bench,total?p.play/total:0,p.pos1||'']);
-    });
-    ws.getColumn(7).numFmt='0%';
-    thinBorders(ws,5,4+rp.length,1,8);
-    addExcelTable(ws,`MatchPlayers_${i+1}`,`A4:H${4+rp.length}`);
-
-    let row=ws.rowCount+2;
-    ws.getCell(`A${row}`).value='Wissels';
-    ws.getCell(`A${row}`).font={bold:true,size:14,color:{argb:DARK}};
-    row++;
-    ws.getRow(row).values=['Minuut','Uit #','Uit speler','In #','In speler','Transcript','',''];
-    styleHeader(ws.getRow(row));
-
-    const matchEvents=(m.events||[]).filter(e=>e.type==='WISSEL');
-    matchEvents.forEach(e=>{
-      const out=(m.players||[]).find(p=>p.name===e.out)||playerObj(e.out);
-      const inn=(m.players||[]).find(p=>p.name===e.inn)||playerObj(e.inn);
-      ws.addRow([e.minute,out.number||'',e.out||'',inn.number||'',e.inn||'',e.text||'','','']);
-    });
-    if(matchEvents.length){
-      addExcelTable(ws,`MatchWissels_${i+1}`,`A${row}:F${row+matchEvents.length}`);
-    }
-
-    if(m.rawNote){
-      row=ws.rowCount+2;
-      ws.mergeCells(`A${row}:H${row+1}`);
-      const c=ws.getCell(`A${row}`);
-      c.value=m.rawNote;
-      c.alignment={wrapText:true,vertical:'top'};
-      c.fill={type:'pattern',pattern:'solid',fgColor:{argb:GREEN}};
-      c.font={color:{argb:DARK}};
-    }
-    setWidths(ws,[8,7,28,10,14,14,11,24]);
-  });
-
-  const buffer=await wb.xlsx.writeBuffer();
-  const blob=new Blob([buffer],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download=`Hercules_O16_dashboard_${new Date().toISOString().slice(0,10)}.xlsx`;
-  a.click();
-  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+    setStatus('Niet goed herkend. Gebruik naam/rugnummer of de handmatige invoer.');
+  };
+  r.onerror=e=>setStatus('Spraakfout: '+e.error+' — gebruik eventueel handmatige invoer.');r.start();
 }
 
-document.getElementById('team').addEventListener('change',loadPlayers);
-document.getElementById('startBtn').onclick=startMatch;
-document.getElementById('micBtn').onclick=listen;
-document.getElementById('pauseBtn').onclick=togglePause;
-document.getElementById('confirmBtn').onclick=confirmSwap;
-document.getElementById('cancelBtn').onclick=cancelSwap;
-document.getElementById('undoBtn').onclick=undo;
-document.getElementById('finishBtn').onclick=finish;
-document.getElementById('saveMatchBtn').onclick=saveFinishedMatch;
-document.getElementById('exportExcelBtn').onclick=exportFullExcel;
-document.getElementById('showSeasonBtn').onclick=()=>showSeasonView('seasonTotalView');
-document.getElementById('showMatchesBtn').onclick=()=>showSeasonView('matchesView');
-document.getElementById('showBackupBtn').onclick=()=>showSeasonView('backupView');
-document.getElementById('backupBtn').onclick=downloadBackup;
-document.getElementById('importBtn').onclick=()=>document.getElementById('importFile').click();
-document.getElementById('importFile').addEventListener('change',e=>{
-  if(e.target.files&&e.target.files[0])importBackupFile(e.target.files[0]);
-  e.target.value='';
-});
-document.getElementById('clearHistoryBtn').onclick=clearHistory;
-document.getElementById('seasonFilter').addEventListener('input',e=>filterTable(document.getElementById('seasonPlayersTable'),e.target.value));
-document.getElementById('exportBtn').onclick=exportCsv;
-loadPlayers();
-seedOrMigrateAug22Match();
-renderSeasonDashboard();
-restoreLiveMatch();
+function confirmPending(){
+  if(!pending)return;
+  if(pending.type==='WISSEL'){
+    pending.position=document.getElementById('confirmPosition').value;
+    const snap=gameSnapshot();
+    const occupied=Object.keys(snap.positions).find(n=>n!==pending.out&&snap.positions[n]===pending.position);
+    if(occupied){setStatus(`Positie ${pending.position} is al bezet door ${occupied}. Kies de positie van de uitgaande speler of wijzig eerst een positie.`);return;}
+    state.events.push({...pending,seq:Date.now()});setStatus(`Wissel opgeslagen: ${pending.out} → ${pending.inn} op ${pending.position}, minuut ${pending.minute}.`,true);
+  }
+  pending=null;document.getElementById('confirmBox').classList.add('hidden');saveLive();renderLive();
+}
+function cancelPending(){pending=null;document.getElementById('confirmBox').classList.add('hidden');setStatus('Actie niet opgeslagen.');}
+function undoLast(){if(!state.events.length)return;const e=state.events.pop();setStatus(`Laatste actie verwijderd: ${eventDescription(e)}.`,true);saveLive();renderLive();}
+function eventDescription(e){
+  if(e.type==='WISSEL')return `${e.out} → ${e.inn} (${e.position})`;
+  if(e.type==='GOAL')return `Doelpunt ${e.side==='home'?e.scorer:state.opponent}`;
+  if(e.type==='POSITIE')return `${e.player} naar ${e.position}`;
+  return e.type;
+}
+function renderEventLog(){
+  const body=document.getElementById('eventBody');body.innerHTML='';
+  sortedEvents().forEach(e=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${e.minute}'</td><td>${esc(e.type)}</td><td>${esc(eventDescription(e))}</td>`;body.appendChild(tr);});
+}
+
+function finishMatch(){
+  state.duration=nowMinute();if(state.paused&&state.pausedAt){state.pausedTotalMs+=Date.now()-state.pausedAt;state.paused=false;state.pausedAt=null;}
+  state.finished=true;clearInterval(timerId);document.getElementById('saveMatchBtn').classList.remove('hidden');setStatus(`Wedstrijd beëindigd op ${state.duration}'. Bewaar hem nu in het seizoensdashboard.`,true);saveLive();renderLive();
+}
+function buildRecord(){
+  const s=gameSnapshot();const goals=state.events.filter(e=>e.type==='GOAL');
+  return {id:uid(),savedAt:new Date().toISOString(),matchDate:state.matchDate,team:state.team,opponent:state.opponent,formation:state.formation,
+    duration:state.duration,pauseMinutes:Math.round((state.pausedTotalMs||0)/60000),attendance:state.attendance,selected:[...state.selected],starters:[...state.starters],
+    startingPositions:{...state.startingPositions},events:state.events.map(e=>({...e})),goalsComplete:true,homeGoals:s.homeGoals,awayGoals:s.awayGoals,
+    players:roster.filter(p=>p.team===state.team).map(p=>({name:p.name,number:p.number,size:p.size,present:!!state.attendance[p.name],selected:state.selected.includes(p.name),starter:state.starters.includes(p.name),
+      startPosition:state.startingPositions[p.name]||'',play:state.selected.includes(p.name)?(s.play[p.name]||0):0,bench:state.selected.includes(p.name)?(s.bench[p.name]||0):0,
+      goals:goals.filter(g=>g.side==='home'&&g.scorer===p.name).length}))};
+}
+function saveMatch(){
+  if(!state.finished){alert('Beëindig eerst de wedstrijd.');return}
+  const h=getHistory();h.push(buildRecord());setHistory(h);clearLive();renderSeason();
+  alert('Wedstrijd opgeslagen.');
+  state=emptyState();['liveCard','livePitchCard','liveDashboardCard','eventCard'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+  document.getElementById('saveMatchBtn').classList.add('hidden');document.getElementById('opponent').value='';document.getElementById('matchDate').value=todayLocal();loadRoster();window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function restoreLive(){
+  try{const raw=localStorage.getItem(LIVE_KEY);if(!raw)return;state=Object.assign(emptyState(),JSON.parse(raw));if(!state.startMs)return;
+    if(!state.attendance||!Object.keys(state.attendance).length){state.attendance={};roster.filter(p=>p.team===state.team).forEach(p=>state.attendance[p.name]=state.selected.includes(p.name));}
+    if(!state.formation)state.formation='4-3-3';if(!state.startingPositions)state.startingPositions={};
+    ['liveCard','livePitchCard','liveDashboardCard','eventCard'].forEach(id=>document.getElementById(id).classList.remove('hidden'));
+    document.getElementById('liveTeam').textContent=state.team;document.getElementById('liveOpponent').textContent=state.opponent;document.getElementById('liveFormationLabel').textContent=state.formation;
+    if(state.paused)document.getElementById('pauseBtn').textContent='▶ Hervat tweede helft';
+    if(state.finished)document.getElementById('saveMatchBtn').classList.remove('hidden');else startTimer();
+    setStatus(state.finished?'Afgeronde wedstrijd hersteld na vernieuwen. Bewaar hem in het dashboard.':'Lopende wedstrijd hersteld na vernieuwen.',true);renderLive();
+  }catch(e){}
+}
+
+function migrateFirstMatch(){
+  if(localStorage.getItem(MIGRATION_KEY))return;
+  const h=getHistory();const idx=h.findIndex(x=>x.id==='match-2026-08-22-1115');
+  const minutes={
+    'Boaz Vries':80,'Wai Sam Chung':60,'Matz Buijsman':60,'Dani Faber':60,'Kayden Cramer':60,'Siem Knossen':60,
+    'Isaiah Eijndhoven':55,'Shane Statia':55,'Maxim Boer':55,'Shane Besselink':50,'Vigo Schreuder':50,'Eliah Wong Swie Sang':50,'Noah Oerip':50,'Luuk Buringa':50,'Ben Jansen':45,'Nolaï Williams':40
+  };
+  const starters=['Boaz Vries','Dani Faber','Siem Knossen','Vigo Schreuder','Wai Sam Chung','Eliah Wong Swie Sang','Noah Oerip','Luuk Buringa','Matz Buijsman','Kayden Cramer','Shane Besselink'];
+  const startPos={'Boaz Vries':'GK','Dani Faber':'LB','Siem Knossen':'LCB','Vigo Schreuder':'RCB','Wai Sam Chung':'RB','Noah Oerip':'LCM','Eliah Wong Swie Sang':'CM','Luuk Buringa':'RCM','Shane Besselink':'LW','Matz Buijsman':'ST','Kayden Cramer':'RW'};
+  const rec={id:'match-2026-08-22-1115',savedAt:'2026-08-22T12:50:00+02:00',matchDate:'2026-08-22',team:'O16-1',opponent:'DEM O16-2',formation:'4-3-3',duration:80,pauseMinutes:15,
+    startLabel:'11:15',halftimeStart:'11:55',halftimeEnd:'12:10',endLabel:'12:50',attendance:{},selected:roster.map(p=>p.name),starters,startingPositions:startPos,events:[],goalsComplete:false,homeGoals:null,awayGoals:null,
+    rawNote:'Historische wedstrijd gecorrigeerd op basis van bekende rangorde speeltijd. Totaal klopt exact: 880 speler-minuten. Exacte wissel- en positietijdlijn is niet volledig gereconstrueerd; vanaf v11 wordt dit live exact vastgelegd.',
+    players:roster.map(p=>{rec_att=true;return {name:p.name,number:p.number,size:p.size,present:true,selected:true,starter:starters.includes(p.name),startPosition:startPos[p.name]||'',play:minutes[p.name]||0,bench:80-(minutes[p.name]||0),goals:0}})};
+  roster.forEach(p=>rec.attendance[p.name]=true);
+  if(idx>=0)h[idx]=rec;else h.push(rec);setHistory(h);localStorage.setItem(MIGRATION_KEY,'1');
+}
+
+function aggregate(){
+  const h=getHistory(),map={};roster.forEach(p=>map[p.name]={name:p.name,number:p.number,present:0,absent:0,starts:0,play:0,bench:0,selected:0,goals:0});
+  h.forEach(m=>roster.filter(p=>p.team===m.team).forEach(p=>{
+    const a=map[p.name],mp=(m.players||[]).find(x=>x.name===p.name),present=mp?!!mp.present:!!m.attendance?.[p.name];
+    if(present)a.present++;else a.absent++;
+    if(mp?.selected){a.selected++;a.play+=Number(mp.play)||0;a.bench+=Number(mp.bench)||0;}
+    if(mp?.starter)a.starts++;a.goals+=Number(mp?.goals)||0;
+  }));
+  return {history:h,players:Object.values(map)};
+}
+
+function rankRows(arr,key,ascending=false){
+  const a=arr.slice().sort((x,y)=>ascending?(x[key]-y[key]||x.name.localeCompare(y.name)):(y[key]-x[key]||x.name.localeCompare(y.name)));
+  return a.map((p,i)=>`<div class="rankrow"><div class="rankno">${i+1}</div><div>#${p.number} ${esc(p.name)}</div><div class="rankval">${p[key]}</div></div>`).join('');
+}
+function renderSeason(){
+  const d=aggregate(),ps=d.players,h=d.history;const totalGoals=ps.reduce((s,p)=>s+p.goals,0),play=ps.reduce((s,p)=>s+p.play,0);
+  document.getElementById('seasonKpis').innerHTML=`<div class="kpi"><b>${h.length}</b><span>wedstrijden</span></div><div class="kpi"><b>${play}</b><span>speelminuten</span></div><div class="kpi"><b>${totalGoals}</b><span>goals geregistreerd</span></div><div class="kpi"><b>${ps.reduce((s,p)=>s+p.present,0)}</b><span>aanwezig-momenten</span></div><div class="kpi"><b>${ps.reduce((s,p)=>s+p.absent,0)}</b><span>afwezig-momenten</span></div>`;
+  document.getElementById('playRanking').innerHTML=rankRows(ps,'play');
+  document.getElementById('goalRanking').innerHTML=rankRows(ps,'goals');
+  document.getElementById('attendanceRanking').innerHTML=rankRows(ps,'present');
+  const sorted=ps.slice().sort((a,b)=>b.play-a.play||a.name.localeCompare(b.name));const body=document.getElementById('seasonBody');body.innerHTML='';
+  sorted.forEach((p,i)=>{const avg=p.selected?Math.round(p.play/p.selected):0,pct=(p.play+p.bench)?Math.round(100*p.play/(p.play+p.bench)):0;
+    const tr=document.createElement('tr');tr.innerHTML=`<td>${i+1}</td><td>${p.number}</td><td>${esc(p.name)}</td><td>${p.present}</td><td>${p.absent}</td><td>${p.starts}</td><td>${p.play}</td><td>${p.bench}</td><td>${avg}</td><td>${pct}%</td><td>${p.goals}</td>`;body.appendChild(tr);
+  });
+  enableSort(document.getElementById('seasonTable'));renderMatches();
+}
+
+function renderMatches(){
+  const list=document.getElementById('matchesList'),h=getHistory().slice().sort((a,b)=>new Date(b.savedAt)-new Date(a.savedAt));list.innerHTML='';
+  h.forEach((m,i)=>{const own=m.homeGoals!==undefined&&m.homeGoals!==null?Number(m.homeGoals):(m.events||[]).filter(e=>e.type==='GOAL'&&e.side==='home').length,opp=m.awayGoals!==undefined&&m.awayGoals!==null?Number(m.awayGoals):(m.events||[]).filter(e=>e.type==='GOAL'&&e.side==='away').length;
+    const d=document.createElement('div');d.className='matchcard';d.innerHTML=`<div class="matchtop"><div><b>${esc(m.team)} vs ${esc(m.opponent)}</b><div class="smalltxt">${m.matchDate||fmtDate(m.savedAt)} · ${m.formation||'formatie onbekend'} · ${m.duration} min + ${m.pauseMinutes||0} rust · ${m.goalsComplete?own+'-'+opp:'score niet ingevoerd'}</div></div></div>
+    <div class="miniActions"><button class="small secondary detailBtn" data-id="${m.id}">Bekijk</button><button class="small secondary editBtn" data-id="${m.id}">✏️ Corrigeer</button><button class="small danger deleteBtn" data-id="${m.id}">🗑 Verwijder</button></div>`;list.appendChild(d);
+  });
+  list.querySelectorAll('.detailBtn').forEach(b=>b.onclick=()=>showDetail(b.dataset.id));list.querySelectorAll('.editBtn').forEach(b=>b.onclick=()=>showEdit(b.dataset.id));list.querySelectorAll('.deleteBtn').forEach(b=>b.onclick=()=>deleteMatch(b.dataset.id));
+}
+
+function showDetail(id){
+  const m=getHistory().find(x=>x.id===id);if(!m)return;document.getElementById('editPanel').innerHTML='';
+  const own=m.homeGoals!==undefined&&m.homeGoals!==null?Number(m.homeGoals):(m.events||[]).filter(e=>e.type==='GOAL'&&e.side==='home').length,opp=m.awayGoals!==undefined&&m.awayGoals!==null?Number(m.awayGoals):(m.events||[]).filter(e=>e.type==='GOAL'&&e.side==='away').length;
+  const rows=(m.players||[]).slice().sort((a,b)=>b.play-a.play||a.name.localeCompare(b.name));
+  document.getElementById('matchDetail').innerHTML=`<div class="editPanel"><h3>${esc(m.team)} vs ${esc(m.opponent)} ${m.goalsComplete?'· '+own+'-'+opp:''}</h3><div class="smalltxt">${m.matchDate} · ${m.formation||''} · ${m.duration} min · rust ${m.pauseMinutes||0} min</div>
+  <div class="tabletools"><input id="detailFilter" placeholder="🔎 Filter..."></div><div style="overflow:auto"><table id="detailTable"><thead><tr><th>#</th><th>Speler</th><th>Aanw.</th><th>Basis</th><th>Startpos.</th><th>Speel</th><th>Bank</th><th>Goals</th></tr></thead><tbody>${rows.map(p=>`<tr><td>${p.number}</td><td>${esc(p.name)}</td><td>${p.present?'Ja':'Nee'}</td><td>${p.starter?'Ja':'Nee'}</td><td>${esc(p.startPosition||'')}</td><td>${p.play}</td><td>${p.bench}</td><td>${p.goals||0}</td></tr>`).join('')}</tbody></table></div>
+  ${m.rawNote?`<div class="status warn">${esc(m.rawNote)}</div>`:''}</div>`;
+  enableSort(document.getElementById('detailTable'));document.getElementById('detailFilter').oninput=e=>filterTable(document.getElementById('detailTable'),e.target.value);
+}
+
+function showEdit(id){
+  const h=getHistory(),m=h.find(x=>x.id===id);if(!m)return;document.getElementById('matchDetail').innerHTML='';
+  const panel=document.getElementById('editPanel');const form=m.formation||'4-3-3';
+  panel.innerHTML=`<div class="editPanel"><h3>Wedstrijd corrigeren</h3><div class="grid2">
+  <label>Tegenstander<input id="eOpponent" value="${esc(m.opponent)}"></label><label>Datum<input id="eDate" type="date" value="${esc(m.matchDate||'')}"></label>
+  <label>Formatie<select id="eFormation">${Object.keys(FORMATIONS).map(f=>`<option ${f===form?'selected':''}>${f}</option>`).join('')}</select></label>
+  <label>Speelduur<input id="eDuration" type="number" value="${m.duration}"></label><label>Rust<input id="ePause" type="number" value="${m.pauseMinutes||0}"></label>
+  <label>Goals tegen<input id="eAwayGoals" type="number" min="0" value="${m.awayGoals!==undefined&&m.awayGoals!==null?m.awayGoals:(m.events||[]).filter(e=>e.type==='GOAL'&&e.side==='away').length}"></label></div>
+  <h3>Spelers</h3><div class="editPlayers"><table><thead><tr><th>#</th><th>Speler</th><th>Aanw.</th><th>Sel.</th><th>Basis</th><th>Startpos.</th><th>Speel</th><th>Bank</th><th>Goals</th></tr></thead><tbody>
+  ${(m.players||[]).map((p,i)=>`<tr data-i="${i}"><td>${p.number}</td><td>${esc(p.name)}</td><td><input class="epPresent" type="checkbox" ${p.present?'checked':''}></td><td><input class="epSelected" type="checkbox" ${p.selected?'checked':''}></td><td><input class="epStarter" type="checkbox" ${p.starter?'checked':''}></td><td><select class="epPos">${positionOptions(form,p.startPosition||'')}</select></td><td><input class="epPlay" type="number" min="0" value="${p.play||0}"></td><td><input class="epBench" type="number" min="0" value="${p.bench||0}"></td><td><input class="epGoals" type="number" min="0" value="${p.goals||0}"></td></tr>`).join('')}
+  </tbody></table></div><div id="editCheck" class="status"></div>
+  <div class="confirmbuttons"><button id="saveEditBtn">Correcties opslaan</button><button class="secondary" id="cancelEditBtn">Annuleren</button></div></div>`;
+  function check(){const dur=Math.max(1,Number(document.getElementById('eDuration').value)||0);let t=0;panel.querySelectorAll('.epPlay').forEach(x=>t+=Number(x.value)||0);const exp=11*dur,b=document.getElementById('editCheck');b.className='status '+(t===exp?'ok':'warn');b.textContent=t===exp?`✓ ${t} speler-minuten klopt met 11 × ${dur}.`:`Let op: ${t} speler-minuten, verwacht ${exp}. Verschil ${t-exp}.`;}
+  panel.querySelectorAll('.epPlay').forEach(x=>x.oninput=check);document.getElementById('eDuration').oninput=check;check();
+  document.getElementById('eFormation').onchange=e=>{
+    panel.querySelectorAll('.epPos').forEach(sel=>{const old=sel.value;sel.innerHTML=positionOptions(e.target.value,formationSlots(e.target.value).some(s=>s.code===old)?old:'');});
+  };
+  document.getElementById('cancelEditBtn').onclick=()=>panel.innerHTML='';
+  document.getElementById('saveEditBtn').onclick=()=>{
+    const idx=h.findIndex(x=>x.id===id),mm=h[idx];mm.opponent=document.getElementById('eOpponent').value.trim()||'Onbekend';mm.matchDate=document.getElementById('eDate').value;mm.formation=document.getElementById('eFormation').value;mm.duration=Math.max(1,Number(document.getElementById('eDuration').value)||80);mm.pauseMinutes=Math.max(0,Number(document.getElementById('ePause').value)||0);
+    const rows=[...panel.querySelectorAll('tr[data-i]')];rows.forEach(r=>{const p=mm.players[Number(r.dataset.i)];p.present=r.querySelector('.epPresent').checked;p.selected=r.querySelector('.epSelected').checked;p.starter=r.querySelector('.epStarter').checked;p.startPosition=r.querySelector('.epPos').value;p.play=Math.max(0,Number(r.querySelector('.epPlay').value)||0);p.bench=Math.max(0,Number(r.querySelector('.epBench').value)||0);p.goals=Math.max(0,Number(r.querySelector('.epGoals').value)||0);mm.attendance=mm.attendance||{};mm.attendance[p.name]=p.present;});
+    mm.homeGoals=mm.players.reduce((s,p)=>s+(Number(p.goals)||0),0);mm.awayGoals=Math.max(0,Number(document.getElementById('eAwayGoals').value)||0);mm.goalsComplete=true;
+    const total=mm.players.reduce((s,p)=>s+(Number(p.play)||0),0),exp=11*mm.duration;mm.rawNote=total===exp?`Datacontrole OK: ${total} speler-minuten = 11 × ${mm.duration}.`:`Datacontrole: ${total} speler-minuten; verwacht ${exp}. Verschil ${total-exp}.`;
+    setHistory(h);renderSeason();showDetail(id);panel.innerHTML='';alert('Correcties opgeslagen.');
+  };
+}
+
+function deleteMatch(id){if(!confirm('Deze wedstrijd verwijderen?'))return;setHistory(getHistory().filter(x=>x.id!==id));document.getElementById('matchDetail').innerHTML='';document.getElementById('editPanel').innerHTML='';renderSeason();}
+
+function parseSort(v){const s=String(v||'').replace('%','').replace(',','.').trim();return s!==''&&!isNaN(Number(s))?Number(s):s.toLowerCase();}
+function enableSort(table){if(!table||table.dataset.ready)return;table.dataset.ready='1';[...table.tHead.rows[0].cells].forEach((th,i)=>th.onclick=()=>{const dir=th.dataset.dir==='asc'?'desc':'asc';[...th.parentElement.cells].forEach(x=>delete x.dataset.dir);th.dataset.dir=dir;const rows=[...table.tBodies[0].rows];rows.sort((a,b)=>{const x=parseSort(a.cells[i]?.innerText),y=parseSort(b.cells[i]?.innerText);const c=typeof x==='number'&&typeof y==='number'?x-y:String(x).localeCompare(String(y),'nl',{numeric:true});return dir==='asc'?c:-c});rows.forEach(r=>table.tBodies[0].appendChild(r));});}
+function filterTable(table,q){q=clean(q);[...table.tBodies[0].rows].forEach(r=>r.style.display=clean(r.innerText).includes(q)?'':'none');}
+
+function backup(){const b=new Blob([JSON.stringify({version:11,exportedAt:new Date().toISOString(),history:getHistory()},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='Hercules_O16_backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
+function importBackup(file){const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result),h=Array.isArray(d)?d:d.history;if(!Array.isArray(h))throw 0;if(confirm(`Backup bevat ${h.length} wedstrijden. Huidige historie vervangen?`)){setHistory(h);renderSeason();alert('Backup geïmporteerd.')}}catch(e){alert('Geen geldige backup.')}};r.readAsText(file);}
+
+async function exportExcel(){
+  if(typeof ExcelJS==='undefined'){alert('Excel-module kon niet worden geladen.');return}
+  const d=aggregate(),h=d.history;if(!h.length){alert('Nog geen wedstrijden.');return}
+  const wb=new ExcelJS.Workbook();wb.creator='Maarten Chung';const P='6F42C1',D='4B2672',L='EADFF5',W='FFFFFF';
+  const title=(ws,range,t)=>{ws.mergeCells(range);const c=ws.getCell(range.split(':')[0]);c.value=t;c.font={bold:true,size:18,color:{argb:W}};c.fill={type:'pattern',pattern:'solid',fgColor:{argb:D}};};
+  const head=r=>r.eachCell(c=>{c.font={bold:true,color:{argb:W}};c.fill={type:'pattern',pattern:'solid',fgColor:{argb:P}};});
+  const table=(ws,name,ref)=>{try{ws.addTable({name:name.replace(/[^A-Za-z0-9_]/g,'_'),ref,headerRow:true,totalsRow:false,style:{theme:'TableStyleMedium4',showRowStripes:true}})}catch(e){}};
+  const dash=wb.addWorksheet('Dashboard',{views:[{showGridLines:false}]});title(dash,'A1:H1','Hercules O16 – Dashboard');dash.getCell('A2').value='Gemaakt door Maarten Chung';
+  const ps=d.players.slice().sort((a,b)=>b.play-a.play);dash.getRow(4).values=['Rank','#','Speler','Speeltijd','Goals','Aanwezig','Afwezig','Basis'];head(dash.getRow(4));ps.forEach((p,i)=>dash.addRow([i+1,p.number,p.name,p.play,p.goals,p.present,p.absent,p.starts]));table(dash,'DashboardSpelers',`A4:H${4+ps.length}`);
+  const season=wb.addWorksheet('Seizoen totaal',{views:[{showGridLines:false}]});title(season,'A1:K1','Seizoen totaal per speler');season.getRow(3).values=['Rank','#','Speler','Aanwezig','Afwezig','Selecties','Basis','Speeltijd','Banktijd','Gem.','Goals'];head(season.getRow(3));ps.forEach((p,i)=>season.addRow([i+1,p.number,p.name,p.present,p.absent,p.selected,p.starts,p.play,p.bench,p.selected?Math.round(p.play/p.selected):0,p.goals]));table(season,'SeizoenTotaal',`A3:K${3+ps.length}`);
+  const mi=wb.addWorksheet('Wedstrijden',{views:[{showGridLines:false}]});title(mi,'A1:I1','Wedstrijdhistorie');mi.getRow(3).values=['Nr','Datum','Team','Tegenstander','Formatie','Speeltijd','Rust','Goals voor','Goals tegen'];head(mi.getRow(3));
+  h.forEach((m,i)=>{const gh=m.homeGoals!==undefined&&m.homeGoals!==null?Number(m.homeGoals):(m.events||[]).filter(e=>e.type==='GOAL'&&e.side==='home').length,ga=m.awayGoals!==undefined&&m.awayGoals!==null?Number(m.awayGoals):(m.events||[]).filter(e=>e.type==='GOAL'&&e.side==='away').length;mi.addRow([i+1,m.matchDate,m.team,m.opponent,m.formation||'',m.duration,m.pauseMinutes||0,m.goalsComplete?gh:'',m.goalsComplete?ga:'']);});table(mi,'WedstrijdIndex',`A3:I${3+h.length}`);
+  h.forEach((m,i)=>{const ws=wb.addWorksheet((`W${String(i+1).padStart(2,'0')} ${m.matchDate||''}`).slice(0,31),{views:[{showGridLines:false}]});title(ws,'A1:J1',`${m.team} vs ${m.opponent}`);ws.getRow(3).values=['#','Speler','Aanwezig','Selectie','Basis','Startpositie','Speeltijd','Banktijd','Goals','Shirt'];head(ws.getRow(3));(m.players||[]).forEach(p=>ws.addRow([p.number,p.name,p.present?'Ja':'Nee',p.selected?'Ja':'Nee',p.starter?'Ja':'Nee',p.startPosition||'',p.play,p.bench,p.goals||0,p.size||'']));table(ws,`Spelers_${i+1}`,`A3:J${3+(m.players||[]).length}`);
+    let r=ws.rowCount+2;ws.getRow(r).values=['Minuut','Type','Actie','','','','','','',''];head(ws.getRow(r));const ev=(m.events||[]);ev.forEach(e=>ws.addRow([e.minute,e.type,e.type==='WISSEL'?`${e.out} → ${e.inn} (${e.position||''})`:e.type==='GOAL'?`Doelpunt ${e.side==='home'?e.scorer:m.opponent}`:`${e.player} → ${e.position}`,'','','','','','','']));if(ev.length)table(ws,`Events_${i+1}`,`A${r}:C${r+ev.length}`);
+  });
+  wb.worksheets.forEach(ws=>{ws.columns.forEach(c=>c.width=Math.max(10,Math.min(30,c.width||15)));});
+  const buf=await wb.xlsx.writeBuffer(),blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`Hercules_O16_dashboard_${todayLocal()}.xlsx`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+
+document.getElementById('team').onchange=loadRoster;document.getElementById('formation').onchange=setupFormationChanged;document.getElementById('startBtn').onclick=startMatch;
+document.getElementById('voiceBtn').onclick=voiceAction;document.getElementById('pauseBtn').onclick=togglePause;document.getElementById('manualSwapBtn').onclick=manualSwap;document.getElementById('goalBtn').onclick=manualGoal;document.getElementById('positionBtn').onclick=changePosition;
+document.getElementById('confirmBtn').onclick=confirmPending;document.getElementById('cancelBtn').onclick=cancelPending;document.getElementById('undoBtn').onclick=undoLast;document.getElementById('finishBtn').onclick=finishMatch;document.getElementById('saveMatchBtn').onclick=saveMatch;
+document.getElementById('showSeasonBtn').onclick=()=>{document.getElementById('seasonView').classList.remove('hidden');document.getElementById('matchesView').classList.add('hidden')};
+document.getElementById('showMatchesBtn').onclick=()=>{document.getElementById('seasonView').classList.add('hidden');document.getElementById('matchesView').classList.remove('hidden');renderMatches()};
+document.getElementById('backupBtn').onclick=backup;document.getElementById('importBtn').onclick=()=>document.getElementById('importFile').click();document.getElementById('importFile').onchange=e=>{if(e.target.files[0])importBackup(e.target.files[0]);e.target.value=''};
+document.getElementById('exportExcelBtn').onclick=exportExcel;document.getElementById('seasonFilter').oninput=e=>filterTable(document.getElementById('seasonTable'),e.target.value);
+document.getElementById('swapOut').onchange=()=>{const s=gameSnapshot(),n=document.getElementById('swapOut').value;if(n)document.getElementById('swapPosition').value=s.positions[n]||'';};
+
+initFormation();migrateFirstMatch();loadRoster();renderSeason();restoreLive();
 </script>
 </body>
 </html>
