@@ -70,7 +70,24 @@ small{color:#666}
 .restoreNote{background:#ece2f7;border:1px solid #cfb8e8;color:#4b2672}
 @media(max-width:600px){.rankgrid,.kpis,.backupgrid{grid-template-columns:1fr 1fr}.seasonnav{grid-template-columns:1fr}}
 
-@media(max-width:600px){.grid,.liveboard{grid-template-columns:1fr}.rankgrid{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}}
+
+.tabletools{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.tabletools input,.tabletools select{width:auto;min-width:160px;flex:1;margin:0;padding:9px;font-size:14px}
+.sortable th{cursor:pointer;user-select:none;white-space:nowrap}
+.sortable th:hover{background:#56308f}
+.sortable th::after{content:" ↕";font-size:10px;opacity:.65}
+.sortable th[data-dir="asc"]::after{content:" ▲"}
+.sortable th[data-dir="desc"]::after{content:" ▼"}
+.editPanel{margin-top:12px;border:2px solid #6f42c1;border-radius:14px;padding:12px;background:#fbf8fe}
+.editGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.editPlayers{overflow-x:auto;margin-top:10px}
+.editPlayers input,.editPlayers select{padding:7px;font-size:14px;margin:0;min-width:70px}
+.editPlayers input[type="checkbox"]{width:auto;min-width:0;transform:scale(1.15)}
+.validationOk{background:#e2f4e7;border:1px solid #b8dfc3;color:#245a33}
+.validationWarn{background:#fff4db;border:1px solid #ead6a6;color:#6a531c}
+@media(max-width:600px){.editGrid{grid-template-columns:1fr}.tabletools{display:grid;grid-template-columns:1fr}}
+
+@media(max-width:600px){.grid,.liveboard{grid-template-columns:1fr}.rankgrid{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}.editGrid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -165,8 +182,11 @@ small{color:#666}
       </div>
 
       <h3 style="margin:16px 0 8px">Totaal per speler</h3>
+      <div class="tabletools">
+        <input id="seasonFilter" placeholder="🔎 Filter spelers..." aria-label="Filter spelers">
+      </div>
       <div style="overflow-x:auto">
-        <table class="smalltable">
+        <table class="smalltable sortable" id="seasonPlayersTable">
           <thead>
             <tr>
               <th>#</th><th>Speler</th><th>Wed.</th><th>Basis</th>
@@ -181,6 +201,7 @@ small{color:#666}
     <div id="matchesView" class="hidden">
       <div id="matchesList"></div>
       <div id="matchDetail"></div>
+      <div id="editMatchPanel"></div>
     </div>
 
     <div id="backupView" class="hidden">
@@ -760,6 +781,54 @@ function aggregateSeason(){
   return {history:hist,players:Object.values(agg)};
 }
 
+
+function parseSortValue(v){
+  const s=String(v||'').trim().replace('%','').replace(',','.');
+  if(s!=='' && !isNaN(Number(s))) return Number(s);
+  return s.toLocaleLowerCase('nl-NL');
+}
+
+function sortHtmlTable(table, colIndex, dir){
+  const tbody=table.tBodies[0];
+  if(!tbody)return;
+  const rows=[...tbody.rows];
+  rows.sort((a,b)=>{
+    const av=parseSortValue(a.cells[colIndex]?.innerText);
+    const bv=parseSortValue(b.cells[colIndex]?.innerText);
+    let cmp=0;
+    if(typeof av==='number' && typeof bv==='number') cmp=av-bv;
+    else cmp=String(av).localeCompare(String(bv),'nl',{numeric:true,sensitivity:'base'});
+    return dir==='asc'?cmp:-cmp;
+  });
+  rows.forEach(r=>tbody.appendChild(r));
+}
+
+function enableSortable(table){
+  if(!table || table.dataset.sortReady==='1')return;
+  table.dataset.sortReady='1';
+  [...table.tHead?.rows[0]?.cells||[]].forEach((th,i)=>{
+    th.addEventListener('click',()=>{
+      const current=th.dataset.dir;
+      [...th.parentElement.cells].forEach(x=>delete x.dataset.dir);
+      const dir=current==='asc'?'desc':'asc';
+      th.dataset.dir=dir;
+      sortHtmlTable(table,i,dir);
+    });
+  });
+}
+
+function filterTable(table, query){
+  const q=clean(query);
+  if(!table || !table.tBodies[0])return;
+  [...table.tBodies[0].rows].forEach(r=>{
+    r.style.display=clean(r.innerText).includes(q)?'':'none';
+  });
+}
+
+function initDynamicTables(){
+  document.querySelectorAll('table.sortable').forEach(enableSortable);
+}
+
 function renderSeasonDashboard(){
   const data=aggregateSeason();
   const hist=data.history;
@@ -807,23 +876,32 @@ function renderSeasonDashboard(){
       `<div class="matchmeta">${fmtDate(m.savedAt)}${m.startLabel?' · '+m.startLabel+'-'+m.endLabel:''} · ${m.duration} speelmin${m.pauseMinutes?' · '+m.pauseMinutes+' min rust':''} · ${m.players.length} spelers</div></div>`+
       `<span class="badge">Wedstrijd ${rank}</span></div>`+
       `<div class="miniActions"><button type="button" class="secondary viewMatchBtn" data-id="${esc(m.id)}">Bekijk details</button>`+
-      `<button type="button" class="secondary deleteMatchBtn" data-id="${esc(m.id)}">Verwijder</button></div>`;
+      `<button type="button" class="secondary editMatchBtn" data-id="${esc(m.id)}">✏️ Corrigeer</button>`+
+      `<button type="button" class="secondary deleteMatchBtn" data-id="${esc(m.id)}">🗑 Verwijder</button></div>`;
     list.appendChild(d);
   });
 
+  enableSortable(document.getElementById('seasonPlayersTable'));
+
   document.querySelectorAll('.viewMatchBtn').forEach(b=>b.addEventListener('click',()=>showMatchDetail(b.dataset.id)));
+  document.querySelectorAll('.editMatchBtn').forEach(b=>b.addEventListener('click',()=>showEditMatch(b.dataset.id)));
   document.querySelectorAll('.deleteMatchBtn').forEach(b=>b.addEventListener('click',()=>deleteMatch(b.dataset.id)));
+  initDynamicTables();
 }
 
 function showMatchDetail(id){
   const m=getHistory().find(x=>x.id===id);
   if(!m)return;
 
+  document.getElementById('editMatchPanel').innerHTML='';
+
   const ranked=(m.players||[]).slice().sort((a,b)=>b.play-a.play || a.name.localeCompare(b.name));
   const detail=document.getElementById('matchDetail');
   detail.innerHTML=
     `<div class="rankcard" style="margin-top:12px"><h3>${esc(m.team)} vs ${esc(m.opponent)} · ${fmtDate(m.savedAt)}</h3>`+
-    `<div style="overflow-x:auto"><table class="smalltable"><thead><tr><th>Rank</th><th>#</th><th>Speler</th><th>Basis</th><th>Speeltijd</th><th>Bank</th><th>Speel%</th></tr></thead>`+
+    `<div class="tabletools"><input id="matchFilter" placeholder="🔎 Filter deze wedstrijd..."></div>`+
+    `<div style="overflow-x:auto"><table class="smalltable sortable" id="matchDetailTable"><thead><tr>`+
+    `<th>Rank</th><th>#</th><th>Speler</th><th>Basis</th><th>Speeltijd</th><th>Bank</th><th>Speel%</th></tr></thead>`+
     `<tbody>${ranked.map((p,i)=>{
       const total=(Number(p.play)||0)+(Number(p.bench)||0);
       const pct=total?Math.round((p.play/total)*100):0;
@@ -831,6 +909,115 @@ function showMatchDetail(id){
     }).join('')}</tbody></table></div>`+
     (m.rawNote?`<div class="quality"><b>Datacontrole:</b> ${esc(m.rawNote)}</div>`:'')+
     `</div>`;
+
+  enableSortable(document.getElementById('matchDetailTable'));
+  document.getElementById('matchFilter').addEventListener('input',e=>filterTable(document.getElementById('matchDetailTable'),e.target.value));
+}
+
+function matchDataCheck(m){
+  const total=(m.players||[]).reduce((s,p)=>s+(Number(p.play)||0),0);
+  const expected=11*(Number(m.duration)||0);
+  const diff=total-expected;
+  return {total:total,expected:expected,diff:diff};
+}
+
+function showEditMatch(id){
+  const hist=getHistory();
+  const m=hist.find(x=>x.id===id);
+  if(!m)return;
+
+  document.getElementById('matchDetail').innerHTML='';
+
+  const panel=document.getElementById('editMatchPanel');
+  const dateVal=m.matchDate || new Date(m.savedAt).toISOString().slice(0,10);
+
+  panel.innerHTML=
+    `<div class="editPanel">
+      <h3 style="margin-top:0">✏️ Wedstrijd corrigeren</h3>
+      <div class="editGrid">
+        <label>Tegenstander<input id="editOpponent" value="${esc(m.opponent||'')}"></label>
+        <label>Datum<input id="editDate" type="date" value="${esc(dateVal)}"></label>
+        <label>Speelduur (min)<input id="editDuration" type="number" min="1" value="${Number(m.duration)||80}"></label>
+        <label>Rust (min)<input id="editPause" type="number" min="0" value="${Number(m.pauseMinutes)||0}"></label>
+        <label>Starttijd<input id="editStartLabel" type="time" value="${esc(m.startLabel||'')}"></label>
+        <label>Eindtijd<input id="editEndLabel" type="time" value="${esc(m.endLabel||'')}"></label>
+      </div>
+
+      <div class="editPlayers">
+        <table class="smalltable">
+          <thead><tr><th>#</th><th>Speler</th><th>Basis</th><th>Speeltijd</th><th>Banktijd</th></tr></thead>
+          <tbody>
+          ${(m.players||[]).map((p,i)=>`
+            <tr data-edit-player="${i}">
+              <td>${esc(p.number)}</td>
+              <td>${esc(p.name)}</td>
+              <td><input type="checkbox" class="epStarter" ${p.starter?'checked':''}></td>
+              <td><input type="number" min="0" class="epPlay" value="${Number(p.play)||0}"></td>
+              <td><input type="number" min="0" class="epBench" value="${Number(p.bench)||0}"></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+
+      <div id="editValidation" class="status"></div>
+      <div class="confirmbuttons">
+        <button type="button" id="saveCorrectionBtn">✓ Correcties opslaan</button>
+        <button type="button" class="secondary" id="cancelCorrectionBtn">Annuleren</button>
+      </div>
+    </div>`;
+
+  function updateValidation(){
+    const duration=Math.max(1,Number(document.getElementById('editDuration').value)||0);
+    let total=0;
+    panel.querySelectorAll('.epPlay').forEach(x=>total+=Number(x.value)||0);
+    const expected=11*duration;
+    const box=document.getElementById('editValidation');
+    if(total===expected){
+      box.className='status validationOk';
+      box.textContent=`✓ Bezettingscontrole klopt: ${total} speler-minuten = 11 × ${duration}.`;
+    }else{
+      const d=total-expected;
+      box.className='status validationWarn';
+      box.textContent=`Let op: ${total} speler-minuten geregistreerd; verwacht ${expected}. Verschil ${d>0?'+':''}${d} minuten. Je mag wel opslaan, maar controleer de wissels/minuten.`;
+    }
+  }
+
+  panel.querySelectorAll('.epPlay,#editDuration').forEach(x=>x.addEventListener('input',updateValidation));
+  updateValidation();
+
+  document.getElementById('cancelCorrectionBtn').onclick=()=>panel.innerHTML='';
+
+  document.getElementById('saveCorrectionBtn').onclick=()=>{
+    const idx=hist.findIndex(x=>x.id===id);
+    if(idx<0)return;
+
+    const mm=hist[idx];
+    mm.opponent=document.getElementById('editOpponent').value.trim()||'Onbekend';
+    mm.matchDate=document.getElementById('editDate').value;
+    mm.duration=Math.max(1,Number(document.getElementById('editDuration').value)||80);
+    mm.pauseMinutes=Math.max(0,Number(document.getElementById('editPause').value)||0);
+    mm.startLabel=document.getElementById('editStartLabel').value;
+    mm.endLabel=document.getElementById('editEndLabel').value;
+
+    const rows=[...panel.querySelectorAll('tr[data-edit-player]')];
+    rows.forEach((row,i)=>{
+      const p=mm.players[i];
+      p.starter=row.querySelector('.epStarter').checked;
+      p.play=Math.max(0,Number(row.querySelector('.epPlay').value)||0);
+      p.bench=Math.max(0,Number(row.querySelector('.epBench').value)||0);
+    });
+
+    const check=matchDataCheck(mm);
+    mm.rawNote=check.diff===0
+      ? `Datacontrole OK: ${check.total} speler-minuten = 11 spelers × ${mm.duration} minuten.`
+      : `Datacontrole: ${check.total} speler-minuten geregistreerd; verwacht ${check.expected}. Verschil ${check.diff>0?'+':''}${check.diff} minuten.`;
+
+    setHistory(hist);
+    renderSeasonDashboard();
+    showMatchDetail(id);
+    panel.innerHTML='';
+    alert('Correcties opgeslagen.');
+  };
 }
 
 function deleteMatch(id){
@@ -994,6 +1181,19 @@ async function exportFullExcel(){
     }
   }
 
+  function addExcelTable(ws,name,ref){
+    try{
+      ws.addTable({
+        name:name.replace(/[^A-Za-z0-9_]/g,'_'),
+        ref:ref,
+        headerRow:true,
+        totalsRow:false,
+        style:{theme:'TableStyleMedium4',showRowStripes:true}
+      });
+    }catch(e){}
+  }
+
+
   const agg=data.players.slice().sort((a,b)=>b.play-a.play || a.name.localeCompare(b.name));
 
   // Dashboard
@@ -1033,6 +1233,7 @@ async function exportFullExcel(){
     ]);
   }
   setWidths(dash,[8,6,28,14,8,6,28,14]);
+  addExcelTable(dash,'DashboardRanking',`A8:H${8+Math.max(agg.length,benchRank.length)}`);
 
   // Season totals
   const season=wb.addWorksheet('Seizoen totaal',{views:[{showGridLines:false,state:'frozen',ySplit:3}]});
@@ -1047,6 +1248,7 @@ async function exportFullExcel(){
   season.getColumn(9).numFmt='0%';
   thinBorders(season,4,3+agg.length,1,9);
   setWidths(season,[8,6,28,12,10,14,14,16,11]);
+  addExcelTable(season,'SeizoenTotaal',`A3:I${3+agg.length}`);
 
   // Match index
   const mi=wb.addWorksheet('Wedstrijden',{views:[{showGridLines:false,state:'frozen',ySplit:3}]});
@@ -1061,6 +1263,7 @@ async function exportFullExcel(){
   });
   thinBorders(mi,4,3+hist.length,1,8);
   setWidths(mi,[6,13,10,30,12,10,18,10]);
+  addExcelTable(mi,'WedstrijdIndex',`A3:H${3+hist.length}`);
 
   // One sheet per match
   hist.forEach((m,i)=>{
@@ -1083,6 +1286,7 @@ async function exportFullExcel(){
     });
     ws.getColumn(7).numFmt='0%';
     thinBorders(ws,5,4+rp.length,1,8);
+    addExcelTable(ws,`MatchPlayers_${i+1}`,`A4:H${4+rp.length}`);
 
     let row=ws.rowCount+2;
     ws.getCell(`A${row}`).value='Wissels';
@@ -1091,11 +1295,15 @@ async function exportFullExcel(){
     ws.getRow(row).values=['Minuut','Uit #','Uit speler','In #','In speler','Transcript','',''];
     styleHeader(ws.getRow(row));
 
-    (m.events||[]).filter(e=>e.type==='WISSEL').forEach(e=>{
+    const matchEvents=(m.events||[]).filter(e=>e.type==='WISSEL');
+    matchEvents.forEach(e=>{
       const out=(m.players||[]).find(p=>p.name===e.out)||playerObj(e.out);
       const inn=(m.players||[]).find(p=>p.name===e.inn)||playerObj(e.inn);
       ws.addRow([e.minute,out.number||'',e.out||'',inn.number||'',e.inn||'',e.text||'','','']);
     });
+    if(matchEvents.length){
+      addExcelTable(ws,`MatchWissels_${i+1}`,`A${row}:F${row+matchEvents.length}`);
+    }
 
     if(m.rawNote){
       row=ws.rowCount+2;
@@ -1138,6 +1346,7 @@ document.getElementById('importFile').addEventListener('change',e=>{
   e.target.value='';
 });
 document.getElementById('clearHistoryBtn').onclick=clearHistory;
+document.getElementById('seasonFilter').addEventListener('input',e=>filterTable(document.getElementById('seasonPlayersTable'),e.target.value));
 document.getElementById('exportBtn').onclick=exportCsv;
 loadPlayers();
 seedOrMigrateAug22Match();
