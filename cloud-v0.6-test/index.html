@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>ClubMatch Cloud v0.6 test laden…</title>
+<style>
+:root{font-family:Arial,Helvetica,sans-serif;color:#241633;background:#f6f1fb}
+body{margin:0;padding:24px}.box{max-width:680px;margin:40px auto;background:#fff;border:1px solid #eadcf5;border-radius:16px;padding:20px;box-shadow:0 4px 18px rgba(93,46,132,.12)}
+h1{color:#4b2672;margin-top:0}.status{padding:12px;border-radius:10px;background:#f1e9f8;border:1px solid #e4d4f2;white-space:pre-wrap}.err{background:#fff4db;border-color:#ead6a6;color:#6a531c}
+</style>
+</head>
+<body>
+<div class="box"><h1>ClubMatch Cloud v0.6</h1><div id="status" class="status">Testbuild laden…</div></div>
+<script>
+(async()=>{
+ const s=document.getElementById('status');
+ try{
+  if(!('DecompressionStream' in window)) throw new Error('Deze browser ondersteunt DecompressionStream niet. Gebruik een actuele Chrome, Edge of Safari.');
+  const names=['payload01.txt','payload02.txt','payload03.txt'];
+  const parts=await Promise.all(names.map(async n=>{
+   const r=await fetch(n+'?v=0601',{cache:'no-store'});
+   if(!r.ok) throw new Error(n+' kon niet worden geladen (HTTP '+r.status+').');
+   return await r.text();
+  }));
+  const b64=parts.join('').replace(/\s+/g,'');
+  if(b64.length!==47004) throw new Error('Payloadlengte klopt niet: '+b64.length+' in plaats van 47004.');
+  const bin=atob(b64);
+  const bytes=Uint8Array.from(bin,c=>c.charCodeAt(0));
+  const ds=new DecompressionStream('gzip');
+  const html=await new Response(new Blob([bytes]).stream().pipeThrough(ds)).text();
+  if(!html.includes("CLOUD_BRIDGE_VERSION='0.6'")) throw new Error('De geladen build is niet Cloud v0.6.');
+  document.open(); document.write(html); document.close();
+ }catch(e){
+  s.classList.add('err');
+  s.textContent='Laden mislukt: '+e.message;
+ }
+})();
+</script>
+</body>
+</html>
