@@ -1,4 +1,11 @@
 (()=>{
+// Layout-stabilisatie: laad compacte wisselbadges zonder extra tekstregel/hoogte.
+if(!document.querySelector('link[data-v063-layoutfix]')){
+ const l=document.createElement('link');l.rel='stylesheet';l.href='v063-layoutfix.css?v=0633';l.dataset.v063Layoutfix='1';document.head.appendChild(l);
+}
+if(!document.querySelector('script[data-v063-layoutfix]')){
+ const s=document.createElement('script');s.src='v063-layoutfix.js?v=0633';s.dataset.v063Layoutfix='1';document.head.appendChild(s);
+}
 const style=document.createElement('style');
 style.textContent=`
 #pauseClockCard.pauseActive063{border-color:#d39118!important;background:#fff4db!important;box-shadow:0 0 0 3px rgba(211,145,24,.13)}
