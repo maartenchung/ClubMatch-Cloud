@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>ClubMatch Cloud v0.6.2 test laden…</title>
+<title>ClubMatch Cloud v0.6.3 test laden…</title>
 <style>
 :root{font-family:Arial,Helvetica,sans-serif;color:#241633;background:#f6f1fb}
 body{margin:0;padding:24px}.box{max-width:680px;margin:40px auto;background:#fff;border:1px solid #eadcf5;border-radius:16px;padding:20px;box-shadow:0 4px 18px rgba(93,46,132,.12)}
@@ -14,7 +14,7 @@ h1{color:#4b2672;margin-top:0}.status{padding:12px;border-radius:10px;background
 </style>
 </head>
 <body>
-<div class="box"><h1>ClubMatch Cloud v0.6.2</h1><div id="status" class="status">Testbuild laden…</div></div>
+<div class="box"><h1>ClubMatch Cloud v0.6.3</h1><div id="status" class="status">Testbuild laden…</div></div>
 <script>
 (async()=>{
  const s=document.getElementById('status');
@@ -22,7 +22,7 @@ h1{color:#4b2672;margin-top:0}.status{padding:12px;border-radius:10px;background
   if(!('DecompressionStream' in window)) throw new Error('Deze browser ondersteunt DecompressionStream niet. Gebruik een actuele Chrome, Edge of Safari.');
   const names=['payload01.txt','payload02.txt','payload03.txt'];
   const parts=await Promise.all(names.map(async n=>{
-   const r=await fetch(n+'?v=0620',{cache:'no-store'});
+   const r=await fetch(n+'?v=0630',{cache:'no-store'});
    if(!r.ok) throw new Error(n+' kon niet worden geladen (HTTP '+r.status+').');
    return await r.text();
   }));
@@ -36,9 +36,9 @@ h1{color:#4b2672;margin-top:0}.status{padding:12px;border-radius:10px;background
 
   const redirectUrl='https://maartenchung.github.io/Hercules-O16/cloud-v0.6-test/';
   html=html.replace("options:{data:{full_name:'ClubMatch beheerder'}}","options:{emailRedirectTo:'"+redirectUrl+"',data:{full_name:'ClubMatch beheerder'}}");
-  html=html.replace("const CLOUD_BRIDGE_VERSION='0.6';","const CLOUD_BRIDGE_VERSION='0.6.2';");
-  html=html.replace('Cloud v0.6 · apparaat-sync + diagnostiek + Cloud dashboard','Cloud v0.6.2 · centrale pauzetijd + expliciet hervatten + apparaat-sync');
-  html=html.replace('v0.6 controleert elke 5 seconden','v0.6.2 controleert elke 5 seconden');
+  html=html.replace("const CLOUD_BRIDGE_VERSION='0.6';","const CLOUD_BRIDGE_VERSION='0.6.3';");
+  html=html.replace('Cloud v0.6 · apparaat-sync + diagnostiek + Cloud dashboard','Cloud v0.6.3 · live highlights + wisselstatistieken + favorieten + apparaat-sync');
+  html=html.replace('v0.6 controleert elke 5 seconden','v0.6.3 controleert elke 5 seconden');
 
   // Nooit automatisch een oude Cloud-wedstrijd hervatten.
   html=html.replace(
@@ -46,7 +46,7 @@ h1{color:#4b2672;margin-top:0}.status{padding:12px;border-radius:10px;background
    "  cloudActiveMatchId=null;\n  cloudLastSnapshotVersion=null;\n  cloudLastDraftStamp=null;"
   );
 
-  // Pauzetijd reconstrueren uit server-events. Dit is onafhankelijk van wedstrijd-elapsed.
+  // Pauzetijd reconstrueren uit centrale server-events.
   html=html.replace('function cloudApplyLiveSnapshot(snap){',
 `function cloudPauseInfoFromEvents(events,serverNowIso){
   const nowMs=Date.parse(serverNowIso||new Date().toISOString());
@@ -126,6 +126,12 @@ function rawActiveMs(){`);
   }
 }
 function nowMinute()`);
+
+  // v0.6.3 UI/clock patch wordt na de hoofdapp uitgevoerd.
+  const pr=await fetch('v063-patch.js?v=0630',{cache:'no-store'});
+  if(!pr.ok) throw new Error('v0.6.3 patch kon niet worden geladen (HTTP '+pr.status+').');
+  const patch=await pr.text();
+  html=html.replace('</body>','<script>'+patch.replace(/<\\/script>/gi,'<\\/script>')+'<\\/script></body>');
 
   document.open(); document.write(html); document.close();
  }catch(e){
