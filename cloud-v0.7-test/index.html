@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>ClubMatch Cloud v0.7.0 laden…</title>
+<title>ClubMatch Cloud v0.7.1 laden…</title>
 <style>
 :root{font-family:Arial,Helvetica,sans-serif;color:#241633;background:#f6f1fb}
 body{margin:0;padding:24px}.box{max-width:680px;margin:40px auto;background:#fff;border:1px solid #eadcf5;border-radius:16px;padding:20px;box-shadow:0 4px 18px rgba(93,46,132,.12)}
@@ -14,7 +14,7 @@ h1{color:#4b2672;margin-top:0}.status{padding:12px;border-radius:10px;background
 </style>
 </head>
 <body>
-<div class="box"><h1>ClubMatch Cloud v0.7.0</h1><div id="status" class="status">Schone v0.7-testbuild laden…</div></div>
+<div class="box"><h1>ClubMatch Cloud v0.7.1</h1><div id="status" class="status">v0.7.1 testbuild laden…</div></div>
 <script>
 (async()=>{
  const s=document.getElementById('status');
@@ -22,7 +22,7 @@ h1{color:#4b2672;margin-top:0}.status{padding:12px;border-radius:10px;background
   if(!('DecompressionStream' in window))throw new Error('Gebruik een actuele Chrome, Edge of Safari.');
   const base='../cloud-v0.6-test/';
   const names=['payload01.txt','payload02.txt','payload03.txt'];
-  const parts=await Promise.all(names.map(async n=>{const r=await fetch(base+n+'?v=0700',{cache:'no-store'});if(!r.ok)throw new Error(n+' kon niet worden geladen (HTTP '+r.status+').');return r.text()}));
+  const parts=await Promise.all(names.map(async n=>{const r=await fetch(base+n+'?v=0710',{cache:'no-store'});if(!r.ok)throw new Error(n+' kon niet worden geladen (HTTP '+r.status+').');return r.text()}));
   const b64=parts.join('').replace(/\s+/g,'');
   if(b64.length!==47004)throw new Error('Payloadlengte klopt niet: '+b64.length+'.');
   const bin=atob(b64),bytes=Uint8Array.from(bin,c=>c.charCodeAt(0)),ds=new DecompressionStream('gzip');
@@ -31,18 +31,16 @@ h1{color:#4b2672;margin-top:0}.status{padding:12px;border-radius:10px;background
 
   const redirectUrl='https://maartenchung.github.io/Hercules-O16/cloud-v0.7-test/';
   html=html.replace("options:{data:{full_name:'ClubMatch beheerder'}}","options:{emailRedirectTo:'"+redirectUrl+"',data:{full_name:'ClubMatch beheerder'}}");
-  html=html.replace("const CLOUD_BRIDGE_VERSION='0.6';","const CLOUD_BRIDGE_VERSION='0.7.0';");
-  html=html.replace('Cloud v0.6 · apparaat-sync + diagnostiek + Cloud dashboard','Cloud v0.7.0 · basisopstelling-herstel + stabiele live UI + rijk dashboard');
-  html=html.replace('v0.6 controleert elke 5 seconden','v0.7.0 controleert elke 5 seconden');
-  html=html.replace('v0.6.1 controleert elke 5 seconden','v0.7.0 controleert elke 5 seconden');
+  html=html.replace("const CLOUD_BRIDGE_VERSION='0.6';","const CLOUD_BRIDGE_VERSION='0.7.1';");
+  html=html.replace('Cloud v0.6 · apparaat-sync + diagnostiek + Cloud dashboard','Cloud v0.7.1 · vaste live-opstelling + wisselstatus + rijk dashboard');
+  html=html.replace('v0.6 controleert elke 5 seconden','v0.7.1 controleert elke 5 seconden');
+  html=html.replace('v0.6.1 controleert elke 5 seconden','v0.7.1 controleert elke 5 seconden');
 
-  // Oude Cloud-sessie nooit stilzwijgend opnieuw openen.
   html=html.replace(
    "  const stored=localStorage.getItem('clubmatch_cloud_active_match_v1');\n  if(stored&&cloudOpenMatches.some(x=>x.match_id===stored))cloudActiveMatchId=stored;",
    "  cloudActiveMatchId=null;\n  cloudLastSnapshotVersion=null;\n  cloudLastDraftStamp=null;"
   );
 
-  // Centrale rust/pauzetijd reconstrueren uit serverevents.
   html=html.replace('function cloudApplyLiveSnapshot(snap){',
 `function cloudPauseInfoFromEvents(events,serverNowIso){
   const nowMs=Date.parse(serverNowIso||new Date().toISOString());
@@ -80,12 +78,12 @@ function rawActiveMs(){`);
   return Math.max(0,(state.pausedTotalMs||0)+current);
 }`);
 
-  // Alleen de schone v0.7-lagen laden; geen v063-patch/layoutfix.
   const scripts=[
-    '../cloud-v0.6-test/v064-stablerender.js?v=0700',
-    'v070-clock.js?v=0700',
-    'prepfix.js?v=0700',
-    'v070-ui.js?v=0700'
+    '../cloud-v0.6-test/v064-stablerender.js?v=0710',
+    'v070-clock.js?v=0710',
+    'prepfix.js?v=0710',
+    'v070-ui.js?v=0710',
+    'v071-ui.js?v=0710'
   ].map(src=>'<scr'+'ipt src="'+src+'"></scr'+'ipt>').join('');
   html=html.replace('</body>',scripts+'</body>');
   document.open();document.write(html);document.close();
