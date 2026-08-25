@@ -22,7 +22,7 @@ h1{color:#4b2672;margin-top:0}.status{padding:12px;border-radius:10px;background
   if(!('DecompressionStream' in window)) throw new Error('Deze browser ondersteunt DecompressionStream niet. Gebruik een actuele Chrome, Edge of Safari.');
   const names=['payload01.txt','payload02.txt','payload03.txt'];
   const parts=await Promise.all(names.map(async n=>{
-   const r=await fetch(n+'?v=0601',{cache:'no-store'});
+   const r=await fetch(n+'?v=0602',{cache:'no-store'});
    if(!r.ok) throw new Error(n+' kon niet worden geladen (HTTP '+r.status+').');
    return await r.text();
   }));
@@ -31,8 +31,10 @@ h1{color:#4b2672;margin-top:0}.status{padding:12px;border-radius:10px;background
   const bin=atob(b64);
   const bytes=Uint8Array.from(bin,c=>c.charCodeAt(0));
   const ds=new DecompressionStream('gzip');
-  const html=await new Response(new Blob([bytes]).stream().pipeThrough(ds)).text();
+  let html=await new Response(new Blob([bytes]).stream().pipeThrough(ds)).text();
   if(!html.includes("CLOUD_BRIDGE_VERSION='0.6'")) throw new Error('De geladen build is niet Cloud v0.6.');
+  const redirectUrl='https://maartenchung.github.io/Hercules-O16/cloud-v0.6-test/';
+  html=html.replace("options:{data:{full_name:'ClubMatch beheerder'}}","options:{emailRedirectTo:'"+redirectUrl+"',data:{full_name:'ClubMatch beheerder'}}");
   document.open(); document.write(html); document.close();
  }catch(e){
   s.classList.add('err');
