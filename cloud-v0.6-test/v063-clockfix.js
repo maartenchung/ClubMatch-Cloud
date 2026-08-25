@@ -1,10 +1,10 @@
 (()=>{
 // Layout-stabilisatie: laad compacte wisselbadges zonder extra tekstregel/hoogte.
 if(!document.querySelector('link[data-v063-layoutfix]')){
- const l=document.createElement('link');l.rel='stylesheet';l.href='v063-layoutfix.css?v=0634';l.dataset.v063Layoutfix='1';document.head.appendChild(l);
+ const l=document.createElement('link');l.rel='stylesheet';l.href='v063-layoutfix.css?v=0640';l.dataset.v063Layoutfix='1';document.head.appendChild(l);
 }
 if(!document.querySelector('script[data-v063-layoutfix]')){
- const s=document.createElement('script');s.src='v063-layoutfix.js?v=0634';s.dataset.v063Layoutfix='1';document.head.appendChild(s);
+ const s=document.createElement('script');s.src='v063-layoutfix.js?v=0640';s.dataset.v063Layoutfix='1';document.head.appendChild(s);
 }
 const style=document.createElement('style');
 style.textContent=`
@@ -80,8 +80,12 @@ document.addEventListener('click',ev=>{
 setInterval(updatePauseUi063,500);
 setTimeout(updatePauseUi063,100);
 
-// v0.6.3.4: stabiele renderer. Geen volledige spelertegel-rebuild meer iedere seconde.
+// v0.6.4: stabiele renderer. Geen volledige spelertegel-rebuild meer iedere seconde.
 if(!document.querySelector('script[data-v064-stable]')){
- const sr=document.createElement('script');sr.src='v064-stablerender.js?v=0634';sr.dataset.v064Stable='1';sr.async=false;document.body.appendChild(sr);
+ const sr=document.createElement('script');sr.src='v064-stablerender.js?v=0640';sr.dataset.v064Stable='1';sr.async=false;document.body.appendChild(sr);
+}
+// v0.6.4: permanente veldlabels, wisselkleuren, legenda, actieve state en favorieten.
+if(!document.querySelector('script[data-v064-ui]')){
+ const ui=document.createElement('script');ui.src='v064-ui.js?v=0640';ui.dataset.v064Ui='1';ui.async=false;document.body.appendChild(ui);
 }
 })();
