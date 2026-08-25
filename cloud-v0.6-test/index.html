@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>ClubMatch Cloud v0.6.3 test laden…</title>
+<title>ClubMatch Cloud v0.6.3.1 test laden…</title>
 <style>
 :root{font-family:Arial,Helvetica,sans-serif;color:#241633;background:#f6f1fb}
 body{margin:0;padding:24px}.box{max-width:680px;margin:40px auto;background:#fff;border:1px solid #eadcf5;border-radius:16px;padding:20px;box-shadow:0 4px 18px rgba(93,46,132,.12)}
@@ -14,7 +14,7 @@ h1{color:#4b2672;margin-top:0}.status{padding:12px;border-radius:10px;background
 </style>
 </head>
 <body>
-<div class="box"><h1>ClubMatch Cloud v0.6.3</h1><div id="status" class="status">Testbuild laden…</div></div>
+<div class="box"><h1>ClubMatch Cloud v0.6.3.1</h1><div id="status" class="status">Testbuild laden…</div></div>
 <script>
 (async()=>{
  const s=document.getElementById('status');
@@ -36,15 +36,17 @@ h1{color:#4b2672;margin-top:0}.status{padding:12px;border-radius:10px;background
 
   const redirectUrl='https://maartenchung.github.io/Hercules-O16/cloud-v0.6-test/';
   html=html.replace("options:{data:{full_name:'ClubMatch beheerder'}}","options:{emailRedirectTo:'"+redirectUrl+"',data:{full_name:'ClubMatch beheerder'}}");
-  html=html.replace("const CLOUD_BRIDGE_VERSION='0.6';","const CLOUD_BRIDGE_VERSION='0.6.3';");
-  html=html.replace('Cloud v0.6 · apparaat-sync + diagnostiek + Cloud dashboard','Cloud v0.6.3 · live highlights + wisselstatistieken + favorieten + apparaat-sync');
-  html=html.replace('v0.6 controleert elke 5 seconden','v0.6.3 controleert elke 5 seconden');
+  html=html.replace("const CLOUD_BRIDGE_VERSION='0.6';","const CLOUD_BRIDGE_VERSION='0.6.3.1';");
+  html=html.replace('Cloud v0.6 · apparaat-sync + diagnostiek + Cloud dashboard','Cloud v0.6.3.1 · live highlights + wisselstatistieken + favorieten + apparaat-sync');
+  html=html.replace('v0.6 controleert elke 5 seconden','v0.6.3.1 controleert elke 5 seconden');
 
+  // Nooit automatisch een oude Cloud-wedstrijd hervatten.
   html=html.replace(
    "  const stored=localStorage.getItem('clubmatch_cloud_active_match_v1');\n  if(stored&&cloudOpenMatches.some(x=>x.match_id===stored))cloudActiveMatchId=stored;",
    "  cloudActiveMatchId=null;\n  cloudLastSnapshotVersion=null;\n  cloudLastDraftStamp=null;"
   );
 
+  // Pauzetijd reconstrueren uit centrale server-events.
   html=html.replace('function cloudApplyLiveSnapshot(snap){',
 `function cloudPauseInfoFromEvents(events,serverNowIso){
   const nowMs=Date.parse(serverNowIso||new Date().toISOString());
@@ -92,6 +94,7 @@ function rawActiveMs(){`);
   return Math.max(0,(state.pausedTotalMs||0)+current);
 }`);
 
+  // Klokbeveiliging voor ontspoorde oude testmatches.
   html=html.replace(
    "async function cloudClockAction(action,minutes=null){\n  try{",
    "async function cloudClockAction(action,minutes=null){\n  if(state?.cloudClockSafetyLock){setStatus('Klokbeveiliging actief: deze oude testwedstrijd wordt niet automatisch gewijzigd.');cloudSetStatus('Klokbeveiliging actief. Open een verse testwedstrijd of herstel deze server-side.');return}\n  try{"
@@ -124,10 +127,9 @@ function rawActiveMs(){`);
 }
 function nowMinute()`);
 
-  const pr=await fetch('v063-patch.js?v=0631',{cache:'no-store'});
-  if(!pr.ok) throw new Error('v0.6.3 patch kon niet worden geladen (HTTP '+pr.status+').');
-  const patch=await pr.text();
-  html=html.replace('</body>','<script>'+patch+'</script></body>');
+  // Externe v0.6.3 UI-patch, zonder inline script-escapingrisico.
+  const ext='<scr'+'ipt src="v063-patch.js?v=0631"></scr'+'ipt>';
+  html=html.replace('</body>',ext+'</body>');
 
   document.open(); document.write(html); document.close();
  }catch(e){
