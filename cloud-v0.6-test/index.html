@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>ClubMatch Cloud v0.6 test laden…</title>
+<title>ClubMatch Cloud v0.6.1 test laden…</title>
 <style>
 :root{font-family:Arial,Helvetica,sans-serif;color:#241633;background:#f6f1fb}
 body{margin:0;padding:24px}.box{max-width:680px;margin:40px auto;background:#fff;border:1px solid #eadcf5;border-radius:16px;padding:20px;box-shadow:0 4px 18px rgba(93,46,132,.12)}
@@ -14,7 +14,7 @@ h1{color:#4b2672;margin-top:0}.status{padding:12px;border-radius:10px;background
 </style>
 </head>
 <body>
-<div class="box"><h1>ClubMatch Cloud v0.6</h1><div id="status" class="status">Testbuild laden…</div></div>
+<div class="box"><h1>ClubMatch Cloud v0.6.1</h1><div id="status" class="status">Testbuild laden…</div></div>
 <script>
 (async()=>{
  const s=document.getElementById('status');
@@ -22,7 +22,7 @@ h1{color:#4b2672;margin-top:0}.status{padding:12px;border-radius:10px;background
   if(!('DecompressionStream' in window)) throw new Error('Deze browser ondersteunt DecompressionStream niet. Gebruik een actuele Chrome, Edge of Safari.');
   const names=['payload01.txt','payload02.txt','payload03.txt'];
   const parts=await Promise.all(names.map(async n=>{
-   const r=await fetch(n+'?v=0602',{cache:'no-store'});
+   const r=await fetch(n+'?v=0610',{cache:'no-store'});
    if(!r.ok) throw new Error(n+' kon niet worden geladen (HTTP '+r.status+').');
    return await r.text();
   }));
@@ -32,9 +32,51 @@ h1{color:#4b2672;margin-top:0}.status{padding:12px;border-radius:10px;background
   const bytes=Uint8Array.from(bin,c=>c.charCodeAt(0));
   const ds=new DecompressionStream('gzip');
   let html=await new Response(new Blob([bytes]).stream().pipeThrough(ds)).text();
-  if(!html.includes("CLOUD_BRIDGE_VERSION='0.6'")) throw new Error('De geladen build is niet Cloud v0.6.');
+  if(!html.includes("CLOUD_BRIDGE_VERSION='0.6'")) throw new Error('De geladen basisbuild is niet Cloud v0.6.');
+
   const redirectUrl='https://maartenchung.github.io/Hercules-O16/cloud-v0.6-test/';
   html=html.replace("options:{data:{full_name:'ClubMatch beheerder'}}","options:{emailRedirectTo:'"+redirectUrl+"',data:{full_name:'ClubMatch beheerder'}}");
+  html=html.replace("const CLOUD_BRIDGE_VERSION='0.6';","const CLOUD_BRIDGE_VERSION='0.6.1';");
+  html=html.replace('Cloud v0.6 · apparaat-sync + diagnostiek + Cloud dashboard','Cloud v0.6.1 · expliciet hervatten + klokbeveiliging + apparaat-sync');
+  html=html.replace('v0.6 controleert elke 5 seconden','v0.6.1 controleert elke 5 seconden');
+
+  html=html.replace(
+   "  const stored=localStorage.getItem('clubmatch_cloud_active_match_v1');\n  if(stored&&cloudOpenMatches.some(x=>x.match_id===stored))cloudActiveMatchId=stored;",
+   "  // Expliciet hervatten: een eerder gebruikte Cloud-wedstrijd wordt nooit automatisch actief.\n  cloudActiveMatchId=null;\n  cloudLastSnapshotVersion=null;\n  cloudLastDraftStamp=null;"
+  );
+
+  html=html.replace(
+   "async function cloudClockAction(action,minutes=null){\n  try{",
+   "async function cloudClockAction(action,minutes=null){\n  if(state?.cloudClockSafetyLock){setStatus('Klokbeveiliging actief: deze oude testwedstrijd wordt niet automatisch gewijzigd.');cloudSetStatus('Klokbeveiliging actief. Open een verse testwedstrijd of herstel deze server-side.');return}\n  try{"
+  );
+
+  html=html.replace(/function enforceTimeLimit\(\)\{[\s\S]*?\n\}\nfunction nowMinute\(\)/,
+`function enforceTimeLimit(){
+  if(!state.startMs||state.finished||state.paused)return;
+  const lim=(state.timeLimit||state.officialDuration||80)*60000,raw=rawActiveMs();
+  if(raw>=lim){
+    if(state.cloud){
+      state.autoStopped=true;
+      const hardSafety=Math.max(lim+60*60000,5*60*60000);
+      if(raw>hardSafety){
+        if(!state.cloudClockSafetyLock){
+          state.cloudClockSafetyLock=true;
+          cloudSetStatus('Klokbeveiliging actief: serverklok staat op '+Math.floor(raw/60000)+' min. Er wordt GEEN automatische klokactie verstuurd.');
+          setStatus('Klokbeveiliging actief: deze oude Cloud-testwedstrijd wordt niet automatisch gewijzigd.');
+        }
+        return;
+      }
+      if(!cloudAutoStopPending&&!state.cloudClockSafetyLock){
+        cloudAutoStopPending=true;
+        cloudClockAction('pause').finally(()=>{cloudAutoStopPending=false});
+      }
+      return;
+    }
+    const excess=raw-lim;state.pausedTotalMs+=(excess>0?excess:0);state.paused=true;state.pausedAt=Date.now();state.autoStopped=true;saveLive()
+  }
+}
+function nowMinute()`);
+
   document.open(); document.write(html); document.close();
  }catch(e){
   s.classList.add('err');
