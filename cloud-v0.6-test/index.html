@@ -22,7 +22,7 @@ h1{color:#4b2672;margin-top:0}.status{padding:12px;border-radius:10px;background
   if(!('DecompressionStream' in window)) throw new Error('Deze browser ondersteunt DecompressionStream niet. Gebruik een actuele Chrome, Edge of Safari.');
   const names=['payload01.txt','payload02.txt','payload03.txt'];
   const parts=await Promise.all(names.map(async n=>{
-   const r=await fetch(n+'?v=0630',{cache:'no-store'});
+   const r=await fetch(n+'?v=0631',{cache:'no-store'});
    if(!r.ok) throw new Error(n+' kon niet worden geladen (HTTP '+r.status+').');
    return await r.text();
   }));
@@ -40,13 +40,11 @@ h1{color:#4b2672;margin-top:0}.status{padding:12px;border-radius:10px;background
   html=html.replace('Cloud v0.6 · apparaat-sync + diagnostiek + Cloud dashboard','Cloud v0.6.3 · live highlights + wisselstatistieken + favorieten + apparaat-sync');
   html=html.replace('v0.6 controleert elke 5 seconden','v0.6.3 controleert elke 5 seconden');
 
-  // Nooit automatisch een oude Cloud-wedstrijd hervatten.
   html=html.replace(
    "  const stored=localStorage.getItem('clubmatch_cloud_active_match_v1');\n  if(stored&&cloudOpenMatches.some(x=>x.match_id===stored))cloudActiveMatchId=stored;",
    "  cloudActiveMatchId=null;\n  cloudLastSnapshotVersion=null;\n  cloudLastDraftStamp=null;"
   );
 
-  // Pauzetijd reconstrueren uit centrale server-events.
   html=html.replace('function cloudApplyLiveSnapshot(snap){',
 `function cloudPauseInfoFromEvents(events,serverNowIso){
   const nowMs=Date.parse(serverNowIso||new Date().toISOString());
@@ -94,7 +92,6 @@ function rawActiveMs(){`);
   return Math.max(0,(state.pausedTotalMs||0)+current);
 }`);
 
-  // Klokbeveiliging voor ontspoorde oude testmatches.
   html=html.replace(
    "async function cloudClockAction(action,minutes=null){\n  try{",
    "async function cloudClockAction(action,minutes=null){\n  if(state?.cloudClockSafetyLock){setStatus('Klokbeveiliging actief: deze oude testwedstrijd wordt niet automatisch gewijzigd.');cloudSetStatus('Klokbeveiliging actief. Open een verse testwedstrijd of herstel deze server-side.');return}\n  try{"
@@ -127,11 +124,10 @@ function rawActiveMs(){`);
 }
 function nowMinute()`);
 
-  // v0.6.3 UI/clock patch wordt na de hoofdapp uitgevoerd.
-  const pr=await fetch('v063-patch.js?v=0630',{cache:'no-store'});
+  const pr=await fetch('v063-patch.js?v=0631',{cache:'no-store'});
   if(!pr.ok) throw new Error('v0.6.3 patch kon niet worden geladen (HTTP '+pr.status+').');
   const patch=await pr.text();
-  html=html.replace('</body>','<script>'+patch.replace(/<\\/script>/gi,'<\\/script>')+'<\\/script></body>');
+  html=html.replace('</body>','<script>'+patch+'</script></body>');
 
   document.open(); document.write(html); document.close();
  }catch(e){
