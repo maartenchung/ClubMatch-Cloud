@@ -7,7 +7,12 @@
 .liveplayer.recentIn063{border-color:#1976d2!important;background:#eaf3ff!important;box-shadow:inset 4px 0 0 #1976d2!important}
 .liveplayer.recentOut063{border-color:#d39118!important;background:#fff8e8!important;box-shadow:inset 4px 0 0 #d39118!important}
 
-/* Live veld: geen groen gebruiken voor wisselstatus, omdat het veld zelf groen is. */
+/* Legacy v0.6.3 minutelabel wordt nog door oude code aangemaakt/verwijderd.
+   Verberg het volledig zodat dit NOOIT meer layoutverschuiving veroorzaakt.
+   v0.6.4 gebruikt hiervoor een permanent .pitchMinute064 element. */
+#livePitch .pitchTime063{display:none!important;position:absolute!important;width:0!important;height:0!important;margin:0!important;padding:0!important;overflow:hidden!important}
+#livePitch .slot{min-height:72px!important}
+
 #livePitch .slot.swapNone064 .dot{background:#fff!important;color:#4b2672!important;outline:3px solid rgba(255,255,255,.96)!important;outline-offset:2px!important}
 #livePitch .slot.swapPast064 .dot{background:#6f42c1!important;color:#fff!important;outline:4px solid #d8c4ef!important;outline-offset:2px!important}
 #livePitch .slot.swapRecentIn064 .dot{background:#1976d2!important;color:#fff!important;outline:4px solid #b9d9ff!important;outline-offset:2px!important}
