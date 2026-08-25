@@ -1,8 +1,26 @@
 .subInfo063{display:none!important}
 .liveplayer{position:relative;overflow:visible}
-.swapChip064{position:absolute;right:72px;top:9px;z-index:3;display:inline-flex;align-items:center;gap:3px;padding:3px 7px;border-radius:999px;font-size:10px;font-weight:900;line-height:1;background:#efe5f8;color:#4b2672;border:1px solid rgba(111,66,193,.18);white-space:nowrap;pointer-events:none}
-.swapChip064.in{background:#dff3e5;color:#1f6638;border-color:#9ed5ad}
+.swapChip064{position:absolute;right:72px;top:9px;z-index:3;display:inline-flex;align-items:center;gap:3px;padding:3px 7px;border-radius:999px;font-size:10px;font-weight:900;line-height:1;background:#e8dcf5;color:#4b2672;border:1px solid #b99bd7;white-space:nowrap;pointer-events:none}
+.swapChip064.in{background:#dbeafe;color:#174ea6;border-color:#7fb3ef}
 .swapChip064.out{background:#fff0cf;color:#785000;border-color:#e5bf6e}
-.liveplayer.recentIn063{background:#eaf7ee!important}
-.liveplayer.recentOut063{background:#fff8e8!important}
-@media(max-width:720px){.swapChip064{right:58px;top:8px;padding:2px 5px;font-size:9px}}
+.liveplayer.subHistory063{border-color:#7d4bb3!important;background:#f5effb!important;box-shadow:inset 4px 0 0 #7d4bb3!important}
+.liveplayer.recentIn063{border-color:#1976d2!important;background:#eaf3ff!important;box-shadow:inset 4px 0 0 #1976d2!important}
+.liveplayer.recentOut063{border-color:#d39118!important;background:#fff8e8!important;box-shadow:inset 4px 0 0 #d39118!important}
+
+/* Live veld: geen groen gebruiken voor wisselstatus, omdat het veld zelf groen is. */
+#livePitch .slot.swapNone064 .dot{background:#fff!important;color:#4b2672!important;outline:3px solid rgba(255,255,255,.96)!important;outline-offset:2px!important}
+#livePitch .slot.swapPast064 .dot{background:#6f42c1!important;color:#fff!important;outline:4px solid #d8c4ef!important;outline-offset:2px!important}
+#livePitch .slot.swapRecentIn064 .dot{background:#1976d2!important;color:#fff!important;outline:4px solid #b9d9ff!important;outline-offset:2px!important}
+#livePitch .slot.swapNone064 .name{background:#fff!important;color:#301846!important}
+#livePitch .slot.swapPast064 .name{background:#eadff5!important;color:#3b2055!important}
+#livePitch .slot.swapRecentIn064 .name{background:#dbeafe!important;color:#174ea6!important}
+#livePitch .slot.recentIn063 .dot{background:#1976d2!important;outline:4px solid #b9d9ff!important}
+
+#swapLegend064{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:8px 4px 2px;padding:8px 10px;border-radius:10px;background:#faf7fd;border:1px solid #eadcf5;font-size:11px;color:#4b2672}
+#swapLegend064 b{margin-right:2px}
+.legendDot064{width:11px;height:11px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:-1px;border:1px solid rgba(36,22,51,.18)}
+.legendNone064{background:#fff}
+.legendPast064{background:#6f42c1}
+.legendIn064{background:#1976d2}
+.legendOut064{background:#d39118}
+@media(max-width:720px){.swapChip064{right:58px;top:8px;padding:2px 5px;font-size:9px}#swapLegend064{gap:6px 10px;font-size:10px}}
