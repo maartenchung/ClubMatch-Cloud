@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>ClubMatch Cloud v0.6.1 test laden…</title>
+<title>ClubMatch Cloud v0.6.2 test laden…</title>
 <style>
 :root{font-family:Arial,Helvetica,sans-serif;color:#241633;background:#f6f1fb}
 body{margin:0;padding:24px}.box{max-width:680px;margin:40px auto;background:#fff;border:1px solid #eadcf5;border-radius:16px;padding:20px;box-shadow:0 4px 18px rgba(93,46,132,.12)}
@@ -14,7 +14,7 @@ h1{color:#4b2672;margin-top:0}.status{padding:12px;border-radius:10px;background
 </style>
 </head>
 <body>
-<div class="box"><h1>ClubMatch Cloud v0.6.1</h1><div id="status" class="status">Testbuild laden…</div></div>
+<div class="box"><h1>ClubMatch Cloud v0.6.2</h1><div id="status" class="status">Testbuild laden…</div></div>
 <script>
 (async()=>{
  const s=document.getElementById('status');
@@ -22,7 +22,7 @@ h1{color:#4b2672;margin-top:0}.status{padding:12px;border-radius:10px;background
   if(!('DecompressionStream' in window)) throw new Error('Deze browser ondersteunt DecompressionStream niet. Gebruik een actuele Chrome, Edge of Safari.');
   const names=['payload01.txt','payload02.txt','payload03.txt'];
   const parts=await Promise.all(names.map(async n=>{
-   const r=await fetch(n+'?v=0610',{cache:'no-store'});
+   const r=await fetch(n+'?v=0620',{cache:'no-store'});
    if(!r.ok) throw new Error(n+' kon niet worden geladen (HTTP '+r.status+').');
    return await r.text();
   }));
@@ -36,15 +36,65 @@ h1{color:#4b2672;margin-top:0}.status{padding:12px;border-radius:10px;background
 
   const redirectUrl='https://maartenchung.github.io/Hercules-O16/cloud-v0.6-test/';
   html=html.replace("options:{data:{full_name:'ClubMatch beheerder'}}","options:{emailRedirectTo:'"+redirectUrl+"',data:{full_name:'ClubMatch beheerder'}}");
-  html=html.replace("const CLOUD_BRIDGE_VERSION='0.6';","const CLOUD_BRIDGE_VERSION='0.6.1';");
-  html=html.replace('Cloud v0.6 · apparaat-sync + diagnostiek + Cloud dashboard','Cloud v0.6.1 · expliciet hervatten + klokbeveiliging + apparaat-sync');
-  html=html.replace('v0.6 controleert elke 5 seconden','v0.6.1 controleert elke 5 seconden');
+  html=html.replace("const CLOUD_BRIDGE_VERSION='0.6';","const CLOUD_BRIDGE_VERSION='0.6.2';");
+  html=html.replace('Cloud v0.6 · apparaat-sync + diagnostiek + Cloud dashboard','Cloud v0.6.2 · centrale pauzetijd + expliciet hervatten + apparaat-sync');
+  html=html.replace('v0.6 controleert elke 5 seconden','v0.6.2 controleert elke 5 seconden');
 
+  // Nooit automatisch een oude Cloud-wedstrijd hervatten.
   html=html.replace(
    "  const stored=localStorage.getItem('clubmatch_cloud_active_match_v1');\n  if(stored&&cloudOpenMatches.some(x=>x.match_id===stored))cloudActiveMatchId=stored;",
-   "  // Expliciet hervatten: een eerder gebruikte Cloud-wedstrijd wordt nooit automatisch actief.\n  cloudActiveMatchId=null;\n  cloudLastSnapshotVersion=null;\n  cloudLastDraftStamp=null;"
+   "  cloudActiveMatchId=null;\n  cloudLastSnapshotVersion=null;\n  cloudLastDraftStamp=null;"
   );
 
+  // Pauzetijd reconstrueren uit server-events. Dit is onafhankelijk van wedstrijd-elapsed.
+  html=html.replace('function cloudApplyLiveSnapshot(snap){',
+`function cloudPauseInfoFromEvents(events,serverNowIso){
+  const nowMs=Date.parse(serverNowIso||new Date().toISOString());
+  const sorted=(events||[]).slice().sort((a,b)=>Date.parse(a.occurred_at||0)-Date.parse(b.occurred_at||0));
+  let totalMs=0,openStart=null;
+  for(const e of sorted){
+    const t=Date.parse(e.occurred_at||0); if(!Number.isFinite(t))continue;
+    if(e.event_type==='match_paused'||e.event_type==='halftime_started'){
+      if(openStart===null)openStart=t;
+    }else if(e.event_type==='match_resumed'||e.event_type==='second_half_started'||e.event_type==='match_finished'){
+      if(openStart!==null){totalMs+=Math.max(0,t-openStart);openStart=null}
+    }
+  }
+  if(openStart!==null)totalMs+=Math.max(0,nowMs-openStart);
+  return {totalMs,open:openStart!==null,serverNowMs:nowMs};
+}
+function cloudApplyLiveSnapshot(snap){`);
+
+  html=html.replace(
+   "  const effective=Math.max(0,Number(ms.effective_elapsed_seconds)||0);",
+   "  const effective=Math.max(0,Number(ms.effective_elapsed_seconds)||0);\n  const cloudPause=cloudPauseInfoFromEvents(events,snap.server_now);"
+  );
+
+  html=html.replace(
+   "    paused:ms.clock_status!=='running',pausedAt:ms.clock_status!=='running'?Date.now():null,pausedTotalMs:0,",
+   "    paused:ms.clock_status!=='running',pausedAt:ms.clock_status!=='running'?Date.now():null,pausedTotalMs:0,\n    cloudPauseTotalMs:cloudPause.totalMs,cloudPauseOpen:cloudPause.open,cloudPauseLoadedAtMs:Date.now(),"
+  );
+
+  html=html.replace('function rawActiveMs(){',
+`function cloudPauseMsNow(){
+  if(!state?.cloud)return state?.pausedTotalMs||0;
+  const base=Number(state.cloudPauseTotalMs)||0;
+  return state.cloudPauseOpen?base+Math.max(0,Date.now()-(Number(state.cloudPauseLoadedAtMs)||Date.now())):base;
+}
+function rawActiveMs(){`);
+
+  html=html.replace(
+`function livePauseMs(){
+  const current=(state.paused&&state.pausedAt&&!state.autoStopped)?Date.now()-state.pausedAt:0;
+  return Math.max(0,(state.pausedTotalMs||0)+current);
+}`,
+`function livePauseMs(){
+  if(state.cloud)return Math.max(0,cloudPauseMsNow());
+  const current=(state.paused&&state.pausedAt&&!state.autoStopped)?Date.now()-state.pausedAt:0;
+  return Math.max(0,(state.pausedTotalMs||0)+current);
+}`);
+
+  // Klokbeveiliging voor ontspoorde oude testmatches.
   html=html.replace(
    "async function cloudClockAction(action,minutes=null){\n  try{",
    "async function cloudClockAction(action,minutes=null){\n  if(state?.cloudClockSafetyLock){setStatus('Klokbeveiliging actief: deze oude testwedstrijd wordt niet automatisch gewijzigd.');cloudSetStatus('Klokbeveiliging actief. Open een verse testwedstrijd of herstel deze server-side.');return}\n  try{"
