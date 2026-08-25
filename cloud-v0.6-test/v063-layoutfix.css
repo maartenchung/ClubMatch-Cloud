@@ -1,0 +1,8 @@
+.subInfo063{display:none!important}
+.liveplayer{position:relative;overflow:visible}
+.swapChip064{position:absolute;right:72px;top:9px;z-index:3;display:inline-flex;align-items:center;gap:3px;padding:3px 7px;border-radius:999px;font-size:10px;font-weight:900;line-height:1;background:#efe5f8;color:#4b2672;border:1px solid rgba(111,66,193,.18);white-space:nowrap;pointer-events:none}
+.swapChip064.in{background:#dff3e5;color:#1f6638;border-color:#9ed5ad}
+.swapChip064.out{background:#fff0cf;color:#785000;border-color:#e5bf6e}
+.liveplayer.recentIn063{background:#eaf7ee!important}
+.liveplayer.recentOut063{background:#fff8e8!important}
+@media(max-width:720px){.swapChip064{right:58px;top:8px;padding:2px 5px;font-size:9px}}
