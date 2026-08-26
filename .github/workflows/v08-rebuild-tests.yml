@@ -36,6 +36,7 @@ jobs:
           node --check cloud-client.js
           node --check action-policy.js
           node --check clock-projector.js
+          node --check lifecycle-sync.js
           node --check dom-renderer.js
           node --check ui-frame.js
           node --check runtime.js
@@ -43,8 +44,10 @@ jobs:
         run: node cloud-client.test.mjs
       - name: Action availability policy
         run: node action-policy.test.mjs
-      - name: One-second clock projection
+      - name: One-second match and halftime clocks
         run: node clock-projector.test.mjs
+      - name: Mobile and desktop lifecycle resync
+        run: node lifecycle-sync.test.mjs
       - name: Mutation controller and lifecycle gates
         run: node mutation-controller.test.mjs
       - name: Snapshot adapter
