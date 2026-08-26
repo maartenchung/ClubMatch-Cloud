@@ -33,10 +33,13 @@ jobs:
       - name: Browser shell syntax
         run: |
           node --check app.js
+          node --check cloud-client.js
           node --check action-policy.js
           node --check dom-renderer.js
           node --check ui-frame.js
           node --check runtime.js
+      - name: Native Cloud transport
+        run: node cloud-client.test.mjs
       - name: Action availability policy
         run: node action-policy.test.mjs
       - name: Mutation controller and lifecycle gates
