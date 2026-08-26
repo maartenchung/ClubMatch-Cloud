@@ -34,7 +34,7 @@ h1{color:#4b2672;margin-top:0}.status{padding:12px;border-radius:10px;background
   let html=await new Response(new Blob([bytes]).stream().pipeThrough(ds)).text();
   if(!html.includes("CLOUD_BRIDGE_VERSION='0.6'")) throw new Error('De geladen basisbuild is niet Cloud v0.6.');
 
-  const redirectUrl='https://maartenchung.github.io/Hercules-O16/cloud-v0.6-test/';
+  const redirectUrl='https://maartenchung.github.io/ClubMatch-Cloud/cloud-v0.6-test/';
   html=html.replace("options:{data:{full_name:'ClubMatch beheerder'}}","options:{emailRedirectTo:'"+redirectUrl+"',data:{full_name:'ClubMatch beheerder'}}");
   html=html.replace("const CLOUD_BRIDGE_VERSION='0.6';","const CLOUD_BRIDGE_VERSION='0.6.3.2';");
   html=html.replace('Cloud v0.6 · apparaat-sync + diagnostiek + Cloud dashboard','Cloud v0.6.3.2 · pause/resume fix + live highlights + apparaat-sync');
