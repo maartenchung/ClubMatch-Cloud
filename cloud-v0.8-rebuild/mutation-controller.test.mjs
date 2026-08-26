@@ -14,7 +14,7 @@ const players={
   c:{playerId:'c',currentRole:'FIELD',currentPosition:'ST'}
 };
 const liveState=()=>({players:structuredClone(players),fieldIds:['a','c']});
-const snapshot=version=>({match:{id:'m1',status:'live'},state:{state_version:version,effective_elapsed_seconds:600},players:[],events:[]});
+const snapshot=(version,status='live')=>({match:{id:'m1',status},state:{state_version:version,effective_elapsed_seconds:600},players:[],events:[]});
 
 async function testConfirmedRenderOnly(){
   let version=1,mutated=false,renders=0;
@@ -73,8 +73,55 @@ async function testAtomicSwapUsesOneRpc(){
   assert.equal(writes[0].params.p_client_event_id,'swap-1');
 }
 
+async function testFinishUsesServerClockRpc(){
+  let version=1,status='live',writes=[];
+  const rpc=async(name,params)=>{
+    if(name==='get_match_snapshot')return {data:snapshot(version,status)};
+    writes.push({name,params});
+    assert.equal(name,'advance_match_clock');
+    assert.equal(params.p_action,'finish');
+    status='finished';version++;
+    return {data:{ok:true,status,state_version:version}};
+  };
+  const controller=createMutationController({rpc,deriveSnapshot:liveState,idFactory:()=> 'finish-1'});
+  const result=await controller.advanceClock({matchId:'m1',clockAction:'finish'});
+  assert.equal(writes.length,1);
+  assert.equal(result.after.snapshot.match.status,'finished');
+}
+
+async function testSafeDeleteContract(){
+  let writes=[];
+  const rpc=async(name,params)=>{
+    if(name==='get_match_snapshot')return {data:snapshot(5,'finished')};
+    writes.push({name,params});
+    return {data:{ok:true,deleted_match_id:'m1'}};
+  };
+  const controller=createMutationController({rpc,deriveSnapshot:liveState});
+  await assert.rejects(()=>controller.deleteMatch({matchId:'m1',confirmation:'yes'}),/Explicit DELETE confirmation/);
+  assert.equal(writes.length,0,'invalid confirmation must never write');
+  const result=await controller.deleteMatch({matchId:'m1',confirmation:'DELETE'});
+  assert.equal(writes.length,1);
+  assert.equal(writes[0].name,'delete_match_v08');
+  assert.equal(writes[0].params.p_confirmation,'DELETE');
+  assert.equal(result.after,null,'deleted match must not be reloaded');
+}
+
+async function testActiveDeleteIsBlockedBeforeDeleteRpc(){
+  let deleteWrites=0;
+  const rpc=async name=>{
+    if(name==='get_match_snapshot')return {data:snapshot(3,'live')};
+    deleteWrites++;return {data:{ok:true}};
+  };
+  const controller=createMutationController({rpc,deriveSnapshot:liveState});
+  await assert.rejects(()=>controller.deleteMatch({matchId:'m1',confirmation:'DELETE'}),/Active matches must be finished/);
+  assert.equal(deleteWrites,0);
+}
+
 await testConfirmedRenderOnly();
 await testInvalidMutationDoesNotWrite();
 await testQueueSerializesWrites();
 await testAtomicSwapUsesOneRpc();
-console.log('PASS mutation-controller: 4/4');
+await testFinishUsesServerClockRpc();
+await testSafeDeleteContract();
+await testActiveDeleteIsBlockedBeforeDeleteRpc();
+console.log('PASS mutation-controller: 7/7');
