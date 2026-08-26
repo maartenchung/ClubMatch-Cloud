@@ -4,11 +4,21 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="refresh" content="0; url=./cloud-v0.8-rebuild/">
 <title>ClubMatch Cloud</title>
-<script>location.replace('./cloud-v0.8-rebuild/');</script>
+<script>
+(function(){
+  const target=new URL('./cloud-v0.8-rebuild/',location.href);
+  target.search=location.search;
+  target.hash=location.hash;
+  location.replace(target.href);
+})();
+</script>
 </head>
 <body>
-<p>ClubMatch Cloud v0.8 wordt geopend… <a href="./cloud-v0.8-rebuild/">Open v0.8</a></p>
+<p>ClubMatch Cloud v0.8 wordt geopend… <a id="fallback" href="./cloud-v0.8-rebuild/">Open v0.8</a></p>
+<script>
+const link=document.getElementById('fallback');
+const target=new URL('./cloud-v0.8-rebuild/',location.href);target.search=location.search;target.hash=location.hash;link.href=target.href;
+</script>
 </body>
 </html>
