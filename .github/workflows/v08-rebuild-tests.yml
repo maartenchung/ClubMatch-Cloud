@@ -47,6 +47,8 @@ jobs:
           node --check dom-renderer.js
           node --check ui-frame.js
           node --check runtime.js
+      - name: GitHub Pages password recovery redirect
+        run: grep -F "const RESET_REDIRECT='https://maartenchung.github.io/ClubMatch-Cloud/cloud-v0.8-rebuild/';" app.js
       - name: Native Cloud transport, recovery and MFA
         run: node cloud-client.test.mjs
       - name: Password recovery and MFA security controller
