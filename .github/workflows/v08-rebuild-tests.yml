@@ -30,7 +30,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Mutation controller
+      - name: Mutation controller and lifecycle gates
         run: node mutation-controller.test.mjs
       - name: Snapshot adapter
         run: node snapshot-adapter.test.mjs
@@ -40,3 +40,5 @@ jobs:
         run: node runtime.test.mjs
       - name: Match regression gates 1-17
         run: node regression-gates.test.mjs
+      - name: Single-source UI frame
+        run: node ui-frame.test.mjs
