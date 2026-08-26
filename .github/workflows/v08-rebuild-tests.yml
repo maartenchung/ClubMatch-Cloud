@@ -43,6 +43,8 @@ jobs:
           node --check formation-layout.js
           node --check preparation-controller.js
           node --check preparation-ui.js
+          node --check correction-ui.js
+          node --check correction-bootstrap.js
           node --check dashboard-controller.js
           node --check dashboard-ui.js
           node --check dom-renderer.js
@@ -70,6 +72,8 @@ jobs:
         run: node formation-layout.test.mjs
       - name: Match preparation and start gate
         run: node preparation-controller.test.mjs
+      - name: Append-only event correction projection
+        run: node correction-ui.test.mjs
       - name: Dashboard team filter and history
         run: node dashboard-controller.test.mjs
       - name: Mutation controller and lifecycle gates
