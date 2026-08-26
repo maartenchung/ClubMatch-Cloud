@@ -4,8 +4,8 @@
 const SUPABASE_URL='https://fnbqyogbamufytcabfzm.supabase.co';
 const SUPABASE_KEY='sb_publishable_skGPpngOQ_1OpEbreV2kXA__2OL_Mbp';
 const byId=id=>document.getElementById(id);
-const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let client=null,runtime=null,renderer=null,lifecycleSync=null,matchSelection=null,preparation=null,preparationUi=null,lastFrame=null,busy=false;
+const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+let client=null,runtime=null,renderer=null,lifecycleSync=null,matchSelection=null,preparation=null,preparationUi=null,dashboard=null,dashboardUi=null,lastFrame=null,busy=false;
 
 function status(message,ok=false){const el=byId('v08Status');if(!el)return;el.textContent=message;el.classList.toggle('ok',ok);el.classList.toggle('bad',!ok&&!!message)}
 function setBusy(value){busy=!!value;document.querySelectorAll('[data-v08-action]').forEach(btn=>{btn.disabled=busy||btn.dataset.v08Allowed==='0'})}
@@ -26,8 +26,8 @@ function updateActionControls(frame){lastFrame=frame;fillSelect('subOut',frame.f
 function renderModel(model){const frame=global.ClubMatchV08UiFrame.createUiFrame(model);renderer.render(frame);updateActionControls(frame)}
 function markActiveMatch(matchId){document.querySelectorAll('.matchChoice').forEach(x=>x.classList.toggle('active',x.dataset.matchId===matchId))}
 
-async function openLiveMatch(match,{remember=true}={}){preparationUi?.hide();await runtime.start(match.match_id);if(remember)matchSelection?.remember(match.match_id);markActiveMatch(match.match_id);return runtime.viewModel}
-async function openPreparation(match,{remember=true}={}){runtime.stop();resetLiveUi();if(remember)matchSelection?.remember(match.match_id);await preparationUi.openExisting(match);markActiveMatch(match.match_id);return preparation.state}
+async function openLiveMatch(match,{remember=true}={}){preparationUi?.hide();dashboardUi?.hide();await runtime.start(match.match_id);if(remember)matchSelection?.remember(match.match_id);markActiveMatch(match.match_id);return runtime.viewModel}
+async function openPreparation(match,{remember=true}={}){dashboardUi?.hide();runtime.stop();resetLiveUi();if(remember)matchSelection?.remember(match.match_id);await preparationUi.openExisting(match);markActiveMatch(match.match_id);return preparation.state}
 async function openMatchSummary(match,options={}){if(['draft','scheduled'].includes(match.status))return openPreparation(match,options);return openLiveMatch(match,options)}
 
 async function refreshOpenMatches({restore=false}={}){
@@ -41,21 +41,20 @@ async function refreshOpenMatches({restore=false}={}){
   return matches;
 }
 
-function ensureNewPreparationButton(){
-  if(byId('newPreparationBtn'))return;const refresh=byId('refreshMatchesBtn'),parent=refresh?.parentElement;if(!parent)return;
-  const button=document.createElement('button');button.id='newPreparationBtn';button.className='secondary';button.dataset.v08Action='';button.textContent='+ Nieuwe wedstrijd';
-  button.onclick=()=>run('Nieuwe voorbereiding',async()=>{runtime.stop();resetLiveUi();matchSelection?.clear();preparation.clear();await preparation.loadTeamSeasons();preparationUi.renderCurrent();return preparation.state});
-  parent.insertBefore(button,refresh);
+function ensureHeaderButtons(){
+  const refresh=byId('refreshMatchesBtn'),parent=refresh?.parentElement;if(!parent)return;
+  if(!byId('newPreparationBtn')){const button=document.createElement('button');button.id='newPreparationBtn';button.className='secondary';button.dataset.v08Action='';button.textContent='+ Nieuwe wedstrijd';button.onclick=()=>run('Nieuwe voorbereiding',async()=>{dashboardUi?.hide();runtime.stop();resetLiveUi();matchSelection?.clear();preparation.clear();await preparation.loadTeamSeasons();preparationUi.renderCurrent();return preparation.state});parent.insertBefore(button,refresh)}
+  if(!byId('dashboardBtn')){const button=document.createElement('button');button.id='dashboardBtn';button.className='secondary';button.dataset.v08Action='';button.textContent='Dashboard';button.onclick=()=>run('Dashboard laden',async()=>{preparationUi?.hide();await dashboard.loadTeams();await dashboard.load(null);dashboardUi.show();return dashboard.state});parent.insertBefore(button,refresh)}
 }
 
-function showSession(session){const signed=!!session?.user;byId('authPanel').classList.toggle('hidden',signed);byId('appPanel').classList.toggle('hidden',!signed);byId('sessionEmail').textContent=signed?session.user.email||session.user.id:'';if(!signed){runtime?.stop?.();preparationUi?.hide?.();resetLiveUi()}}
+function showSession(session){const signed=!!session?.user;byId('authPanel').classList.toggle('hidden',signed);byId('appPanel').classList.toggle('hidden',!signed);byId('sessionEmail').textContent=signed?session.user.email||session.user.id:'';if(!signed){runtime?.stop?.();preparationUi?.hide?.();dashboardUi?.hide?.();resetLiveUi()}}
 async function loadSignedInContext({restore=true}={}){await preparation.loadTeamSeasons();return refreshOpenMatches({restore})}
 async function bootstrapSession(){const {data,error}=await client.auth.getSession();if(error)throw error;showSession(data.session);if(data.session)await loadSignedInContext({restore:true})}
 
 function bindActions(){
-  ensureNewPreparationButton();
+  ensureHeaderButtons();
   byId('loginBtn').onclick=()=>run('Inloggen',async()=>{const email=byId('email').value.trim(),password=byId('password').value;const {data,error}=await client.auth.signInWithPassword({email,password});if(error)throw error;showSession(data.session);await loadSignedInContext({restore:true})});
-  byId('logoutBtn').onclick=()=>run('Uitloggen',async()=>{runtime.stop();preparationUi.hide();const {error}=await client.auth.signOut();if(error)throw error;showSession(null);byId('openMatches').innerHTML=''});
+  byId('logoutBtn').onclick=()=>run('Uitloggen',async()=>{runtime.stop();preparationUi.hide();dashboardUi.hide();const {error}=await client.auth.signOut();if(error)throw error;showSession(null);byId('openMatches').innerHTML=''});
   byId('refreshMatchesBtn').onclick=()=>run('Wedstrijden verversen',()=>refreshOpenMatches({restore:!runtime.activeMatchId&&!preparationUi.visible}));byId('refreshLiveBtn').onclick=()=>run('Live status verversen',()=>runtime.refresh('manual'));
   byId('subBtn').onclick=()=>run('Wissel vastleggen',()=>runtime.substitute({outId:byId('subOut').value,inId:byId('subIn').value}));
   byId('posBtn').onclick=()=>run('Positie wijzigen',()=>runtime.changePosition({playerId:byId('posPlayer').value,position:byId('posNew').value.trim()}));
@@ -75,15 +74,16 @@ async function init(){
     await ensureModule('match-selection.js',()=>!!global.ClubMatchV08MatchSelection?.createMatchSelection,'match-selection.js');
     await ensureModule('preparation-controller.js',()=>!!global.ClubMatchV08Preparation?.createPreparationController,'preparation-controller.js');
     await ensureModule('preparation-ui.js',()=>!!global.ClubMatchV08PreparationUi?.createPreparationUi,'preparation-ui.js');
+    await ensureModule('dashboard-controller.js',()=>!!global.ClubMatchV08Dashboard?.createDashboardController,'dashboard-controller.js');
+    await ensureModule('dashboard-ui.js',()=>!!global.ClubMatchV08DashboardUi?.createDashboardUi,'dashboard-ui.js');
     client=global.ClubMatchV08CloudClient.createClient(SUPABASE_URL,SUPABASE_KEY);
     renderer=global.ClubMatchV08DomRenderer.createRenderer(document);
     runtime=global.ClubMatchV08Runtime.createRuntime({supabase:client,render:renderModel,onDeleted:resetLiveUi,onError:error=>status(`Cloud sync: ${error.message||error}`)});
     matchSelection=global.ClubMatchV08MatchSelection.createMatchSelection();
     preparation=global.ClubMatchV08Preparation.createPreparationController({client,onChange:state=>{if(preparationUi?.visible)preparationUi.render(state)}});
-    preparationUi=global.ClubMatchV08PreparationUi.createPreparationUi({document,controller:preparation,run,
-      onSaved:async snapshot=>{matchSelection.remember(snapshot.match.id);await refreshOpenMatches({restore:false});markActiveMatch(snapshot.match.id)},
-      onStarted:async matchId=>{matchSelection.remember(matchId);preparationUi.hide();await refreshOpenMatches({restore:false});const matches=(await client.rpc('get_my_open_matches')).data||[],match=matches.find(item=>item.match_id===matchId);if(!match)throw new Error('Gestarte wedstrijd niet teruggevonden');await openLiveMatch(match,{remember:false})}
-    });
+    preparationUi=global.ClubMatchV08PreparationUi.createPreparationUi({document,controller:preparation,run,onSaved:async snapshot=>{matchSelection.remember(snapshot.match.id);await refreshOpenMatches({restore:false});markActiveMatch(snapshot.match.id)},onStarted:async matchId=>{matchSelection.remember(matchId);preparationUi.hide();await refreshOpenMatches({restore:false});const response=await client.rpc('get_my_open_matches');if(response.error)throw response.error;const match=(response.data||[]).find(item=>item.match_id===matchId);if(!match)throw new Error('Gestarte wedstrijd niet teruggevonden');await openLiveMatch(match,{remember:false})}});
+    dashboard=global.ClubMatchV08Dashboard.createDashboardController({client,onChange:state=>{if(dashboardUi?.visible)dashboardUi.render(state)}});
+    dashboardUi=global.ClubMatchV08DashboardUi.createDashboardUi({document,controller:dashboard,run});
     lifecycleSync=global.ClubMatchV08LifecycleSync.createLifecycleSync({runtime,window:global,document});lifecycleSync.install();
     bindActions();applyActionPolicy({field:[],bench:[]});client.auth.onAuthStateChange((_event,session)=>showSession(session));
     await bootstrapSession();status('ClubMatch Cloud v0.8 rebuild gereed.',true);
