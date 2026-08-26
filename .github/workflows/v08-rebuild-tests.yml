@@ -38,3 +38,5 @@ jobs:
         run: node view-model.test.mjs
       - name: Confirmed-state runtime
         run: node runtime.test.mjs
+      - name: Match regression gates 1-17
+        run: node regression-gates.test.mjs
