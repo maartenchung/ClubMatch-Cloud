@@ -3,7 +3,7 @@
 'use strict';
 const SUPABASE_URL='https://fnbqyogbamufytcabfzm.supabase.co';
 const SUPABASE_KEY='sb_publishable_skGPpngOQ_1OpEbreV2kXA__2OL_Mbp';
-const RESET_REDIRECT=`${SUPABASE_URL}/functions/v1/clubmatch-v08-preview/`;
+const RESET_REDIRECT='https://maartenchung.github.io/ClubMatch-Cloud/cloud-v0.8-rebuild/';
 const byId=id=>document.getElementById(id);
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let client=null,runtime=null,renderer=null,lifecycleSync=null,matchSelection=null,preparation=null,preparationUi=null,dashboard=null,dashboardUi=null,security=null,securityUi=null,lastFrame=null,busy=false;
