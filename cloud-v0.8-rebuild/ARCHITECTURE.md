@@ -104,6 +104,19 @@ mag eigen wisselkleuren of tijden herberekenen. De semantische kleurstatus is
 vast: NEVER_SUBBED = neutraal, SUBBED_BEFORE = paars, JUST_IN = blauw en
 JUST_OUT = amber. Groen wordt niet gebruikt als wisselstatus op het speelveld.
 
+`runtime.js` is de enige integratielaag tussen Supabase en de live views. De
+runtime haalt bevestigde snapshots op, bouwt LiveMatchState + ViewModel, en
+publiceert pas daarna naar de renderer. Mutaties gebruiken dezelfde runtime en
+worden na serverbevestiging opnieuw geladen. Realtime `match_state` updates en
+een 5-seconden poll zijn alleen triggers om dezelfde confirmed-state refresh uit
+te voeren; zij hebben geen eigen stateberekening.
+
+De backend-RPC `swap_player_positions` is een aanvullende v0.8-contractfunctie.
+Hij draait als `security invoker`, vereist een ingelogde gebruiker met
+match-bewerkingsrechten, wisselt beide posities in één transactie en schrijft één
+`position_changed` event met `payload.swap=true`. De bijbehorende SQL staat in
+`supabase/cloud_v08_atomic_position_swap.sql`.
+
 ## Verplichte regressiegates vóór publicatie
 1. Start 11 veldspelers.
 2. Eerste wissel A uit / B in.
@@ -124,5 +137,8 @@ JUST_OUT = amber. Groen wordt niet gebruikt als wisselstatus op het speelveld.
 17. Voor iedere geselecteerde speler: playSeconds + benchSeconds == effectiveMatchSecond.
 18. Wedstrijd stoppen werkt server-side.
 19. Verwijderen vereist waarschuwing en server-side autorisatie.
+
+De branch-workflow `.github/workflows/v08-rebuild-tests.yml` is een verplichte
+technische gate voor mutation-controller, snapshot-adapter, view-model en runtime.
 
 Geen versie naar main zolang één van deze gates faalt.
