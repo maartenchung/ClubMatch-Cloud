@@ -53,6 +53,8 @@ jobs:
         run: node cloud-client.test.mjs
       - name: Password recovery and MFA security controller
         run: node security-controller.test.mjs
+      - name: Password recovery live validation UI
+        run: node security-ui.test.mjs
       - name: Action availability policy
         run: node action-policy.test.mjs
       - name: One-second match and halftime clocks
