@@ -2,10 +2,11 @@ import fs from 'node:fs';
 import assert from 'node:assert/strict';
 const html=fs.readFileSync(new URL('./index.html',import.meta.url),'utf8');
 const scripts=[...html.matchAll(/<script\s+src="([^"]+)"/g)].map(m=>m[1]);
-assert.ok(scripts.length>=19,'expected full v0.8 browser module set');
-assert.ok(scripts.every(src=>/\?v=20260826\.1409$/.test(src)),`unversioned script found: ${scripts.filter(src=>!/\?v=20260826\.1409$/.test(src)).join(', ')}`);
-for(const expected of ['cloud-client.js','action-policy.js','lifecycle-sync.js','match-selection.js','preparation-controller.js','preparation-ui.js','dashboard-controller.js','dashboard-ui.js','security-controller.js','security-ui.js','app.js']){
-  assert.ok(scripts.some(src=>src.startsWith(`${expected}?v=`)),`missing version-pinned ${expected}`);
+const marker=html.match(/build\s+(\d{8}\.\d{4})/i);assert.ok(marker,'visible build marker missing');const build=marker[1];
+assert.ok(scripts.length>=20,'expected full v0.8 browser module set');
+assert.ok(scripts.every(src=>src.endsWith(`?v=${build}`)),`browserbestand zonder actuele versie ${build}: ${scripts.filter(src=>!src.endsWith(`?v=${build}`)).join(', ')}`);
+for(const expected of ['cloud-client.js','action-policy.js','lifecycle-sync.js','match-selection.js','formation-layout.js','preparation-controller.js','preparation-ui.js','dashboard-controller.js','dashboard-ui.js','security-controller.js','security-ui.js','app.js']){
+  assert.ok(scripts.some(src=>src===`${expected}?v=${build}`),`ontbrekend versie-gepind browserbestand: ${expected}`);
 }
-assert.ok(html.includes('build 20260826.1409'),'visible build marker missing');
-console.log('PASS asset-versioning: all browser scripts are version-pinned and build marker is visible');
+assert.equal(new Set(scripts.map(src=>src.split('?v=')[1])).size,1,'niet alle browserbestanden gebruiken hetzelfde buildnummer');
+console.log(`PASS asset-versioning: ${scripts.length} browserbestanden zijn versie-gepind op build ${build}`);
