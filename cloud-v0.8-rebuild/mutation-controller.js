@@ -187,6 +187,21 @@ function createMutationController(options){
     });
   }
 
+  function deleteMatch(input){
+    return enqueue(async()=>{
+      invariant(input?.matchId,'matchId is required');
+      invariant(input.confirmation==='DELETE','Explicit DELETE confirmation is required','CLUBMATCH_DELETE_CONFIRMATION');
+      const before=await readConfirmed(input.matchId);
+      invariant(!['live','halftime'].includes(before.snapshot.match.status),'Active matches must be finished before deletion','CLUBMATCH_DELETE_ACTIVE');
+      const mutationResult=await callRpc('delete_match_v08',{
+        p_match_id:input.matchId,
+        p_confirmation:input.confirmation
+      });
+      invariant(mutationResult?.ok===true,'Server did not confirm match deletion','CLUBMATCH_DELETE_FAILED');
+      return {action:'MATCH_DELETED',mutationResult,before,after:null};
+    });
+  }
+
   return {
     readConfirmed,
     substitute,
@@ -194,6 +209,7 @@ function createMutationController(options){
     swapPositions,
     recordGoal,
     advanceClock,
+    deleteMatch,
     get pendingCount(){return pendingCount}
   };
 }
