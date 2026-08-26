@@ -2,6 +2,11 @@
 (function(global){
 'use strict';
 function invariant(condition,message){if(!condition)throw new Error(message)}
+function deriveRecoveryUi(password,confirmation,passwordCheck){
+  const value=String(password??''),confirm=String(confirmation??'');
+  const check=typeof passwordCheck==='function'?passwordCheck(value,confirm):{ok:value.length>=12&&value===confirm,errors:[]};
+  return Object.freeze({length:value.length,confirmationLength:confirm.length,lengthOk:value.length>=12,match:value.length>0&&value===confirm,ready:!!check?.ok&&value.length>=12&&value===confirm,errors:Object.freeze([...(check?.errors||[])])});
+}
 function createSecurityUi(options={}){
   const doc=options.document||global.document;invariant(doc?.createElement,'document is required');
   const authPanel=doc.getElementById('authPanel'),appPanel=doc.getElementById('appPanel');invariant(authPanel&&appPanel,'auth/app panels are required');
@@ -10,7 +15,7 @@ function createSecurityUi(options={}){
   const forgot=doc.createElement('button');forgot.id='forgotPasswordBtn';forgot.type='button';forgot.className='secondary';forgot.dataset.v08Action='';forgot.textContent='Wachtwoord vergeten?';loginBtn.parentElement?.appendChild(forgot);
   const resetNote=doc.createElement('div');resetNote.id='passwordResetNote';resetNote.className='muted';resetNote.style.marginTop='7px';authPanel.appendChild(resetNote);
 
-  const recovery=doc.createElement('section');recovery.id='securityRecoveryPanel';recovery.className='card hidden';recovery.innerHTML='<h2>Nieuw wachtwoord instellen</h2><div class="muted">Gebruik minimaal 12 tekens. Na wijzigen log je opnieuw in met het nieuwe wachtwoord.</div><div class="grid2" style="margin-top:8px"><label>Nieuw wachtwoord<input id="newPassword" type="password" autocomplete="new-password"></label><label>Herhaal wachtwoord<input id="newPasswordConfirm" type="password" autocomplete="new-password"></label></div><div class="controls"><button id="saveNewPasswordBtn" data-v08-action>Nieuw wachtwoord opslaan</button></div><div id="recoveryStatus" class="muted"></div>';
+  const recovery=doc.createElement('section');recovery.id='securityRecoveryPanel';recovery.className='card hidden';recovery.innerHTML='<h2>Nieuw wachtwoord instellen</h2><div class="muted">Gebruik minimaal 12 tekens. Na wijzigen log je opnieuw in met het nieuwe wachtwoord.</div><div class="grid2" style="margin-top:8px"><label>Nieuw wachtwoord<input id="newPassword" type="password" autocomplete="new-password"><div id="newPasswordCount" class="muted" style="margin-top:4px">0/12 tekens</div></label><label>Herhaal wachtwoord<input id="newPasswordConfirm" type="password" autocomplete="new-password"><div id="newPasswordMatch" class="muted" style="margin-top:4px">Herhaal hetzelfde wachtwoord</div></label></div><div class="controls"><button id="saveNewPasswordBtn" data-v08-action data-v08-allowed="0" disabled>Nieuw wachtwoord opslaan</button></div><div id="recoveryStatus" class="muted"></div>';
   authPanel.parentElement?.insertBefore(recovery,appPanel);
 
   const challenge=doc.createElement('section');challenge.id='securityMfaChallenge';challenge.className='card hidden';challenge.innerHTML='<h2>2FA-verificatie</h2><div class="muted">Open je authenticator-app en vul de actuele code in.</div><label style="display:block;margin-top:8px">Authenticatorcode<input id="loginMfaCode" inputmode="numeric" autocomplete="one-time-code" maxlength="10"></label><div class="controls"><button id="verifyLoginMfaBtn" data-v08-action>Verifiëren</button><button id="mfaChallengeLogoutBtn" class="secondary" data-v08-action>Uitloggen</button></div><div id="mfaChallengeStatus" class="muted"></div>';
@@ -20,7 +25,15 @@ function createSecurityUi(options={}){
   appPanel.insertBefore(securityCard,appPanel.firstElementChild?.nextSibling||appPanel.firstChild);
 
   function setText(id,value){const el=doc.getElementById(id);if(el)el.textContent=String(value??'')}
-  function showRecovery(show=true){recovery.classList.toggle('hidden',!show);authPanel.classList.toggle('hidden',show);appPanel.classList.add('hidden');challenge.classList.add('hidden')}
+  function updateRecoveryValidation(){
+    const password=doc.getElementById('newPassword')?.value||'',confirmation=doc.getElementById('newPasswordConfirm')?.value||'';
+    const state=deriveRecoveryUi(password,confirmation,options.passwordCheck);
+    setText('newPasswordCount',`${state.length}/12 tekens${state.lengthOk?' ✓':''}`);
+    setText('newPasswordMatch',confirmation.length===0?'Herhaal hetzelfde wachtwoord':state.match?'Wachtwoorden zijn gelijk ✓':'Wachtwoorden zijn niet gelijk');
+    const save=doc.getElementById('saveNewPasswordBtn');if(save){save.dataset.v08Allowed=state.ready?'1':'0';save.disabled=!state.ready}
+    return state;
+  }
+  function showRecovery(show=true){recovery.classList.toggle('hidden',!show);authPanel.classList.toggle('hidden',show);appPanel.classList.add('hidden');challenge.classList.add('hidden');if(show)updateRecoveryValidation()}
   function showChallenge(show=true){challenge.classList.toggle('hidden',!show);if(show){authPanel.classList.add('hidden');recovery.classList.add('hidden');appPanel.classList.add('hidden')}}
   function showApp(){challenge.classList.add('hidden');recovery.classList.add('hidden');authPanel.classList.add('hidden');appPanel.classList.remove('hidden')}
   function showLoggedOut(){challenge.classList.add('hidden');recovery.classList.add('hidden');appPanel.classList.add('hidden');authPanel.classList.remove('hidden')}
@@ -30,14 +43,17 @@ function createSecurityUi(options={}){
     const enroll=doc.getElementById('mfaEnrollBox'),data=state?.enrollment;enroll?.classList.toggle('hidden',!data);if(data){const qr=doc.getElementById('mfaQr');if(qr)qr.src=data.qrCode||'';setText('mfaSecret',data.secret||'')}
   }
   forgot.onclick=()=>options.onRequestReset?.(emailInput?.value||'');
-  doc.getElementById('saveNewPasswordBtn').onclick=()=>options.onUpdatePassword?.(doc.getElementById('newPassword').value,doc.getElementById('newPasswordConfirm').value);
+  const passwordInput=doc.getElementById('newPassword'),confirmationInput=doc.getElementById('newPasswordConfirm'),savePassword=doc.getElementById('saveNewPasswordBtn');
+  passwordInput.addEventListener('input',updateRecoveryValidation);confirmationInput.addEventListener('input',updateRecoveryValidation);
+  savePassword.onclick=()=>{const validation=updateRecoveryValidation();if(!validation.ready)return;options.onUpdatePassword?.(passwordInput.value,confirmationInput.value)};
   doc.getElementById('verifyLoginMfaBtn').onclick=()=>options.onVerifyLoginMfa?.(doc.getElementById('loginMfaCode').value);
   doc.getElementById('mfaChallengeLogoutBtn').onclick=()=>options.onLogout?.();
   doc.getElementById('enableMfaBtn').onclick=()=>options.onBeginEnrollment?.();
   doc.getElementById('refreshSecurityBtn').onclick=()=>options.onRefreshSecurity?.();
   doc.getElementById('verifyMfaEnrollBtn').onclick=()=>options.onVerifyEnrollment?.(doc.getElementById('mfaEnrollCode').value);
   doc.getElementById('cancelMfaEnrollBtn').onclick=()=>options.onCancelEnrollment?.();
-  return Object.freeze({showRecovery,showChallenge,showApp,showLoggedOut,render,setResetNote:value=>setText('passwordResetNote',value),setRecoveryStatus:value=>setText('recoveryStatus',value),setChallengeStatus:value=>setText('mfaChallengeStatus',value)});
+  updateRecoveryValidation();
+  return Object.freeze({showRecovery,showChallenge,showApp,showLoggedOut,render,updateRecoveryValidation,setResetNote:value=>setText('passwordResetNote',value),setRecoveryStatus:value=>setText('recoveryStatus',value),setChallengeStatus:value=>setText('mfaChallengeStatus',value)});
 }
-global.ClubMatchV08SecurityUi={createSecurityUi};
+global.ClubMatchV08SecurityUi={createSecurityUi,deriveRecoveryUi};
 })(typeof window!=='undefined'?window:globalThis);
