@@ -33,17 +33,22 @@ function createRuntime(options){
   invariant(global.ClubMatchV08SnapshotAdapter?.deriveSnapshot,'snapshot-adapter.js is required');
   invariant(global.ClubMatchV08ViewModel?.createLiveViewModel,'view-model.js is required');
   invariant(global.ClubMatchV08MutationController?.createMutationController,'mutation-controller.js is required');
+  invariant(global.ClubMatchV08ClockProjector?.createAnchor,'clock-projector.js is required');
 
   const supabase=options.supabase;
   const render=typeof options.render==='function'?options.render:()=>{};
   const onDeleted=typeof options.onDeleted==='function'?options.onDeleted:()=>{};
   const onError=typeof options.onError==='function'?options.onError:console.error;
+  const nowMs=typeof options.nowMs==='function'?options.nowMs:()=>Date.now();
   const pollMs=Math.max(1000,Number(options.pollMs)||5000);
+  const tickMs=Math.max(250,Number(options.tickMs)||1000);
   let activeMatchId=null;
   let lastSnapshot=null;
   let lastLiveState=null;
   let lastViewModel=null;
+  let clockAnchor=null;
   let pollTimer=null;
+  let tickTimer=null;
   let realtimeChannel=null;
   let refreshPromise=null;
   let refreshQueued=false;
@@ -74,7 +79,16 @@ function createRuntime(options){
     lastSnapshot=snapshot;
     lastLiveState=liveState;
     lastViewModel=model;
-    render(model,{snapshot,liveState,...meta});
+    clockAnchor=global.ClubMatchV08ClockProjector.createAnchor(snapshot,nowMs());
+    render(model,{snapshot,liveState,confirmed:true,...meta});
+    return model;
+  }
+
+  function acceptProjected(projectedSnapshot,liveState,meta={}){
+    const model=project(projectedSnapshot,liveState);
+    lastLiveState=liveState;
+    lastViewModel=model;
+    render(model,{snapshot:lastSnapshot,projectedSnapshot,liveState,confirmed:false,...meta});
     return model;
   }
 
@@ -107,9 +121,25 @@ function createRuntime(options){
     try{return await refreshPromise}catch(error){onError(error);throw error}finally{refreshPromise=null}
   }
 
+  function projectNow(reason='tick'){
+    if(stopped||!lastSnapshot||!clockAnchor||!clockAnchor.running)return lastViewModel;
+    try{
+      const projectedSnapshot=global.ClubMatchV08ClockProjector.projectSnapshot(lastSnapshot,clockAnchor,nowMs());
+      const projectedSecond=Number(projectedSnapshot.state.effective_elapsed_seconds||0);
+      if(projectedSecond===Number(lastLiveState?.effectiveMatchSecond||0))return lastViewModel;
+      const liveState=global.ClubMatchV08SnapshotAdapter.deriveSnapshot(projectedSnapshot);
+      return acceptProjected(projectedSnapshot,liveState,{source:reason});
+    }catch(error){onError(error);return lastViewModel}
+  }
+
   function schedulePoll(){
     clearInterval(pollTimer);
     pollTimer=setInterval(()=>{refresh('poll').catch(()=>{})},pollMs);
+  }
+
+  function scheduleTick(){
+    clearInterval(tickTimer);
+    tickTimer=setInterval(()=>projectNow('tick'),tickMs);
   }
 
   function subscribeRealtime(){
@@ -130,6 +160,7 @@ function createRuntime(options){
     stopped=false;
     const model=await refresh('start');
     schedulePoll();
+    scheduleTick();
     subscribeRealtime();
     return model;
   }
@@ -137,6 +168,7 @@ function createRuntime(options){
   function stop(){
     stopped=true;
     clearInterval(pollTimer);pollTimer=null;
+    clearInterval(tickTimer);tickTimer=null;
     if(realtimeChannel){
       try{if(typeof supabase.removeChannel==='function')supabase.removeChannel(realtimeChannel);else realtimeChannel.unsubscribe?.()}catch(error){onError(error)}
     }
@@ -149,6 +181,7 @@ function createRuntime(options){
     lastSnapshot=null;
     lastLiveState=null;
     lastViewModel=null;
+    clockAnchor=null;
     refreshQueued=false;
   }
 
@@ -162,7 +195,7 @@ function createRuntime(options){
   }
 
   return Object.freeze({
-    start,stop,refresh,
+    start,stop,refresh,projectNow,
     substitute:input=>mutations.substitute(requireMatch(input)),
     changePosition:input=>mutations.changePosition(requireMatch(input)),
     swapPositions:input=>mutations.swapPositions(requireMatch(input)),
