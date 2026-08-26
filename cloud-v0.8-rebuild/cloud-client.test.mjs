@@ -30,4 +30,10 @@ assert.equal(rpcCall.options.headers.apikey,'sb_publishable_test');assert.equal(
 const session=await client.auth.getSession();assert.equal(session.data.session.access_token,'a1');
 await client.auth.refreshSession();assert.equal(client.session.access_token,'a2');assert.equal(authEvent,'TOKEN_REFRESHED');
 const out=await client.auth.signOut();assert.equal(out.error,null);assert.equal(client.session,null);assert.equal(authEvent,'SIGNED_OUT');sub.data.subscription.unsubscribe();
-console.log('PASS cloud-client: auth + rpc + refresh + signout');
+
+const failingFetch=async()=>({ok:false,status:400,text:async()=>JSON.stringify({code:'invalid_credentials',message:'Invalid login credentials'})});
+const failing=createClient('https://example.supabase.co','sb_publishable_test',{fetch:failingFetch,storage:localStorage,storageKey:'failed'});
+const bad=await failing.auth.signInWithPassword({email:'test@example.com',password:'wrong'});
+assert.equal(bad.error.code,'invalid_credentials');
+assert.equal(bad.error.message,'E-mail of wachtwoord klopt niet.');
+console.log('PASS cloud-client: auth + rpc + refresh + signout + localized credentials error');
