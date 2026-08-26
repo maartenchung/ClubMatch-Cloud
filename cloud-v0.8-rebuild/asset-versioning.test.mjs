@@ -3,10 +3,8 @@ import assert from 'node:assert/strict';
 const html=fs.readFileSync(new URL('./index.html',import.meta.url),'utf8');
 const scripts=[...html.matchAll(/<script\s+src="([^"]+)"/g)].map(m=>m[1]);
 const marker=html.match(/build\s+(\d{8}\.\d{4})/i);assert.ok(marker,'visible build marker missing');const build=marker[1];
-assert.ok(scripts.length>=20,'expected full v0.8 browser module set');
+assert.ok(scripts.length>=22,'expected full v0.8 browser module set including corrections');
 assert.ok(scripts.every(src=>src.endsWith(`?v=${build}`)),`browserbestand zonder actuele versie ${build}: ${scripts.filter(src=>!src.endsWith(`?v=${build}`)).join(', ')}`);
-for(const expected of ['cloud-client.js','action-policy.js','lifecycle-sync.js','match-selection.js','formation-layout.js','preparation-controller.js','preparation-ui.js','dashboard-controller.js','dashboard-ui.js','security-controller.js','security-ui.js','app.js']){
-  assert.ok(scripts.some(src=>src===`${expected}?v=${build}`),`ontbrekend versie-gepind browserbestand: ${expected}`);
-}
+for(const expected of ['cloud-client.js','action-policy.js','lifecycle-sync.js','match-selection.js','formation-layout.js','preparation-controller.js','preparation-ui.js','correction-ui.js','correction-bootstrap.js','dashboard-controller.js','dashboard-ui.js','security-controller.js','security-ui.js','app.js'])assert.ok(scripts.some(src=>src===`${expected}?v=${build}`),`ontbrekend versie-gepind browserbestand: ${expected}`);
 assert.equal(new Set(scripts.map(src=>src.split('?v=')[1])).size,1,'niet alle browserbestanden gebruiken hetzelfde buildnummer');
 console.log(`PASS asset-versioning: ${scripts.length} browserbestanden zijn versie-gepind op build ${build}`);
