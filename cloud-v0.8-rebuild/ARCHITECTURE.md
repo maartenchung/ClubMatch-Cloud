@@ -85,6 +85,12 @@ Voor wissel, positie, goal en klokactie:
 
 Geen permanente optimistic mutation vóór stap 5.
 
+`mutation-controller.js` dwingt dit protocol af. Alle mutaties lopen serieel door
+één wachtrij, gebruiken één `client_event_id` en renderen pas na een opnieuw
+opgehaalde bevestigde Cloud-snapshot. Een bezette positie wordt niet als twee
+losse positiewijzigingen geschreven; daarvoor is uitsluitend de atomaire
+`swap_player_positions`-actie toegestaan.
+
 ## Verplichte regressiegates vóór publicatie
 1. Start 11 veldspelers.
 2. Eerste wissel A uit / B in.
