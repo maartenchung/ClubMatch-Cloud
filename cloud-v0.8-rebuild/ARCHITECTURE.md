@@ -97,6 +97,13 @@ wedstrijdseconde. Geannuleerde events verdwijnen uit de projectie en een
 correctie vervangt het oorspronkelijke event zonder de auditgeschiedenis te
 verwijderen.
 
+`view-model.js` maakt vervolgens één immutable projectie voor live veld,
+spelertegels, wisselmonitor, scorebord en dashboard. Deze views delen dezelfde
+player-objecten, veld-/banklijsten, posities, klok en eventvolgorde. Geen view
+mag eigen wisselkleuren of tijden herberekenen. De semantische kleurstatus is
+vast: NEVER_SUBBED = neutraal, SUBBED_BEFORE = paars, JUST_IN = blauw en
+JUST_OUT = amber. Groen wordt niet gebruikt als wisselstatus op het speelveld.
+
 ## Verplichte regressiegates vóór publicatie
 1. Start 11 veldspelers.
 2. Eerste wissel A uit / B in.
