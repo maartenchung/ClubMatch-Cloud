@@ -101,4 +101,5 @@ function createClient(url,publishableKey,options={}){
 }
 
 global.ClubMatchV08CloudClient={createClient};
+if(!global.supabase)global.supabase={createClient};
 })(typeof window!=='undefined'?window:globalThis);
