@@ -41,6 +41,7 @@ const supabase={
       version++;return {data:{ok:true,state_version:version}};
     }
     if(name==='swap_player_positions'){
+      elapsed=605;
       const a=params.p_player_a_id,b=params.p_player_b_id,pa=currentPosition[a],pb=currentPosition[b];
       currentPosition[a]=pb;currentPosition[b]=pa;
       events.push({id:'ps1',event_type:'position_changed',match_minute:10,match_second:5,subject_player_id:a,related_player_id:b,payload:{swap:true,player_a_new_position:pb,player_b_new_position:pa},position_change:{player_id:a,new_position:pb}});
@@ -64,10 +65,11 @@ assert.equal(runtime.viewModel.byId.p12.position,'LW');
 assert.equal(renders.length,2,'render only after confirmed mutation snapshot');
 
 await runtime.swapPositions({playerId:'p9',otherPlayerId:'p10'});
+assert.equal(runtime.viewModel.clock,'10:05');
 assert.equal(runtime.viewModel.byId.p9.position,'ST');
 assert.equal(runtime.viewModel.byId.p10.position,'RW');
 assert.equal(runtime.viewModel.field.length,11);
-assert.equal(runtime.viewModel.players.every(p=>p.playSeconds+p.benchSeconds===600),true);
+assert.equal(runtime.viewModel.players.every(p=>p.playSeconds+p.benchSeconds===605),true);
 
 runtime.stop();
 console.log('PASS runtime: 3/3');
