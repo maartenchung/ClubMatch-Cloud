@@ -40,6 +40,7 @@ jobs:
           node --check clock-projector.js
           node --check lifecycle-sync.js
           node --check match-selection.js
+          node --check formation-layout.js
           node --check preparation-controller.js
           node --check preparation-ui.js
           node --check dashboard-controller.js
@@ -65,6 +66,8 @@ jobs:
         run: node lifecycle-sync.test.mjs
       - name: Active match refresh restore
         run: node match-selection.test.mjs
+      - name: Formation presets and starter assignment
+        run: node formation-layout.test.mjs
       - name: Match preparation and start gate
         run: node preparation-controller.test.mjs
       - name: Dashboard team filter and history
