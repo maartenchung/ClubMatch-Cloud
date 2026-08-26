@@ -27,7 +27,7 @@ function applyActionPolicy(frame={field:[],bench:[]}){
   return policy;
 }
 
-function resetLiveUi(){lastFrame=null;renderer?.clear?.();textMatch({});applyActionPolicy({field:[],bench:[]})}
+function resetLiveUi(){lastFrame=null;renderer?.clear?.();textMatch({});if(global.ClubMatchV08ActionPolicy?.createActionPolicy)applyActionPolicy({field:[],bench:[]})}
 
 function updateActionControls(frame){
   lastFrame=frame;fillSelect('subOut',frame.field);fillSelect('subIn',frame.bench);fillSelect('posPlayer',frame.field);fillSelect('swapA',frame.field);fillSelect('swapB',frame.field);fillSelect('goalScorer',frame.field,true);fillSelect('goalAssist',frame.field,true);
@@ -71,10 +71,15 @@ function bindActions(){
   });
 }
 
+function ensureActionPolicy(){
+  if(global.ClubMatchV08ActionPolicy?.createActionPolicy)return Promise.resolve();
+  return new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='action-policy.js';script.onload=()=>global.ClubMatchV08ActionPolicy?.createActionPolicy?resolve():reject(new Error('action-policy.js loaded without API'));script.onerror=()=>reject(new Error('action-policy.js could not be loaded'));document.head.appendChild(script)});
+}
+
 async function init(){
   try{
     if(!global.supabase?.createClient)throw new Error('Supabase JS kon niet worden geladen');
-    if(!global.ClubMatchV08ActionPolicy?.createActionPolicy)throw new Error('action-policy.js is required');
+    await ensureActionPolicy();
     client=global.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
     renderer=global.ClubMatchV08DomRenderer.createRenderer(document);
     runtime=global.ClubMatchV08Runtime.createRuntime({supabase:client,render:renderModel,onDeleted:resetLiveUi,onError:error=>status(`Cloud sync: ${error.message||error}`)});
