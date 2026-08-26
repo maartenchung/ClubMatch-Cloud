@@ -1,0 +1,40 @@
+name: ClubMatch v0.8 rebuild tests
+
+on:
+  push:
+    branches:
+      - clubmatch-v0.8-rebuild
+    paths:
+      - 'cloud-v0.8-rebuild/**'
+      - '.github/workflows/v08-rebuild-tests.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'cloud-v0.8-rebuild/**'
+
+permissions:
+  contents: read
+
+jobs:
+  node-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: cloud-v0.8-rebuild
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Mutation controller
+        run: node mutation-controller.test.mjs
+      - name: Snapshot adapter
+        run: node snapshot-adapter.test.mjs
+      - name: Shared live view model
+        run: node view-model.test.mjs
+      - name: Confirmed-state runtime
+        run: node runtime.test.mjs
