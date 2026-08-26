@@ -36,6 +36,7 @@ function createRuntime(options){
 
   const supabase=options.supabase;
   const render=typeof options.render==='function'?options.render:()=>{};
+  const onDeleted=typeof options.onDeleted==='function'?options.onDeleted:()=>{};
   const onError=typeof options.onError==='function'?options.onError:console.error;
   const pollMs=Math.max(1000,Number(options.pollMs)||5000);
   let activeMatchId=null;
@@ -142,7 +143,23 @@ function createRuntime(options){
     realtimeChannel=null;
   }
 
+  function clearDeletedState(){
+    stop();
+    activeMatchId=null;
+    lastSnapshot=null;
+    lastLiveState=null;
+    lastViewModel=null;
+    refreshQueued=false;
+  }
+
   function requireMatch(input={}){return {...input,matchId:input.matchId||activeMatchId}}
+
+  async function deleteMatch(input={}){
+    const result=await mutations.deleteMatch(requireMatch(input));
+    clearDeletedState();
+    onDeleted(result);
+    return result;
+  }
 
   return Object.freeze({
     start,stop,refresh,
@@ -151,6 +168,7 @@ function createRuntime(options){
     swapPositions:input=>mutations.swapPositions(requireMatch(input)),
     recordGoal:input=>mutations.recordGoal(requireMatch(input)),
     advanceClock:input=>mutations.advanceClock(requireMatch(input)),
+    deleteMatch,
     get activeMatchId(){return activeMatchId},
     get snapshot(){return lastSnapshot},
     get liveState(){return lastLiveState},
