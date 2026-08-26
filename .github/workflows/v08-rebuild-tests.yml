@@ -40,6 +40,8 @@ jobs:
           node --check match-selection.js
           node --check preparation-controller.js
           node --check preparation-ui.js
+          node --check dashboard-controller.js
+          node --check dashboard-ui.js
           node --check dom-renderer.js
           node --check ui-frame.js
           node --check runtime.js
@@ -55,6 +57,8 @@ jobs:
         run: node match-selection.test.mjs
       - name: Match preparation and start gate
         run: node preparation-controller.test.mjs
+      - name: Dashboard team filter and history
+        run: node dashboard-controller.test.mjs
       - name: Mutation controller and lifecycle gates
         run: node mutation-controller.test.mjs
       - name: Snapshot adapter
