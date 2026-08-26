@@ -2,10 +2,10 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 
-const context={console,globalThis:null,window:null,setInterval,clearInterval,setTimeout,clearTimeout,structuredClone};
+const context={console,globalThis:null,window:null,setInterval,clearInterval,setTimeout,clearTimeout,structuredClone,Date};
 context.globalThis=context;context.window=context;
 vm.createContext(context);
-for(const file of ['live-state.js','snapshot-adapter.js','view-model.js','mutation-controller.js','runtime.js']){
+for(const file of ['live-state.js','snapshot-adapter.js','view-model.js','mutation-controller.js','clock-projector.js','runtime.js']){
   vm.runInContext(fs.readFileSync(new URL(`./${file}`,import.meta.url),'utf8'),context);
 }
 
@@ -13,6 +13,7 @@ const ids=Array.from({length:12},(_,i)=>`p${i+1}`);
 const positions=['GK','RB','RCB','LCB','LB','CM1','CM2','AM','RW','ST','LW'];
 let version=1;
 let elapsed=600;
+let now=0;
 let events=[];
 let role=Object.fromEntries(ids.map((id,i)=>[id,i<11?'FIELD':'BENCH']));
 let currentPosition=Object.fromEntries(ids.slice(0,11).map((id,i)=>[id,positions[i]]));
@@ -20,7 +21,7 @@ let currentPosition=Object.fromEntries(ids.slice(0,11).map((id,i)=>[id,positions
 function snapshot(){
   return {
     match:{id:'m1',status:'live',score_for:1,score_against:0},
-    state:{state_version:version,effective_elapsed_seconds:elapsed},
+    state:{state_version:version,clock_status:'running',period:'first_half',effective_elapsed_seconds:elapsed},
     players:ids.map((id,i)=>({
       player_id:id,full_name:`Speler ${i+1}`,display_name:`P${i+1}`,shirt_number:i+1,
       selected:true,is_starter:i<11,starting_position:i<11?positions[i]:null,
@@ -52,7 +53,7 @@ const supabase={
 };
 
 const renders=[];
-const runtime=context.ClubMatchV08Runtime.createRuntime({supabase,pollMs:60000,render:model=>renders.push(model)});
+const runtime=context.ClubMatchV08Runtime.createRuntime({supabase,pollMs:60000,tickMs:60000,nowMs:()=>now,render:model=>renders.push(model)});
 const first=await runtime.start('m1');
 assert.equal(first.field.length,11);
 assert.equal(first.clock,'10:00');
@@ -71,5 +72,12 @@ assert.equal(runtime.viewModel.byId.p10.position,'RW');
 assert.equal(runtime.viewModel.field.length,11);
 assert.equal(runtime.viewModel.players.every(p=>p.playSeconds+p.benchSeconds===605),true);
 
+now=3000;
+runtime.projectNow('test-tick');
+assert.equal(runtime.viewModel.clock,'10:08','presentation clock must tick every second from confirmed anchor');
+assert.equal(runtime.viewModel.players.every(p=>p.playSeconds+p.benchSeconds===608),true,'player clocks must tick from same projection');
+assert.equal(runtime.snapshot.state.effective_elapsed_seconds,605,'confirmed snapshot must not be mutated by presentation ticks');
+assert.equal(renders.length,4);
+
 runtime.stop();
-console.log('PASS runtime: 3/3');
+console.log('PASS runtime: confirmed mutations + one-second projection');
