@@ -23,7 +23,7 @@ const fetch=async(url,options={})=>{
   if(url.includes('/auth/v1/logout'))return {ok:true,status:204,text:async()=>''};
   return {ok:false,status:404,text:async()=>JSON.stringify({message:'not found'})};
 };
-const context={console,globalThis:null,window:null,fetch,localStorage,Date,atob};context.globalThis=context;context.window=context;
+const context={console,globalThis:null,window:null,fetch,localStorage,Date,atob,URLSearchParams};context.globalThis=context;context.window=context;
 vm.createContext(context);
 vm.runInContext(fs.readFileSync(new URL('./cloud-client.js',import.meta.url),'utf8'),context);
 const {createClient}=context.ClubMatchV08CloudClient;
