@@ -8,211 +8,44 @@ function invariant(condition,message,code){
   error.code=code||'CLUBMATCH_VALIDATION';
   throw error;
 }
-
-function defaultIdFactory(){
-  if(global.crypto?.randomUUID)return global.crypto.randomUUID();
-  return `cm-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
-}
-
-function unwrapRpc(result,name){
-  if(result?.error){
-    const error=result.error instanceof Error?result.error:new Error(result.error.message||String(result.error));
-    error.rpc=name;
-    throw error;
-  }
-  return Object.prototype.hasOwnProperty.call(result||{},'data')?result.data:result;
-}
+function defaultIdFactory(){if(global.crypto?.randomUUID)return global.crypto.randomUUID();return `cm-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`}
+function unwrapRpc(result,name){if(result?.error){const error=result.error instanceof Error?result.error:new Error(result.error.message||String(result.error));error.rpc=name;throw error}return Object.prototype.hasOwnProperty.call(result||{},'data')?result.data:result}
+function exactTime(minute,second=0){const m=Number(minute),s=Number(second);invariant(Number.isInteger(m)&&m>=0&&m<=300,'Wedstrijdminuut moet tussen 0 en 300 liggen');invariant(Number.isInteger(s)&&s>=0&&s<=59,'Wedstrijdseconde moet tussen 0 en 59 liggen');return {minute:m,second:s}}
+function findBaseEvent(snapshot,eventId,types){const allowed=Array.isArray(types)?types:[types];return (snapshot?.events||[]).find(e=>e.id===eventId&&allowed.includes(e.event_type))}
+function isVoided(snapshot,eventId){return (snapshot?.events||[]).some(e=>/_voided$/.test(e.event_type)&&e.target_event_id===eventId)}
+function selectedPlayerIds(snapshot){return new Set((snapshot?.players||[]).filter(p=>p.selected).map(p=>p.player_id))}
 
 function createMutationController(options){
-  invariant(options&&typeof options.rpc==='function','rpc is required','CLUBMATCH_CONFIG');
-  invariant(typeof options.deriveSnapshot==='function','deriveSnapshot is required','CLUBMATCH_CONFIG');
-
-  const rpc=options.rpc;
-  const deriveSnapshot=options.deriveSnapshot;
-  const renderConfirmed=typeof options.renderConfirmed==='function'?options.renderConfirmed:()=>{};
-  const idFactory=options.idFactory||defaultIdFactory;
-  let queue=Promise.resolve();
-  let pendingCount=0;
-
-  async function callRpc(name,params){
-    return unwrapRpc(await rpc(name,params),name);
-  }
-
+  invariant(options&&typeof options.rpc==='function','RPC is verplicht','CLUBMATCH_CONFIG');
+  invariant(typeof options.deriveSnapshot==='function','Snapshot-afleiding is verplicht','CLUBMATCH_CONFIG');
+  const rpc=options.rpc,deriveSnapshot=options.deriveSnapshot,renderConfirmed=typeof options.renderConfirmed==='function'?options.renderConfirmed:()=>{},idFactory=options.idFactory||defaultIdFactory;
+  let queue=Promise.resolve(),pendingCount=0;
+  async function callRpc(name,params){return unwrapRpc(await rpc(name,params),name)}
   async function readConfirmed(matchId){
-    invariant(matchId,'matchId is required');
-    const snapshot=await callRpc('get_match_snapshot',{p_match_id:matchId});
-    invariant(snapshot?.match&&snapshot?.state,'Confirmed match snapshot is incomplete','CLUBMATCH_SNAPSHOT');
-    const liveState=deriveSnapshot(snapshot);
-    invariant(liveState&&liveState.players,'Derived live state is incomplete','CLUBMATCH_SNAPSHOT');
-    return {snapshot,liveState};
+    invariant(matchId,'Wedstrijd-ID is verplicht');const snapshot=await callRpc('get_match_snapshot',{p_match_id:matchId});
+    invariant(snapshot?.match&&snapshot?.state,'Bevestigde wedstrijdsnapshot is onvolledig','CLUBMATCH_SNAPSHOT');const liveState=deriveSnapshot(snapshot);invariant(liveState&&liveState.players,'Afgeleide live-status is onvolledig','CLUBMATCH_SNAPSHOT');return {snapshot,liveState};
   }
-
-  function enqueue(task){
-    pendingCount++;
-    const run=queue.then(task,task);
-    queue=run.catch(()=>{}).finally(()=>{pendingCount--});
-    return run;
-  }
-
+  function enqueue(task){pendingCount++;const run=queue.then(task,task);queue=run.catch(()=>{}).finally(()=>{pendingCount--});return run}
   async function execute(spec){
-    return enqueue(async()=>{
-      const before=await readConfirmed(spec.matchId);
-      const clientEventId=spec.clientEventId||idFactory();
-      invariant(clientEventId,'client_event_id could not be created','CLUBMATCH_CLIENT_EVENT_ID');
-      const mutation=spec.build(before.liveState,clientEventId,before.snapshot);
-      invariant(mutation?.rpc&&mutation?.params,'Mutation specification is incomplete','CLUBMATCH_CONFIG');
-
-      const mutationResult=await callRpc(mutation.rpc,mutation.params);
-      const after=await readConfirmed(spec.matchId);
-      const beforeVersion=Number(before.snapshot.state.state_version||0);
-      const afterVersion=Number(after.snapshot.state.state_version||0);
-      invariant(afterVersion>=beforeVersion,'Confirmed state version moved backwards','CLUBMATCH_STATE_VERSION');
-      renderConfirmed(after.snapshot,after.liveState,{
-        action:spec.action,
-        clientEventId,
-        mutationResult,
-        beforeVersion,
-        afterVersion
-      });
-      return {
-        action:spec.action,
-        clientEventId,
-        mutationResult,
-        before,
-        after
-      };
-    });
+    return enqueue(async()=>{const before=await readConfirmed(spec.matchId),clientEventId=spec.clientEventId||idFactory();invariant(clientEventId,'client_event_id kon niet worden aangemaakt','CLUBMATCH_CLIENT_EVENT_ID');const mutation=spec.build(before.liveState,clientEventId,before.snapshot);invariant(mutation?.rpc&&mutation?.params,'Mutatiespecificatie is onvolledig','CLUBMATCH_CONFIG');const mutationResult=await callRpc(mutation.rpc,mutation.params);const after=await readConfirmed(spec.matchId);const beforeVersion=Number(before.snapshot.state.state_version||0),afterVersion=Number(after.snapshot.state.state_version||0);invariant(afterVersion>=beforeVersion,'Bevestigde statusversie ging achteruit','CLUBMATCH_STATE_VERSION');renderConfirmed(after.snapshot,after.liveState,{action:spec.action,clientEventId,mutationResult,beforeVersion,afterVersion});return {action:spec.action,clientEventId,mutationResult,before,after}})
   }
 
-  function substitute(input){
-    return execute({
-      action:'SUBSTITUTION',matchId:input.matchId,clientEventId:input.clientEventId,
-      build(state,clientEventId){
-        const out=state.players[input.outId],inn=state.players[input.inId];
-        invariant(out&&inn&&input.outId!==input.inId,'Two different match players are required');
-        invariant(out.currentRole==='FIELD','Outgoing player is not on the confirmed field');
-        invariant(inn.currentRole==='BENCH','Incoming player is not on the confirmed bench');
-        const position=(input.position||out.currentPosition||'').trim();
-        invariant(position,'Incoming position is required');
-        return {rpc:'record_substitution',params:{
-          p_match_id:input.matchId,
-          p_player_out_id:input.outId,
-          p_player_in_id:input.inId,
-          p_new_position:position,
-          p_client_event_id:clientEventId
-        }};
-      }
-    });
-  }
+  function substitute(input){return execute({action:'SUBSTITUTION',matchId:input.matchId,clientEventId:input.clientEventId,build(state,clientEventId){const out=state.players[input.outId],inn=state.players[input.inId];invariant(out&&inn&&input.outId!==input.inId,'Kies twee verschillende wedstrijdspelers');invariant(out.currentRole==='FIELD','Uitgaande speler staat niet op het bevestigde veld');invariant(inn.currentRole==='BENCH','Inkomende speler staat niet op de bevestigde bank');const position=(input.position||out.currentPosition||'').trim();invariant(position,'Positie van de inkomende speler is verplicht');return {rpc:'record_substitution',params:{p_match_id:input.matchId,p_player_out_id:input.outId,p_player_in_id:input.inId,p_new_position:position,p_client_event_id:clientEventId}}}})}
+  function changePosition(input){return execute({action:'POSITION_CHANGED',matchId:input.matchId,clientEventId:input.clientEventId,build(state,clientEventId){const player=state.players[input.playerId],position=String(input.position||'').trim();invariant(player?.currentRole==='FIELD','Speler staat niet op het bevestigde veld');invariant(position,'Nieuwe positie is verplicht');invariant(position!==player.currentPosition,'Speler staat al op deze positie');const occupied=state.fieldIds.find(id=>id!==input.playerId&&state.players[id].currentPosition===position);invariant(!occupied,'Positie is bezet; gebruik posities ruilen','CLUBMATCH_POSITION_OCCUPIED');return {rpc:'change_player_position',params:{p_match_id:input.matchId,p_player_id:input.playerId,p_new_position:position,p_client_event_id:clientEventId}}}})}
+  function swapPositions(input){return execute({action:'POSITIONS_SWAPPED',matchId:input.matchId,clientEventId:input.clientEventId,build(state,clientEventId){const first=state.players[input.playerId],second=state.players[input.otherPlayerId];invariant(first&&second&&input.playerId!==input.otherPlayerId,'Kies twee verschillende wedstrijdspelers');invariant(first.currentRole==='FIELD'&&second.currentRole==='FIELD','Beide spelers moeten op het bevestigde veld staan');invariant(first.currentPosition&&second.currentPosition,'Beide spelers hebben een bevestigde positie nodig');return {rpc:'swap_player_positions',params:{p_match_id:input.matchId,p_player_a_id:input.playerId,p_player_b_id:input.otherPlayerId,p_client_event_id:clientEventId}}}})}
+  function recordGoal(input){return execute({action:'GOAL',matchId:input.matchId,clientEventId:input.clientEventId,build(state,clientEventId){invariant(input.side==='for'||input.side==='against','Doelpuntzijde moet eigen team of tegenstander zijn');if(input.side==='for'){invariant(state.players[input.scorerId]?.currentRole==='FIELD','Doelpuntenmaker staat niet op het bevestigde veld');if(input.assistId){invariant(input.assistId!==input.scorerId,'Doelpuntenmaker en assist mogen niet dezelfde speler zijn');invariant(state.players[input.assistId]?.currentRole==='FIELD','Assistspeler staat niet op het bevestigde veld')}}else invariant(!input.scorerId&&!input.assistId,'Doelpunt tegenstander gebruikt geen ClubMatch-spelers');return {rpc:'record_goal',params:{p_match_id:input.matchId,p_side:input.side,p_client_event_id:clientEventId,p_scorer_player_id:input.scorerId||null,p_assist_player_id:input.assistId||null,p_goal_type:input.goalType||null,p_note:input.note||null}}}})}
 
-  function changePosition(input){
-    return execute({
-      action:'POSITION_CHANGED',matchId:input.matchId,clientEventId:input.clientEventId,
-      build(state,clientEventId){
-        const player=state.players[input.playerId];
-        const position=String(input.position||'').trim();
-        invariant(player?.currentRole==='FIELD','Player is not on the confirmed field');
-        invariant(position,'New position is required');
-        invariant(position!==player.currentPosition,'Player already has this position');
-        const occupied=state.fieldIds.find(id=>id!==input.playerId&&state.players[id].currentPosition===position);
-        invariant(!occupied,'Position is occupied; use swapPositions for one atomic action','CLUBMATCH_POSITION_OCCUPIED');
-        return {rpc:'change_player_position',params:{
-          p_match_id:input.matchId,
-          p_player_id:input.playerId,
-          p_new_position:position,
-          p_client_event_id:clientEventId
-        }};
-      }
-    });
-  }
+  function correctSubstitution(input){return execute({action:'SUBSTITUTION_CORRECTED',matchId:input.matchId,clientEventId:input.clientEventId,build(_state,clientEventId,snapshot){const original=findBaseEvent(snapshot,input.eventId,'substitution');invariant(original,'Originele wissel niet gevonden');invariant(!isVoided(snapshot,input.eventId),'Deze wissel is al ongeldig gemaakt');const selected=selectedPlayerIds(snapshot);invariant(selected.has(input.outId)&&selected.has(input.inId)&&input.outId!==input.inId,'Kies twee verschillende spelers uit de wedstrijdselectie');const position=String(input.position||'').trim();invariant(position,'Nieuwe positie is verplicht');const time=exactTime(input.matchMinute,input.matchSecond);return {rpc:'correct_substitution',params:{p_match_id:input.matchId,p_substitution_event_id:input.eventId,p_client_event_id:clientEventId,p_player_out_id:input.outId,p_player_in_id:input.inId,p_new_position:position,p_match_minute:time.minute,p_match_second:time.second}}}})}
+  function voidSubstitution(input){return execute({action:'SUBSTITUTION_VOIDED',matchId:input.matchId,clientEventId:input.clientEventId,build(_state,clientEventId,snapshot){invariant(findBaseEvent(snapshot,input.eventId,'substitution'),'Originele wissel niet gevonden');invariant(!isVoided(snapshot,input.eventId),'Deze wissel is al ongeldig gemaakt');return {rpc:'void_substitution',params:{p_match_id:input.matchId,p_substitution_event_id:input.eventId,p_client_event_id:clientEventId,p_reason:String(input.reason||'').trim()||null}}}})}
+  function correctPositionChange(input){return execute({action:'POSITION_CORRECTED',matchId:input.matchId,clientEventId:input.clientEventId,build(_state,clientEventId,snapshot){invariant(findBaseEvent(snapshot,input.eventId,'position_changed'),'Originele positiewijziging niet gevonden');invariant(!isVoided(snapshot,input.eventId),'Deze positiewijziging is al ongeldig gemaakt');const selected=selectedPlayerIds(snapshot);invariant(selected.has(input.playerId),'Speler hoort niet bij de wedstrijdselectie');const position=String(input.position||'').trim();invariant(position,'Nieuwe positie is verplicht');const time=exactTime(input.matchMinute,input.matchSecond);return {rpc:'correct_position_change',params:{p_match_id:input.matchId,p_position_event_id:input.eventId,p_client_event_id:clientEventId,p_player_id:input.playerId,p_new_position:position,p_match_minute:time.minute,p_match_second:time.second}}}})}
+  function voidPositionChange(input){return execute({action:'POSITION_VOIDED',matchId:input.matchId,clientEventId:input.clientEventId,build(_state,clientEventId,snapshot){invariant(findBaseEvent(snapshot,input.eventId,'position_changed'),'Originele positiewijziging niet gevonden');invariant(!isVoided(snapshot,input.eventId),'Deze positiewijziging is al ongeldig gemaakt');return {rpc:'void_position_change',params:{p_match_id:input.matchId,p_position_event_id:input.eventId,p_client_event_id:clientEventId,p_reason:String(input.reason||'').trim()||null}}}})}
+  function correctGoal(input){return execute({action:'GOAL_CORRECTED',matchId:input.matchId,clientEventId:input.clientEventId,build(_state,clientEventId,snapshot){const original=findBaseEvent(snapshot,input.eventId,['goal_for','goal_against']);invariant(original,'Origineel doelpunt niet gevonden');invariant(!isVoided(snapshot,input.eventId),'Dit doelpunt is al ongeldig gemaakt');const side=original.goal?.side||(original.event_type==='goal_for'?'for':'against'),selected=selectedPlayerIds(snapshot);if(side==='for'){invariant(selected.has(input.scorerId),'Kies een doelpuntenmaker uit de wedstrijdselectie');if(input.assistId){invariant(input.assistId!==input.scorerId,'Doelpuntenmaker en assist mogen niet dezelfde speler zijn');invariant(selected.has(input.assistId),'Kies een assist uit de wedstrijdselectie')}}else invariant(!input.scorerId&&!input.assistId,'Doelpunt tegenstander gebruikt geen ClubMatch-spelers');const time=exactTime(input.matchMinute,input.matchSecond);return {rpc:'correct_goal',params:{p_match_id:input.matchId,p_goal_event_id:input.eventId,p_client_event_id:clientEventId,p_scorer_player_id:side==='for'?input.scorerId:null,p_assist_player_id:side==='for'?(input.assistId||null):null,p_goal_type:String(input.goalType||'').trim()||null,p_note:String(input.note||'').trim()||null,p_match_minute:time.minute,p_match_second:time.second}}}})}
+  function voidGoal(input){return execute({action:'GOAL_VOIDED',matchId:input.matchId,clientEventId:input.clientEventId,build(_state,clientEventId,snapshot){invariant(findBaseEvent(snapshot,input.eventId,['goal_for','goal_against']),'Origineel doelpunt niet gevonden');invariant(!isVoided(snapshot,input.eventId),'Dit doelpunt is al ongeldig gemaakt');return {rpc:'void_goal',params:{p_match_id:input.matchId,p_goal_event_id:input.eventId,p_client_event_id:clientEventId,p_reason:String(input.reason||'').trim()||null}}}})}
 
-  function swapPositions(input){
-    return execute({
-      action:'POSITIONS_SWAPPED',matchId:input.matchId,clientEventId:input.clientEventId,
-      build(state,clientEventId){
-        const first=state.players[input.playerId],second=state.players[input.otherPlayerId];
-        invariant(first&&second&&input.playerId!==input.otherPlayerId,'Two different match players are required');
-        invariant(first.currentRole==='FIELD'&&second.currentRole==='FIELD','Both players must be on the confirmed field');
-        invariant(first.currentPosition&&second.currentPosition,'Both players need a confirmed position');
-        return {rpc:'swap_player_positions',params:{
-          p_match_id:input.matchId,
-          p_player_a_id:input.playerId,
-          p_player_b_id:input.otherPlayerId,
-          p_client_event_id:clientEventId
-        }};
-      }
-    });
-  }
+  function advanceClock(input){return execute({action:'CLOCK',matchId:input.matchId,clientEventId:input.clientEventId,build(_state,clientEventId,snapshot){const allowed=['pause','resume','halftime','second_half','injury_time','finish'];invariant(allowed.includes(input.clockAction),'Niet-ondersteunde klokactie');if(input.clockAction==='injury_time')invariant(Number.isInteger(input.minutes)&&input.minutes>=0&&input.minutes<=60,'Extra tijd moet tussen 0 en 60 minuten liggen');invariant(snapshot.match.status!=='finished','Wedstrijd is al gestopt');return {rpc:'advance_match_clock',params:{p_match_id:input.matchId,p_action:input.clockAction,p_client_event_id:clientEventId,p_minutes:input.clockAction==='injury_time'?input.minutes:null}}}})}
+  function deleteMatch(input){return enqueue(async()=>{invariant(input?.matchId,'Wedstrijd-ID is verplicht');invariant(input.confirmation==='DELETE','Expliciete DELETE-bevestiging is verplicht','CLUBMATCH_DELETE_CONFIRMATION');const before=await readConfirmed(input.matchId);invariant(!['live','halftime'].includes(before.snapshot.match.status),'Actieve wedstrijd moet eerst worden gestopt','CLUBMATCH_DELETE_ACTIVE');const mutationResult=await callRpc('delete_match_v08',{p_match_id:input.matchId,p_confirmation:input.confirmation});invariant(mutationResult?.ok===true,'Server bevestigde verwijderen niet','CLUBMATCH_DELETE_FAILED');return {action:'MATCH_DELETED',mutationResult,before,after:null}})}
 
-  function recordGoal(input){
-    return execute({
-      action:'GOAL',matchId:input.matchId,clientEventId:input.clientEventId,
-      build(state,clientEventId){
-        invariant(input.side==='for'||input.side==='against','Goal side must be for or against');
-        if(input.side==='for'){
-          invariant(state.players[input.scorerId]?.currentRole==='FIELD','Scorer is not on the confirmed field');
-          if(input.assistId){
-            invariant(input.assistId!==input.scorerId,'Scorer and assist cannot be the same player');
-            invariant(state.players[input.assistId]?.currentRole==='FIELD','Assist player is not on the confirmed field');
-          }
-        }else invariant(!input.scorerId&&!input.assistId,'Opponent goals cannot use ClubMatch player IDs');
-        return {rpc:'record_goal',params:{
-          p_match_id:input.matchId,
-          p_side:input.side,
-          p_client_event_id:clientEventId,
-          p_scorer_player_id:input.scorerId||null,
-          p_assist_player_id:input.assistId||null,
-          p_goal_type:input.goalType||null,
-          p_note:input.note||null
-        }};
-      }
-    });
-  }
-
-  function advanceClock(input){
-    return execute({
-      action:'CLOCK',matchId:input.matchId,clientEventId:input.clientEventId,
-      build(state,clientEventId,snapshot){
-        const allowed=['pause','resume','halftime','second_half','injury_time','finish'];
-        invariant(allowed.includes(input.clockAction),'Unsupported clock action');
-        if(input.clockAction==='injury_time')invariant(Number.isInteger(input.minutes)&&input.minutes>=0&&input.minutes<=60,'Injury time must be 0-60 minutes');
-        invariant(snapshot.match.status!=='finished','Match is already finished');
-        return {rpc:'advance_match_clock',params:{
-          p_match_id:input.matchId,
-          p_action:input.clockAction,
-          p_client_event_id:clientEventId,
-          p_minutes:input.clockAction==='injury_time'?input.minutes:null
-        }};
-      }
-    });
-  }
-
-  function deleteMatch(input){
-    return enqueue(async()=>{
-      invariant(input?.matchId,'matchId is required');
-      invariant(input.confirmation==='DELETE','Explicit DELETE confirmation is required','CLUBMATCH_DELETE_CONFIRMATION');
-      const before=await readConfirmed(input.matchId);
-      invariant(!['live','halftime'].includes(before.snapshot.match.status),'Active matches must be finished before deletion','CLUBMATCH_DELETE_ACTIVE');
-      const mutationResult=await callRpc('delete_match_v08',{
-        p_match_id:input.matchId,
-        p_confirmation:input.confirmation
-      });
-      invariant(mutationResult?.ok===true,'Server did not confirm match deletion','CLUBMATCH_DELETE_FAILED');
-      return {action:'MATCH_DELETED',mutationResult,before,after:null};
-    });
-  }
-
-  return {
-    readConfirmed,
-    substitute,
-    changePosition,
-    swapPositions,
-    recordGoal,
-    advanceClock,
-    deleteMatch,
-    get pendingCount(){return pendingCount}
-  };
+  return {readConfirmed,substitute,changePosition,swapPositions,recordGoal,correctSubstitution,voidSubstitution,correctPositionChange,voidPositionChange,correctGoal,voidGoal,advanceClock,deleteMatch,get pendingCount(){return pendingCount}};
 }
-
-global.ClubMatchV08MutationController={createMutationController};
+global.ClubMatchV08MutationController={createMutationController,exactTime,findBaseEvent,isVoided};
 })(typeof window!=='undefined'?window:globalThis);
