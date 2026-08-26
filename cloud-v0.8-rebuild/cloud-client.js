@@ -39,6 +39,7 @@ function createClient(url,publishableKey,options={}){
     return refreshPromise;
   }
   async function usableSession(){if(!session)return null;if(Number(session.expires_at||0)-nowSeconds()<=90)return refreshSession(true);return session}
+  async function getCurrentUser(){const current=await usableSession();invariant(current,'Authentication required');return request('/auth/v1/user',{token:current.access_token})}
   async function rpc(name,params={}){try{const current=await usableSession();if(!current)return {data:null,error:new Error('Authentication required')};const data=await request(`/rest/v1/rpc/${encodeURIComponent(name)}`,{method:'POST',body:params,token:current.access_token,headers:{Accept:'application/json'}});return {data,error:null}}catch(error){return {data:null,error}}}
 
   function importRecoveryFromUrl(locationLike=global.location){
@@ -55,7 +56,7 @@ function createClient(url,publishableKey,options={}){
   }
 
   const mfa={
-    async listFactors(){try{const current=await usableSession();invariant(current,'Authentication required');const data=await request('/auth/v1/factors',{token:current.access_token});const all=Array.isArray(data)?data:Array.isArray(data?.all)?data.all:[];const totp=all.filter(f=>f.factor_type==='totp'||f.type==='totp');const phone=all.filter(f=>f.factor_type==='phone'||f.type==='phone');return {data:{all,totp,phone},error:null}}catch(error){return {data:{all:[],totp:[],phone:[]},error}}},
+    async listFactors(){try{const user=await getCurrentUser();const all=Array.isArray(user?.factors)?user.factors:[];const totp=all.filter(f=>f.factor_type==='totp'&&f.status==='verified');const phone=all.filter(f=>f.factor_type==='phone'&&f.status==='verified');return {data:{all,totp,phone},error:null}}catch(error){return {data:{all:[],totp:[],phone:[]},error}}},
     async enroll({factorType='totp',friendlyName}={}){try{const current=await usableSession();invariant(current,'Authentication required');const body={factor_type:factorType};if(friendlyName)body.friendly_name=friendlyName;const data=await request('/auth/v1/factors',{method:'POST',body,token:current.access_token});return {data,error:null}}catch(error){return {data:null,error}}},
     async challenge({factorId}={}){try{invariant(factorId,'factorId is required');const current=await usableSession();invariant(current,'Authentication required');const data=await request(`/auth/v1/factors/${encodeURIComponent(factorId)}/challenge`,{method:'POST',body:{},token:current.access_token});return {data,error:null}}catch(error){return {data:null,error}}},
     async verify({factorId,challengeId,code}={}){try{invariant(factorId&&challengeId&&code,'factorId, challengeId and code are required');const current=await usableSession();invariant(current,'Authentication required');const payload=await request(`/auth/v1/factors/${encodeURIComponent(factorId)}/verify`,{method:'POST',body:{challenge_id:challengeId,code:String(code).trim()},token:current.access_token});const next=normalizedSession(payload);if(next){store(next);emit('MFA_CHALLENGE_VERIFIED')}return {data:payload,error:null}}catch(error){return {data:null,error}}},
@@ -65,6 +66,7 @@ function createClient(url,publishableKey,options={}){
 
   const auth={
     async getSession(){try{const current=await usableSession();return {data:{session:current},error:null}}catch(error){return {data:{session:null},error}}},
+    async getUser(){try{const user=await getCurrentUser();return {data:{user},error:null}}catch(error){return {data:{user:null},error}}},
     async signInWithPassword(credentials={}){try{invariant(credentials.email&&credentials.password,'E-mail en wachtwoord zijn verplicht');const payload=await request('/auth/v1/token?grant_type=password',{method:'POST',body:{email:credentials.email,password:credentials.password}});const next=normalizedSession(payload);if(!next)throw new Error('Supabase returned an incomplete login session');store(next);emit('SIGNED_IN');return {data:{session:next,user:next.user||null},error:null}}catch(error){return {data:{session:null,user:null},error}}},
     async resetPasswordForEmail(email,{redirectTo}={}){try{invariant(email,'E-mail is verplicht');const suffix=redirectTo?`?redirect_to=${encodeURIComponent(redirectTo)}`:'';await request(`/auth/v1/recover${suffix}`,{method:'POST',body:{email:String(email).trim()}});return {data:{sent:true},error:null}}catch(error){return {data:null,error}}},
     async updateUser(attributes={}){try{const current=await usableSession();invariant(current,'Authentication required');const data=await request('/auth/v1/user',{method:'PUT',body:attributes,token:current.access_token});return {data:{user:data},error:null}}catch(error){return {data:null,error}}},
