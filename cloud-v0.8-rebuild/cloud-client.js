@@ -1,0 +1,82 @@
+/* ClubMatch Cloud v0.8 - native Supabase Auth + RPC transport (no CDN dependency) */
+(function(global){
+'use strict';
+
+function invariant(condition,message){if(!condition)throw new Error(message)}
+function nowSeconds(){return Math.floor(Date.now()/1000)}
+function createMemoryStorage(){const m=new Map();return{getItem:k=>m.has(k)?m.get(k):null,setItem:(k,v)=>m.set(k,String(v)),removeItem:k=>m.delete(k)}}
+function jsonOrText(text){if(!text)return null;try{return JSON.parse(text)}catch{return text}}
+function decodeJwtPayload(token){try{const part=String(token||'').split('.')[1];if(!part)return{};const normalized=part.replace(/-/g,'+').replace(/_/g,'/');const padded=normalized+'='.repeat((4-normalized.length%4)%4);return JSON.parse(global.atob?global.atob(padded):Buffer.from(padded,'base64').toString('utf8'))}catch{return{}}}
+function makeError(status,payload){
+  const code=payload?.code||payload?.error_code||null;
+  const raw=payload?.msg||payload?.message||payload?.error_description||payload?.error||`Cloud request failed (${status})`;
+  const messages={invalid_credentials:'E-mail of wachtwoord klopt niet.',same_password:'Kies een ander wachtwoord dan je huidige wachtwoord.'};
+  const e=new Error(messages[code]||raw);e.status=status;e.code=code;e.payload=payload;return e;
+}
+
+function createClient(url,publishableKey,options={}){
+  invariant(/^https:\/\//.test(url||''),'Supabase URL must use https');
+  invariant(publishableKey&&String(publishableKey).startsWith('sb_publishable_'),'A Supabase publishable key is required');
+  const fetchImpl=options.fetch||global.fetch?.bind(global);invariant(fetchImpl,'fetch is required');
+  const storage=options.storage||global.localStorage||createMemoryStorage();
+  const storageKey=options.storageKey||'clubmatch-v08-session';
+  const listeners=new Set();
+  let session=readStored();
+  let refreshPromise=null;
+
+  function readStored(){try{const raw=storage.getItem(storageKey);if(!raw)return null;const parsed=JSON.parse(raw);return parsed?.access_token&&parsed?.refresh_token?parsed:null}catch{return null}}
+  function store(next){session=next||null;try{if(session)storage.setItem(storageKey,JSON.stringify(session));else storage.removeItem(storageKey)}catch{}return session}
+  function emit(event){listeners.forEach(fn=>{try{fn(event,session)}catch(error){console.error(error)}})}
+  function normalizedSession(payload){if(!payload?.access_token||!payload?.refresh_token)return null;const expiresAt=Number(payload.expires_at)||nowSeconds()+Number(payload.expires_in||3600);return {...payload,expires_at:expiresAt}}
+  async function request(path,{method='GET',body,token,headers={}}={}){
+    const h={apikey:publishableKey,...headers};if(body!==undefined)h['Content-Type']='application/json';if(token)h.Authorization=`Bearer ${token}`;
+    let response;try{response=await fetchImpl(`${url}${path}`,{method,headers:h,body:body===undefined?undefined:JSON.stringify(body)})}catch(error){const e=new Error(`Cloud netwerkfout: ${error.message||error}`);e.cause=error;throw e}
+    const text=await response.text(),payload=jsonOrText(text);if(!response.ok)throw makeError(response.status,payload);return payload;
+  }
+  async function refreshSession(force=false){
+    if(!session?.refresh_token)return null;if(!force&&Number(session.expires_at||0)-nowSeconds()>90)return session;if(refreshPromise)return refreshPromise;
+    refreshPromise=(async()=>{try{const payload=await request('/auth/v1/token?grant_type=refresh_token',{method:'POST',body:{refresh_token:session.refresh_token}});const next=normalizedSession(payload);if(!next)throw new Error('Supabase returned an incomplete refreshed session');store(next);emit('TOKEN_REFRESHED');return next}catch(error){store(null);emit('SIGNED_OUT');throw error}finally{refreshPromise=null}})();
+    return refreshPromise;
+  }
+  async function usableSession(){if(!session)return null;if(Number(session.expires_at||0)-nowSeconds()<=90)return refreshSession(true);return session}
+  async function rpc(name,params={}){try{const current=await usableSession();if(!current)return {data:null,error:new Error('Authentication required')};const data=await request(`/rest/v1/rpc/${encodeURIComponent(name)}`,{method:'POST',body:params,token:current.access_token,headers:{Accept:'application/json'}});return {data,error:null}}catch(error){return {data:null,error}}}
+
+  function importRecoveryFromUrl(locationLike=global.location){
+    try{
+      const hash=new URLSearchParams(String(locationLike?.hash||'').replace(/^#/,''));
+      const type=hash.get('type');
+      const accessToken=hash.get('access_token'),refreshToken=hash.get('refresh_token');
+      if(type!=='recovery'||!accessToken||!refreshToken)return {data:{session:null,recovery:false},error:null};
+      const next=normalizedSession({access_token:accessToken,refresh_token:refreshToken,expires_in:Number(hash.get('expires_in')||3600),token_type:hash.get('token_type')||'bearer'});
+      store(next);emit('PASSWORD_RECOVERY');
+      try{global.history?.replaceState?.({},global.document?.title||'',String(locationLike.pathname||'')+String(locationLike.search||''))}catch{}
+      return {data:{session:next,recovery:true},error:null};
+    }catch(error){return {data:{session:null,recovery:false},error}}
+  }
+
+  const mfa={
+    async listFactors(){try{const current=await usableSession();invariant(current,'Authentication required');const data=await request('/auth/v1/factors',{token:current.access_token});const all=Array.isArray(data)?data:Array.isArray(data?.all)?data.all:[];const totp=all.filter(f=>f.factor_type==='totp'||f.type==='totp');const phone=all.filter(f=>f.factor_type==='phone'||f.type==='phone');return {data:{all,totp,phone},error:null}}catch(error){return {data:{all:[],totp:[],phone:[]},error}}},
+    async enroll({factorType='totp',friendlyName}={}){try{const current=await usableSession();invariant(current,'Authentication required');const body={factor_type:factorType};if(friendlyName)body.friendly_name=friendlyName;const data=await request('/auth/v1/factors',{method:'POST',body,token:current.access_token});return {data,error:null}}catch(error){return {data:null,error}}},
+    async challenge({factorId}={}){try{invariant(factorId,'factorId is required');const current=await usableSession();invariant(current,'Authentication required');const data=await request(`/auth/v1/factors/${encodeURIComponent(factorId)}/challenge`,{method:'POST',body:{},token:current.access_token});return {data,error:null}}catch(error){return {data:null,error}}},
+    async verify({factorId,challengeId,code}={}){try{invariant(factorId&&challengeId&&code,'factorId, challengeId and code are required');const current=await usableSession();invariant(current,'Authentication required');const payload=await request(`/auth/v1/factors/${encodeURIComponent(factorId)}/verify`,{method:'POST',body:{challenge_id:challengeId,code:String(code).trim()},token:current.access_token});const next=normalizedSession(payload);if(next){store(next);emit('MFA_CHALLENGE_VERIFIED')}return {data:payload,error:null}}catch(error){return {data:null,error}}},
+    async unenroll({factorId}={}){try{invariant(factorId,'factorId is required');const current=await usableSession();invariant(current,'Authentication required');const data=await request(`/auth/v1/factors/${encodeURIComponent(factorId)}`,{method:'DELETE',token:current.access_token});return {data,error:null}}catch(error){return {data:null,error}}},
+    async getAuthenticatorAssuranceLevel(){try{const current=await usableSession();if(!current)return {data:{currentLevel:null,nextLevel:null},error:null};const claims=decodeJwtPayload(current.access_token),currentLevel=claims.aal||'aal1';const factors=await mfa.listFactors();if(factors.error)throw factors.error;const hasVerified=factors.data.all.some(f=>f.status==='verified');return {data:{currentLevel,nextLevel:hasVerified?'aal2':'aal1',currentAuthenticationMethods:claims.amr||[]},error:null}}catch(error){return {data:null,error}}}
+  };
+
+  const auth={
+    async getSession(){try{const current=await usableSession();return {data:{session:current},error:null}}catch(error){return {data:{session:null},error}}},
+    async signInWithPassword(credentials={}){try{invariant(credentials.email&&credentials.password,'E-mail en wachtwoord zijn verplicht');const payload=await request('/auth/v1/token?grant_type=password',{method:'POST',body:{email:credentials.email,password:credentials.password}});const next=normalizedSession(payload);if(!next)throw new Error('Supabase returned an incomplete login session');store(next);emit('SIGNED_IN');return {data:{session:next,user:next.user||null},error:null}}catch(error){return {data:{session:null,user:null},error}}},
+    async resetPasswordForEmail(email,{redirectTo}={}){try{invariant(email,'E-mail is verplicht');const suffix=redirectTo?`?redirect_to=${encodeURIComponent(redirectTo)}`:'';await request(`/auth/v1/recover${suffix}`,{method:'POST',body:{email:String(email).trim()}});return {data:{sent:true},error:null}}catch(error){return {data:null,error}}},
+    async updateUser(attributes={}){try{const current=await usableSession();invariant(current,'Authentication required');const data=await request('/auth/v1/user',{method:'PUT',body:attributes,token:current.access_token});return {data:{user:data},error:null}}catch(error){return {data:null,error}}},
+    importRecoveryFromUrl,
+    async signOut(){const current=session;store(null);try{if(current?.access_token)await request('/auth/v1/logout',{method:'POST',token:current.access_token})}catch(error){emit('SIGNED_OUT');return {error}}emit('SIGNED_OUT');return {error:null}},
+    onAuthStateChange(callback){invariant(typeof callback==='function','Auth callback is required');listeners.add(callback);return {data:{subscription:{unsubscribe(){listeners.delete(callback)}}}}},
+    async refreshSession(){try{const next=await refreshSession(true);return {data:{session:next,user:next?.user||null},error:null}}catch(error){return {data:{session:null,user:null},error}}},
+    mfa
+  };
+  return Object.freeze({rpc,auth,get transport(){return 'native-fetch'},get session(){return session}});
+}
+
+global.ClubMatchV08CloudClient={createClient,decodeJwtPayload};
+if(!global.supabase)global.supabase={createClient};
+})(typeof window!=='undefined'?window:globalThis);

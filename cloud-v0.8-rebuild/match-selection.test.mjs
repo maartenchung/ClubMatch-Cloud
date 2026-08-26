@@ -1,0 +1,16 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+const context={console,globalThis:null,window:null};context.globalThis=context;context.window=context;vm.createContext(context);
+vm.runInContext(fs.readFileSync(new URL('./match-selection.js',import.meta.url),'utf8'),context);
+const store=new Map(),storage={getItem:k=>store.has(k)?store.get(k):null,setItem:(k,v)=>store.set(k,String(v)),removeItem:k=>store.delete(k)};
+const S=context.ClubMatchV08MatchSelection.createMatchSelection({storage});
+assert.equal(S.choose([]),null);
+assert.equal(S.choose([{match_id:'m1'}]),'m1','single open match should auto-open');
+S.remember('m2');
+assert.equal(S.recalled(),'m2');
+assert.equal(S.choose([{match_id:'m1'},{match_id:'m2'}]),'m2','remembered open match wins');
+assert.equal(S.choose([{match_id:'m1'}]),'m1','stale remembered match falls back to sole open match');
+assert.equal(S.choose([{match_id:'m1'},{match_id:'m3'}]),null,'multiple matches require explicit choice when remembered one is stale');
+S.clear();assert.equal(S.recalled(),null);
+console.log('PASS match-selection: refresh restore + safe fallback');
