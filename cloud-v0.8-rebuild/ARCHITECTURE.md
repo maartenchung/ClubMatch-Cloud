@@ -91,6 +91,12 @@ opgehaalde bevestigde Cloud-snapshot. Een bezette positie wordt niet als twee
 losse positiewijzigingen geschreven; daarvoor is uitsluitend de atomaire
 `swap_player_positions`-actie toegestaan.
 
+`snapshot-adapter.js` zet de Supabase-snapshot om naar het centrale eventmodel.
+Daarbij worden `match_minute` en `match_second` samengevoegd tot één exacte
+wedstrijdseconde. Geannuleerde events verdwijnen uit de projectie en een
+correctie vervangt het oorspronkelijke event zonder de auditgeschiedenis te
+verwijderen.
+
 ## Verplichte regressiegates vóór publicatie
 1. Start 11 veldspelers.
 2. Eerste wissel A uit / B in.
