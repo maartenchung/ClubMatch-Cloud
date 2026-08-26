@@ -30,6 +30,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Browser shell syntax
+        run: |
+          node --check app.js
+          node --check dom-renderer.js
+          node --check ui-frame.js
+          node --check runtime.js
       - name: Mutation controller and lifecycle gates
         run: node mutation-controller.test.mjs
       - name: Snapshot adapter
