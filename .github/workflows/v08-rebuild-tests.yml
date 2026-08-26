@@ -37,10 +37,11 @@ jobs:
           node --check action-policy.js
           node --check clock-projector.js
           node --check lifecycle-sync.js
+          node --check match-selection.js
           node --check dom-renderer.js
           node --check ui-frame.js
           node --check runtime.js
-      - name: Native Cloud transport
+      - name: Native Cloud transport and auth diagnostics
         run: node cloud-client.test.mjs
       - name: Action availability policy
         run: node action-policy.test.mjs
@@ -48,6 +49,8 @@ jobs:
         run: node clock-projector.test.mjs
       - name: Mobile and desktop lifecycle resync
         run: node lifecycle-sync.test.mjs
+      - name: Active match refresh restore
+        run: node match-selection.test.mjs
       - name: Mutation controller and lifecycle gates
         run: node mutation-controller.test.mjs
       - name: Snapshot adapter
