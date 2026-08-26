@@ -87,7 +87,13 @@ function createRenderer(doc){
     return frame;
   }
 
-  return Object.freeze({render});
+  function clear(){
+    text(refs.clock,'0:00');text(refs.score,'0–0');text(refs.integrity,'Nog geen confirmed state.');refs.integrity.classList.remove('ok');
+    [refs.field,refs.bench,refs.pitch,refs.monitor,refs.timeline].forEach(target=>{target.replaceChildren()});
+    cards.clear();pitchNodes.clear();monitorNodes.clear();timelineNodes.clear();
+  }
+
+  return Object.freeze({render,clear});
 }
 
 global.ClubMatchV08DomRenderer={createRenderer};
