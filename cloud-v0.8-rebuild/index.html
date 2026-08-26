@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>ClubMatch Cloud v0.8 Rebuild</title>
+<style>
+:root{--p:#6f42c1;--d:#4b2672;--l:#eadff5;--bg:#f6f1fb;--txt:#241633;--ok:#237a43;--bad:#983263;--amber:#d39118;--blue:#1976d2;font-family:Arial,Helvetica,sans-serif}*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#f8f4fc,#eee5f7);color:var(--txt)}button,input,select{font:inherit}.wrap{max-width:1180px;margin:auto;padding:14px}.card{background:#fff;border:1px solid #e4d4f2;border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:0 4px 18px rgba(75,38,114,.08)}h1,h2,h3{color:var(--d);margin-top:0}.brand{font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--p)}.badge{display:inline-block;background:var(--l);color:var(--d);padding:4px 8px;border-radius:999px;font-size:11px;font-weight:900}.muted{font-size:12px;color:#6b5877}.hidden{display:none!important}.status{padding:9px;border-radius:10px;background:#faf7fd;border:1px solid #e4d4f2;font-size:12px}.status.ok,#v08Integrity.ok{background:#eaf7ee;color:#1f6638;border-color:#9ed5ad}.status.bad{background:#fff1f1;color:#8b1f1f;border-color:#e2a2a2}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.controls{display:flex;gap:7px;flex-wrap:wrap}.controls button,button.primary{border:0;background:var(--p);color:#fff;font-weight:900;border-radius:10px;padding:9px 11px;cursor:pointer}.controls button.secondary{background:var(--l);color:var(--d)}.controls button.danger{background:var(--bad)}button:disabled{opacity:.5;cursor:wait}input,select{width:100%;border:1px solid #cdbfd8;border-radius:9px;padding:9px;background:#fff}.matchChoice{display:block;width:100%;text-align:left;border:1px solid #e4d4f2;background:#fff;border-radius:11px;padding:10px;margin:6px 0;color:var(--txt);cursor:pointer}.matchChoice b,.matchChoice span{display:block}.matchChoice span{font-size:11px;color:#6b5877;margin-top:3px}.matchChoice.active{border:3px solid var(--p);background:#f3ebfa}.scoreline{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;text-align:center}.score{font-size:42px;font-weight:900;color:var(--d)}.clock{font-size:32px;font-weight:900;font-variant-numeric:tabular-nums}.liveLayout{display:grid;grid-template-columns:1.15fr .85fr;gap:12px}.v08Tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.v08Player{border:2px solid #d8c4ef;border-radius:12px;padding:9px;background:#fff;min-height:146px}.v08PlayerHead{display:flex;justify-content:space-between;gap:7px}.v08PlayerPos{font-weight:900;color:var(--d)}.v08PlayerMeta{font-size:9px;margin:5px 0;color:#6b5877}.v08Metrics{display:grid;grid-template-columns:1fr 1fr;gap:5px}.v08Metric{border-radius:8px;padding:5px;background:#f8f4fc;font-size:9px}.v08Metric b{display:block;font-size:14px;color:var(--d);font-variant-numeric:tabular-nums}.v08Metric.active{outline:1px solid #c9afe3}.swapNever080{box-shadow:inset 4px 0 0 #ddd}.swapPast080{box-shadow:inset 4px 0 0 var(--p)!important}.swapIn080{box-shadow:inset 4px 0 0 var(--blue)!important}.swapOut080{box-shadow:inset 4px 0 0 var(--amber)!important}.pitch{min-height:620px;border-radius:15px;border:3px solid #fff;background:repeating-linear-gradient(90deg,#438b57 0 10%,#4b985f 10% 20%);padding:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;align-content:center}.v08PitchPlayer{background:rgba(255,255,255,.94);border-radius:10px;padding:7px;text-align:center;min-height:70px}.v08PitchPlayer b,.v08PitchPlayer span,.v08PitchPlayer small{display:block}.v08PitchPos{color:var(--d);font-size:11px}.v08PitchName{font-weight:900}.v08PitchTime{font-size:9px;margin-top:3px}.v08MonitorRow{display:grid;grid-template-columns:1.4fr .7fr .7fr .8fr .8fr;gap:6px;border-top:1px solid #eee;padding:6px;font-size:11px;align-items:center}.v08TimelineRow{display:grid;grid-template-columns:50px 1fr 60px;gap:6px;border-top:1px solid #eee;padding:6px;font-size:11px}.sectionTitle{display:flex;align-items:center;justify-content:space-between;gap:8px}.actionGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.actionBox{border:1px solid #e4d4f2;border-radius:12px;padding:10px;background:#fcfaff}.actionBox h3{font-size:14px;margin-bottom:7px}.actionBox .controls{margin-top:7px}#v08Integrity{padding:8px;border-radius:9px;border:1px solid #e4d4f2;font-size:11px;margin-top:8px}@media(max-width:820px){.liveLayout,.actionGrid,.grid2,.grid3{grid-template-columns:1fr}.v08Tiles{grid-template-columns:1fr}.pitch{min-height:520px}.v08MonitorRow{grid-template-columns:1.3fr .7fr .8fr}.v08MonitorRow .mPos,.v08MonitorRow .mTotal{display:none}}@media(max-width:480px){.wrap{padding:8px}.card{padding:10px}.score{font-size:35px}.clock{font-size:27px}.pitch{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section class="card">
+    <div class="brand">ClubMatch Cloud · isolated rebuild</div>
+    <h1>ClubMatch Cloud <span class="badge">v0.8 DEVELOPMENT</span></h1>
+    <div class="muted">v0.7.6 blijft frozen. Deze shell leest en schrijft uitsluitend via de v0.8 confirmed-state runtime.</div>
+    <div id="v08Status" class="status">Initialiseren…</div>
+  </section>
+
+  <section id="authPanel" class="card">
+    <h2>Inloggen</h2>
+    <div class="grid2"><label>E-mail<input id="email" type="email" autocomplete="username"></label><label>Wachtwoord<input id="password" type="password" autocomplete="current-password"></label></div>
+    <div class="controls"><button id="loginBtn" data-v08-action>Inloggen</button></div>
+  </section>
+
+  <main id="appPanel" class="hidden">
+    <section class="card">
+      <div class="sectionTitle"><div><b id="sessionEmail"></b><div class="muted">Ingelogde Cloud-sessie</div></div><div class="controls"><button id="refreshMatchesBtn" class="secondary" data-v08-action>↻ Wedstrijden</button><button id="logoutBtn" class="secondary" data-v08-action>Uitloggen</button></div></div>
+      <h2 style="margin-top:12px">Open wedstrijden</h2><div id="openMatches"></div>
+    </section>
+
+    <section class="card">
+      <div class="sectionTitle"><div><h2 id="activeMatchTitle">Geen wedstrijd geselecteerd</h2><div id="activeMatchMeta" class="muted"></div></div><div class="controls"><button id="refreshLiveBtn" class="secondary" data-v08-action>↻ Live</button></div></div>
+      <div class="scoreline"><div>CLUBMATCH</div><div><div id="v08Score" class="score">0–0</div><div id="v08Clock" class="clock">0:00</div></div><div>TEGENSTANDER</div></div>
+      <div id="v08Integrity">Nog geen confirmed state.</div>
+    </section>
+
+    <section class="card">
+      <h2>Wedstrijdacties</h2>
+      <div class="actionGrid">
+        <div class="actionBox"><h3>Wissel</h3><div class="grid2"><label>Uit<select id="subOut"></select></label><label>In<select id="subIn"></select></label></div><div class="controls"><button id="subBtn" data-v08-action>Wissel bevestigen</button></div></div>
+        <div class="actionBox"><h3>Positie wijzigen</h3><div class="grid2"><label>Speler<select id="posPlayer"></select></label><label>Nieuwe positie<input id="posNew" placeholder="Bijv. RW"></label></div><div class="controls"><button id="posBtn" data-v08-action>Positie opslaan</button></div></div>
+        <div class="actionBox"><h3>Posities ruilen</h3><div class="grid2"><label>Speler A<select id="swapA"></select></label><label>Speler B<select id="swapB"></select></label></div><div class="controls"><button id="swapBtn" data-v08-action>Atomair ruilen</button></div></div>
+        <div class="actionBox"><h3>Goal</h3><div class="grid2"><label>Scorer<select id="goalScorer"></select></label><label>Assist<select id="goalAssist"></select></label></div><div class="controls"><button id="goalForBtn" data-v08-action>⚽ Eigen team</button><button id="goalAgainstBtn" class="secondary" data-v08-action>Goal tegen</button></div></div>
+        <div class="actionBox"><h3>Klok</h3><div class="controls"><button data-clock="pause" data-v08-action>Pauze</button><button data-clock="resume" data-v08-action>Hervat</button><button data-clock="halftime" data-v08-action>Rust</button><button data-clock="second_half" data-v08-action>2e helft</button></div></div>
+        <div class="actionBox"><h3>Extra tijd / einde</h3><div class="grid2"><label>Extra minuten<input id="injuryMinutes" type="number" min="0" max="60" value="0"></label><div class="controls"><button data-clock="injury_time" data-v08-action>+ Extra tijd</button></div></div><div class="controls"><button data-clock="finish" class="danger" data-v08-action>■ Wedstrijd stoppen</button><button id="deleteMatchBtn" class="danger hidden" data-v08-action>🗑 Definitief verwijderen</button></div></div>
+      </div>
+    </section>
+
+    <div class="liveLayout">
+      <div>
+        <section class="card"><h2>Live veldopstelling</h2><div id="v08Pitch" class="pitch"></div></section>
+        <section class="card"><h2>Wisselmonitor</h2><div class="v08MonitorRow"><b>Speler</b><b>Status</b><b>Pos.</b><b>Huidig</b><b>Totaal</b></div><div id="v08Monitor"></div></section>
+        <section class="card"><h2>Eventtijdlijn</h2><div id="v08Timeline"></div></section>
+      </div>
+      <div>
+        <section class="card"><h2>Veldspelers</h2><div id="v08FieldTiles" class="v08Tiles"></div></section>
+        <section class="card"><h2>Bank</h2><div id="v08BenchTiles" class="v08Tiles"></div></section>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4"></script>
+<script src="live-state.js"></script>
+<script src="snapshot-adapter.js"></script>
+<script src="view-model.js"></script>
+<script src="mutation-controller.js"></script>
+<script src="runtime.js"></script>
+<script src="ui-frame.js"></script>
+<script src="dom-renderer.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
