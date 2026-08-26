@@ -34,6 +34,8 @@ jobs:
         run: |
           node --check app.js
           node --check cloud-client.js
+          node --check security-controller.js
+          node --check security-ui.js
           node --check action-policy.js
           node --check clock-projector.js
           node --check lifecycle-sync.js
@@ -45,8 +47,10 @@ jobs:
           node --check dom-renderer.js
           node --check ui-frame.js
           node --check runtime.js
-      - name: Native Cloud transport and auth diagnostics
+      - name: Native Cloud transport, recovery and MFA
         run: node cloud-client.test.mjs
+      - name: Password recovery and MFA security controller
+        run: node security-controller.test.mjs
       - name: Action availability policy
         run: node action-policy.test.mjs
       - name: One-second match and halftime clocks
