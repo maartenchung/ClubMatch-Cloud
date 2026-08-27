@@ -31,6 +31,11 @@ function deriveLiveMatchState(input){
        p.currentPosition=e.position||qOld;
        q.currentPosition=e.otherPosition||pOld;
      }else p.currentPosition=e.position;
+   } else if(e.type==='FORMATION_CHANGED'){
+     const assignments=Array.isArray(e.assignments)?e.assignments:[],ids=assignments.map(a=>a.playerId),positions=assignments.map(a=>String(a.position||'').trim());
+     if(assignments.length!==11||new Set(ids).size!==11||new Set(positions).size!==11||assignments.some(a=>!players[a.playerId]||players[a.playerId].currentRole!=='FIELD'||!String(a.position||'').trim())){rejected.push({event:e,reason:'invalid formation change'});return}
+     const currentField=selected.filter(id=>players[id]?.currentRole==='FIELD');if(currentField.length!==11||currentField.some(id=>!ids.includes(id))){rejected.push({event:e,reason:'formation does not match field'});return}
+     assignments.forEach(a=>{players[a.playerId].currentPosition=String(a.position).trim()});
    }
  });
  Object.values(players).forEach(p=>{accrue(p,now);p.currentStintSeconds=Math.max(0,now-p._last);p.currentStintStartedAtSecond=p._last;if(p.substitutionCount)p.changeState=p.lastSubstitutionDirection==='IN'?'JUST_IN':'JUST_OUT';delete p._last});
