@@ -82,6 +82,8 @@ jobs:
         run: node voice-command.test.mjs
       - name: Voice proposal and explicit confirmation gate
         run: node voice-controller.test.mjs
+      - name: Confirmed-snapshot voice app integration
+        run: node voice-integration.test.mjs
       - name: Dashboard team filter and history
         run: node dashboard-controller.test.mjs
       - name: Mutation controller and lifecycle gates
