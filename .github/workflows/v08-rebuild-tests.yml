@@ -63,6 +63,11 @@ jobs:
           node --check voice-ui.js
           node --check dashboard-controller.js
           node --check dashboard-ui.js
+          node --check management-controller.js
+          node --check management-ui.js
+          node --check training-controller.js
+          node --check training-ui.js
+          node --check stored-match-delete-ui.js
           node --check security-controller.js
           node --check security-ui.js
           node --check ux-theme.js
@@ -94,6 +99,8 @@ jobs:
         run: node correction-integration.test.mjs
       - name: Dutch live event descriptions and monitoring changes
         run: node event-describer.test.mjs
+      - name: Goal and penalty score event timeline
+        run: node event-score.test.mjs
       - name: Live clock controls placement and finish confirmation
         run: node live-controls-integration.test.mjs
       - name: Confirmed quick player action controller
@@ -108,8 +115,14 @@ jobs:
         run: node voice-ui-restart.test.mjs
       - name: Confirmed-snapshot voice app integration
         run: node voice-integration.test.mjs
-      - name: Dashboard team filter and history
+      - name: Dashboard match selection delete and 1-100 rating
         run: node dashboard-controller.test.mjs
+      - name: Training attendance and assessment controller
+        run: node training-controller.test.mjs
+      - name: Team season player and club management controller
+        run: node management-controller.test.mjs
+      - name: Roadmap parity browser integration
+        run: node roadmap-parity-integration.test.mjs
       - name: Mutation controller and lifecycle gates
         run: node mutation-controller.test.mjs
       - name: Snapshot adapter
