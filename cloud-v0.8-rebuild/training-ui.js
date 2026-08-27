@@ -3,7 +3,7 @@
 'use strict';
 const SUPABASE_URL='https://fnbqyogbamufytcabfzm.supabase.co';const SUPABASE_KEY='sb_publishable_skGPpngOQ_1OpEbreV2kXA__2OL_Mbp';
 const LAST_TEAM_KEY='clubmatch.v08.training.team';const LAST_SESSION_KEY='clubmatch.v08.training.session';
-function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]))}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function scoreOptions(value){return '<option value="">—</option>'+[1,2,3,4,5].map(n=>`<option value="${n}"${Number(value)===n?' selected':''}>${n}</option>`).join('')}
 function todayLocal(){const d=new Date(),p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`}
 function storageGet(key){try{return global.localStorage?.getItem(key)||''}catch{return ''}}
