@@ -41,9 +41,12 @@ function assignFormation(players=[],code='4-3-3'){
   return Object.freeze({code:getFormation(code).code,slots,assignments:Object.freeze(assignments)});
 }
 function pitchRows(code='4-3-3'){
+  if(global.ClubMatchV08PitchLayout?.formationRows)return global.ClubMatchV08PitchLayout.formationRows(getFormation(code).code);
   const slots=getFormation(code).slots;
   const rowFor=slot=>slot==='GK'?4:/^(RB|RWB|RCB|CB|LCB|LB|LWB)$/.test(slot)?3:/^(DM|RDM|LDM|RM|LM|RCM|CM|LCM|AM)$/.test(slot)?2:1;
   return Object.freeze([1,2,3,4].map(row=>Object.freeze(slots.filter(slot=>rowFor(slot)===row))));
 }
-global.ClubMatchV08Formation={FORMATIONS,getFormation,assignFormation,pitchRows,score};
+function positionLabel(code){return global.ClubMatchV08PitchLayout?.positionLabel?.(code)||normalized(code)}
+function slotLabel(code){return global.ClubMatchV08PitchLayout?.slotLabel?.(code)||`${normalized(code)} · ${positionLabel(code)}`}
+global.ClubMatchV08Formation={FORMATIONS,getFormation,assignFormation,pitchRows,score,positionLabel,slotLabel};
 })(typeof window!=='undefined'?window:globalThis);

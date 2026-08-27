@@ -1,0 +1,16 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+const context={console,globalThis:null,window:null};context.globalThis=context;context.window=context;vm.createContext(context);
+context.ClubMatchV08PitchLayout={slotLabel:p=>({RW:'RW · Rechtsbuiten',LW:'LW · Linksbuiten',ST:'ST · Spits'}[p]||p)};
+vm.runInContext(fs.readFileSync(new URL('./event-describer.js',import.meta.url),'utf8'),context);
+const E=context.ClubMatchV08EventDescriber,players={p13:{name:'Wai Sam',shirt_number:13},p9:{name:'Shane',shirt_number:9},p10:{name:'Siem',shirt_number:10}};
+let d=E.describeEvent({event_type:'substitution',subject_player_id:'p13',related_player_id:'p9',substitution:{old_position:'RW',new_position:'RW'}},players);
+assert.equal(d.label,'Wissel');assert.match(d.description,/RW · Rechtsbuiten → BANK/);assert.match(d.description,/BANK → RW · Rechtsbuiten/);assert.equal(d.playerChanges.p13,'RW · Rechtsbuiten → BANK');
+d=E.describeEvent({event_type:'position_changed',subject_player_id:'p13',related_player_id:'p10',payload:{swap:true,player_a_old_position:'RW',player_a_new_position:'LW',player_b_old_position:'LW',player_b_new_position:'RW'}},players);
+assert.equal(d.label,'Positieruil');assert.match(d.description,/Wai Sam/);assert.match(d.description,/RW · Rechtsbuiten → LW · Linksbuiten/);assert.equal(d.playerChanges.p10,'LW · Linksbuiten → RW · Rechtsbuiten');
+d=E.describeEvent({event_type:'goal_voided',payload:{reason:'Buitenspel'}},players);assert.equal(d.label,'Doelpunt ongeldig');assert.equal(d.description,'Doelpunt ongeldig · Reden: Buitenspel');
+d=E.describeEvent({event_type:'player_action',subject_player_id:'p13',payload:{action:'possession_control'}},players);assert.equal(d.label,'Balbezit / controle');assert.match(d.description,/Wai Sam · Balbezit \/ controle/);
+d=E.describeEvent({event_type:'match_paused',payload:{}},players);assert.equal(d.label,'Wedstrijd gepauzeerd');assert.equal(d.description,'Wedstrijdklok gepauzeerd');
+const latest=E.latestPlayerChanges([{event_type:'position_changed',subject_player_id:'p13',payload:{old_position:'RW',new_position:'ST'},matchSecond:500},{event_type:'player_action',subject_player_id:'p13',payload:{action:'ball_loss'},matchSecond:510}],players);assert.equal(latest.p13.text,'Balverlies');assert.equal(latest.p13.matchSecond,510);
+console.log('PASS event-describer: Dutch timeline + void reasons + from-to live monitoring');

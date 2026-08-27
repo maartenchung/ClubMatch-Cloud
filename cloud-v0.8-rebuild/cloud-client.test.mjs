@@ -14,7 +14,7 @@ const fetch=async(url,options={})=>{
   if(url.includes('/auth/v1/token?grant_type=refresh_token'))return json({access_token:jwt('aal1'),refresh_token:'r2',expires_at:now+3600,user:{id:'u1',email:'test@example.com'}});
   if(url.includes('/auth/v1/recover'))return json({});
   if(url.endsWith('/auth/v1/user')&&options.method==='PUT')return json({id:'u1',email:'test@example.com'});
-  if(url.endsWith('/auth/v1/factors')&&(!options.method||options.method==='GET'))return json([{id:'f1',factor_type:'totp',status:'verified',friendly_name:'ClubMatch'}]);
+  if(url.endsWith('/auth/v1/user')&&(!options.method||options.method==='GET'))return json({id:'u1',email:'test@example.com',factors:[{id:'f1',factor_type:'totp',status:'verified',friendly_name:'ClubMatch'}]});
   if(url.endsWith('/auth/v1/factors')&&options.method==='POST')return json({id:'f2',factor_type:'totp',status:'unverified',totp:{qr_code:'data:image/svg+xml,test',secret:'SECRET',uri:'otpauth://test'}});
   if(url.includes('/auth/v1/factors/f2/challenge'))return json({id:'c1'});
   if(url.includes('/auth/v1/factors/f2/verify'))return json({access_token:jwt('aal2'),refresh_token:'r3',expires_at:now+3600,user:{id:'u1',email:'test@example.com'}});
@@ -40,7 +40,10 @@ const reset=await client.auth.resetPasswordForEmail('test@example.com',{redirect
 const recoverCall=calls.find(c=>c.url.includes('/auth/v1/recover'));assert.ok(recoverCall.url.includes('redirect_to='));assert.equal(JSON.parse(recoverCall.options.body).email,'test@example.com');
 const update=await client.auth.updateUser({password:'new-password-123'});assert.equal(update.error,null);assert.equal(update.data.user.id,'u1');
 
+const user=await client.auth.getUser();assert.equal(user.error,null);assert.equal(user.data.user.id,'u1');assert.equal(user.data.user.factors.length,1);
 const factors=await client.auth.mfa.listFactors();assert.equal(factors.error,null);assert.equal(factors.data.totp[0].id,'f1');
+assert.equal(calls.some(c=>c.url.endsWith('/auth/v1/factors')&&(!c.options.method||c.options.method==='GET')),false,'browser MFA factor listing must not GET /auth/v1/factors');
+assert.ok(calls.some(c=>c.url.endsWith('/auth/v1/user')&&(!c.options.method||c.options.method==='GET')),'MFA factor listing must read authenticated user.factors');
 const aal=await client.auth.mfa.getAuthenticatorAssuranceLevel();assert.equal(aal.data.currentLevel,'aal1');assert.equal(aal.data.nextLevel,'aal2');
 const enrolled=await client.auth.mfa.enroll({factorType:'totp',friendlyName:'ClubMatch'});assert.equal(enrolled.data.id,'f2');
 const challenge=await client.auth.mfa.challenge({factorId:'f2'});assert.equal(challenge.data.id,'c1');
@@ -63,4 +66,4 @@ const failingFetch=async()=>({ok:false,status:400,text:async()=>JSON.stringify({
 const failing=createClient('https://example.supabase.co','sb_publishable_test',{fetch:failingFetch,storage:localStorage,storageKey:'failed'});
 const bad=await failing.auth.signInWithPassword({email:'test@example.com',password:'wrong'});
 assert.equal(bad.error.code,'invalid_credentials');assert.equal(bad.error.message,'E-mail of wachtwoord klopt niet.');
-console.log('PASS cloud-client: auth + recovery + MFA + rpc + refresh + signout');
+console.log('PASS cloud-client: auth + recovery + MFA + user factors + rpc + refresh + signout');

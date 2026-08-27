@@ -1,0 +1,15 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+const context={console,globalThis:null,window:null,Date,Math,crypto:{randomUUID:()=> 'evt-action'}};context.globalThis=context;context.window=context;vm.createContext(context);
+vm.runInContext(fs.readFileSync(new URL('./player-action-controller.js',import.meta.url),'utf8'),context);
+const calls=[],refresh=[];
+const client={async rpc(name,params){calls.push([name,params]);return {data:{ok:true,event_id:'e1'},error:null}}};
+const runtime={activeMatchId:'m1',async refresh(reason){refresh.push(reason)}};
+const C=context.ClubMatchV08PlayerActions.createPlayerActionController({client,runtime});
+C.setSnapshot({match:{id:'m1'},players:[{player_id:'p13',selected:true,is_on_field:true},{player_id:'p9',selected:true,is_on_field:false}]});
+await C.record('p13','ball_loss','onder druk');assert.equal(calls.length,1);assert.equal(calls[0][0],'record_player_action_v08');assert.equal(calls[0][1].p_match_id,'m1');assert.equal(calls[0][1].p_player_id,'p13');assert.equal(calls[0][1].p_action,'ball_loss');assert.equal(calls[0][1].p_note,'onder druk');assert.equal(calls[0][1].p_client_event_id,'evt-action');assert.deepEqual(refresh,['speleractie'],'na serverbevestiging moet confirmed snapshot opnieuw worden geladen');
+await assert.rejects(()=>C.record('p9','bad_pass'),/veldspeler/);assert.equal(calls.length,1,'ongeldige bankactie mag geen RPC doen');
+await C.record('p9','injury','enkel');assert.equal(calls.length,2,'blessure mag ook voor bankspeler worden vastgelegd');
+await assert.rejects(()=>C.record('p13','onbekend'),/Onbekende speleractie/);assert.equal(calls.length,2);
+console.log('PASS player-action-controller: two-tap event -> Cloud -> confirmed refresh');

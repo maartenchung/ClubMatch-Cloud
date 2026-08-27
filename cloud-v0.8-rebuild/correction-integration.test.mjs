@@ -1,0 +1,10 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+const app=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8');
+const html=fs.readFileSync(new URL('./index.html',import.meta.url),'utf8');
+assert.ok(html.includes('correction-ui.js?v='),'correctie-UI moet versie-gepind worden geladen');
+assert.ok(!html.includes('correction-bootstrap.js'),'tijdelijke correctie-bootstrap mag niet meer worden geladen');
+assert.ok(app.includes('correctionUi=global.ClubMatchV08Corrections.createCorrectionUi({document,runtime,run})'),'correctie-UI moet rechtstreeks aan de runtime gekoppeld zijn');
+assert.ok(app.includes('const snapshot=meta.snapshot||runtime?.snapshot')&&app.includes('correctionUi?.render?.(snapshot)'),'iedere render moet correcties uit de bevestigde snapshot verversen');
+assert.ok(app.includes('correctionUi?.clear?.()'),'stop/logout/voorbereiding moet oude correcties uit beeld halen');
+console.log('PASS correction-integration: één runtime + confirmed snapshot + no bootstrap overlay');
