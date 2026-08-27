@@ -31,7 +31,7 @@ function createActionPolicy(input={}){
     secondHalf:hasMatch&&status==='halftime'&&period==='halftime'&&clock==='stopped',
     injuryTime:hasMatch&&isLive&&period==='second_half',
     finish:hasMatch&&['live','halftime'].includes(status)&&['first_half','halftime','second_half','extra_time'].includes(period),
-    deleteMatch:hasMatch&&status==='finished'
+    deleteMatch:hasMatch&&['finished','closed'].includes(status)
   });
 }
 

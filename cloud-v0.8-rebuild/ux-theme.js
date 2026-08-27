@@ -1,7 +1,7 @@
-/* ClubMatch Cloud v0.8 - semantic button families; visual only, no action logic */
+/* ClubMatch Cloud v0.8 - semantic button families and branding; visual only */
 (function(global){
 'use strict';
-function install(doc=global.document){if(!doc||doc.getElementById('v08SemanticTheme'))return;const s=doc.createElement('style');s.id='v08SemanticTheme';s.textContent=`
+function install(doc=global.document){if(!doc)return;if(!doc.getElementById('v08SemanticTheme')){const s=doc.createElement('style');s.id='v08SemanticTheme';s.textContent=`
 /* Voorbereiding: rustig paars/outline zodat het duidelijk pre-match is. */
 #v08Preparation .controls button,#v08Preparation .prepQuick button{background:#f4eef9!important;color:#4b2672!important;border:1px solid #8d6dac!important;box-shadow:none!important}
 #v08Preparation #prepStartBtn{background:#6f42c1!important;color:#fff!important;border-color:#6f42c1!important}
@@ -14,7 +14,10 @@ main:not(.hidden) .actionBox>.controls>button:not(.danger),main:not(.hidden) .ac
 /* Correcties: amber outline; ongeldig: rood outline. Geen verwarring met normale live actie. */
 #v08Corrections .corrActions button.secondary{background:#fff8e9!important;color:#765500!important;border:1px solid #c79528!important;font-weight:900}#v08Corrections .corrActions button.danger{background:#fff!important;color:#983263!important;border:2px solid #b95078!important;font-weight:900}#v08Corrections #corrSave{background:#c18019!important;color:#fff!important;border:1px solid #a66d0c!important}#v08Corrections #corrCancel{background:#f3f0f5!important;color:#5f5268!important;border:1px solid #bdb4c3!important}
 #v08Corrections .corrState.changed{display:inline-block;background:#f0e5fa;color:#65398a;border-radius:999px;padding:2px 6px}#v08Corrections .corrState.voided{display:inline-block;background:#fff0f4;color:#983263;border-radius:999px;padding:2px 6px}
+.cmChungsCredit{margin-top:7px;font-size:11px;font-weight:800;color:#6f42c1}
 button:focus-visible{outline:3px solid rgba(41,95,159,.35)!important;outline-offset:2px}
 `;doc.head.appendChild(s)}
+ const brand=doc.querySelector('.brand');if(brand)brand.textContent='Ontwikkeld door Chungs';const header=brand?.closest('.card');if(header&&!header.querySelector('.cmChungsCredit')){const credit=doc.createElement('div');credit.className='cmChungsCredit';credit.textContent='Ontwikkeld door Chungs';header.appendChild(credit)}
+}
 global.ClubMatchV08UxTheme={install};install();
 })(typeof window!=='undefined'?window:globalThis);
