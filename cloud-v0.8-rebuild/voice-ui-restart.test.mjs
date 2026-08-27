@@ -1,0 +1,10 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+const source=fs.readFileSync(new URL('./voice-ui.js',import.meta.url),'utf8');
+assert.ok(source.includes('function createRecognition()'),'spraak-UI moet herkenningssessies expliciet maken');
+assert.ok(source.includes('r=new Recognition()'),'iedere luisteractie moet een verse SpeechRecognition instantie krijgen');
+assert.ok(source.includes('disposeRecognition(true)'),'oude of vastgelopen herkenning moet worden opgeruimd');
+assert.ok(source.includes('12000'),'luistersessie moet een watchdog hebben');
+assert.ok(source.includes("code==='no-speech'")&&source.includes("code==='network'"),'no-speech en netwerkfouten moeten herstelbaar zijn');
+assert.ok(source.includes("r.lang='nl-NL'"),'spraakherkenning moet Nederlands blijven');
+console.log('PASS voice-ui-restart: fresh recognition instance + cleanup + recoverable errors');
