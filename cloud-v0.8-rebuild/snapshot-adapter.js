@@ -37,9 +37,12 @@ function mapConfirmedEvents(events){
         otherPlayerId:swap?(event.related_player_id||base.related_player_id):null,
         otherPosition:swap?(event.payload?.player_b_new_position||base.payload?.player_b_new_position||''):null
       });
+    }else if(base.event_type==='formation_changed'){
+      const assignments=Array.isArray(event.payload?.assignments)?event.payload.assignments:Array.isArray(base.payload?.assignments)?base.payload.assignments:[];
+      mapped.push({id,type:'FORMATION_CHANGED',matchSecond,seq:index+1,formationCode:event.payload?.new_formation||base.payload?.new_formation||'',assignments:assignments.map(item=>({playerId:item.player_id||item.playerId,position:item.position}))});
     }
   });
-  return mapped.filter(e=>e.playerId||e.outId);
+  return mapped.filter(e=>e.type==='FORMATION_CHANGED'||e.playerId||e.outId);
 }
 
 function snapshotToStateInput(snapshot){
