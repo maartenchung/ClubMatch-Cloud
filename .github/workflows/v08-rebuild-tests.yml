@@ -124,6 +124,8 @@ jobs:
         run: node training-controller.test.mjs
       - name: Reopen and resume saved trainings
         run: node training-reopen.test.mjs
+      - name: Isolated Trainingen workspace
+        run: node training-workspace.test.mjs
       - name: Team season player and club management controller
         run: node management-controller.test.mjs
       - name: Roadmap parity browser integration
