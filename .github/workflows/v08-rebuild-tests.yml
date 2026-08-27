@@ -44,6 +44,7 @@ jobs:
           node --check preparation-controller.js
           node --check preparation-ui.js
           node --check correction-ui.js
+          node --check voice-command.js
           node --check dashboard-controller.js
           node --check dashboard-ui.js
           node --check dom-renderer.js
@@ -75,6 +76,8 @@ jobs:
         run: node correction-ui.test.mjs
       - name: Direct correction UI integration
         run: node correction-integration.test.mjs
+      - name: Dutch voice commands by name and shirt number
+        run: node voice-command.test.mjs
       - name: Dashboard team filter and history
         run: node dashboard-controller.test.mjs
       - name: Mutation controller and lifecycle gates
