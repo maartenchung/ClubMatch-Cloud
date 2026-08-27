@@ -122,6 +122,8 @@ jobs:
         run: node match-library-ui.test.mjs
       - name: Training attendance and one-click assessment save
         run: node training-controller.test.mjs
+      - name: Reopen and resume saved trainings
+        run: node training-reopen.test.mjs
       - name: Team season player and club management controller
         run: node management-controller.test.mjs
       - name: Roadmap parity browser integration
