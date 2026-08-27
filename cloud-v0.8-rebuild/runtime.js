@@ -38,7 +38,7 @@ function createRuntime(options){
   async function deleteMatch(input={}){const result=await mutations.deleteMatch(requireMatch(input));clearDeletedState();onDeleted(result);return result}
   api=Object.freeze({
     start,stop,refresh,projectNow,
-    substitute:input=>mutations.substitute(requireMatch(input)),changePosition:input=>mutations.changePosition(requireMatch(input)),swapPositions:input=>mutations.swapPositions(requireMatch(input)),recordGoal:input=>mutations.recordGoal(requireMatch(input)),
+    substitute:input=>mutations.substitute(requireMatch(input)),changePosition:input=>mutations.changePosition(requireMatch(input)),swapPositions:input=>mutations.swapPositions(requireMatch(input)),changeFormation:input=>mutations.changeFormation(requireMatch(input)),recordGoal:input=>mutations.recordGoal(requireMatch(input)),
     correctSubstitution:input=>mutations.correctSubstitution(requireMatch(input)),voidSubstitution:input=>mutations.voidSubstitution(requireMatch(input)),correctPositionChange:input=>mutations.correctPositionChange(requireMatch(input)),voidPositionChange:input=>mutations.voidPositionChange(requireMatch(input)),correctGoal:input=>mutations.correctGoal(requireMatch(input)),voidGoal:input=>mutations.voidGoal(requireMatch(input)),
     advanceClock:input=>mutations.advanceClock(requireMatch(input)),deleteMatch,
     get activeMatchId(){return activeMatchId},get snapshot(){return lastSnapshot},get liveState(){return lastLiveState},get viewModel(){return lastViewModel},get pendingMutations(){return mutations.pendingCount}
