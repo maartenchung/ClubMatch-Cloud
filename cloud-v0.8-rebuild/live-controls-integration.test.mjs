@@ -1,0 +1,10 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+const source=fs.readFileSync(new URL('./live-controls-ui.js',import.meta.url),'utf8');
+const app=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8');
+assert.ok(source.includes("bar.id='v08ClockControls'"),'live controls moeten een eigen klokbalk krijgen');
+for(const action of ['pause','resume','halftime','second_half','injury_time','finish'])assert.ok(source.includes(action),`live klokactie ${action} moet onder de scoreboardbediening vallen`);
+assert.ok(source.includes('Wedstrijd definitief beëindigen?'),'wedstrijd stoppen moet expliciet worden bevestigd');
+assert.ok(source.includes('stopImmediatePropagation'),'annuleren moet de bestaande finish-handler blokkeren');
+assert.ok(app.includes('liveControlsUi.install()'),'de klokbediening moet in de hoofdapp geïnstalleerd worden');
+console.log('PASS live-controls: controls under clock + hard finish confirmation');
