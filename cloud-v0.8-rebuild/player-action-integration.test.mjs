@@ -1,0 +1,10 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+const app=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8');
+const renderer=fs.readFileSync(new URL('./dom-renderer.js',import.meta.url),'utf8');
+assert.ok(app.includes("createPlayerActionController({client,runtime})"),'speleracties moeten dezelfde Cloud-client en live-runtime gebruiken');
+assert.ok(app.includes("playerActions?.setSnapshot?.(snapshot)"),'speleracties mogen alleen uit een bevestigde snapshot werken');
+assert.ok(app.includes("createPlayerActionUi({document,controller:playerActions,run})"),'snelle actie-UI moet aan de confirmed controller gekoppeld zijn');
+assert.ok(renderer.includes('data-player-action-open'),'tegels/veld moeten één compacte snelle actie-ingang bieden');
+assert.ok(!renderer.includes('Balverlies</button><button'),'alle eventtypes mogen niet permanent over iedere spelerkaart worden uitgesmeerd');
+console.log('PASS player-action-integration: compact two-tap UI + confirmed Cloud controller');
