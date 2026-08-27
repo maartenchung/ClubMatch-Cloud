@@ -10,7 +10,7 @@ assert.equal(d.label,'Wissel');assert.match(d.description,/RW · Rechtsbuiten �
 d=E.describeEvent({event_type:'position_changed',subject_player_id:'p13',related_player_id:'p10',payload:{swap:true,player_a_old_position:'RW',player_a_new_position:'LW',player_b_old_position:'LW',player_b_new_position:'RW'}},players);
 assert.equal(d.label,'Positieruil');assert.match(d.description,/Wai Sam/);assert.match(d.description,/RW · Rechtsbuiten → LW · Linksbuiten/);assert.equal(d.playerChanges.p10,'LW · Linksbuiten → RW · Rechtsbuiten');
 d=E.describeEvent({event_type:'goal_voided',payload:{reason:'Buitenspel'}},players);assert.equal(d.label,'Doelpunt ongeldig');assert.equal(d.description,'Doelpunt ongeldig · Reden: Buitenspel');
-d=E.describeEvent({event_type:'player_action',subject_player_id:'p13',payload:{action:'possession_control'}},players);assert.equal(d.label,'Balbezit / controle');assert.match(d.description,/Wai Sam · Balbezit \/ controle/);
+d=E.describeEvent({event_type:'player_action',subject_player_id:'p13',payload:{action:'possession_control'}},players);assert.equal(d.label,'Balcontrole');assert.match(d.description,/Wai Sam · Balcontrole/);
 d=E.describeEvent({event_type:'match_paused',payload:{}},players);assert.equal(d.label,'Wedstrijd gepauzeerd');assert.equal(d.description,'Wedstrijdklok gepauzeerd');
 const latest=E.latestPlayerChanges([{event_type:'position_changed',subject_player_id:'p13',payload:{old_position:'RW',new_position:'ST'},matchSecond:500},{event_type:'player_action',subject_player_id:'p13',payload:{action:'ball_loss'},matchSecond:510}],players);assert.equal(latest.p13.text,'Balverlies');assert.equal(latest.p13.matchSecond,510);
 console.log('PASS event-describer: Dutch timeline + void reasons + from-to live monitoring');
