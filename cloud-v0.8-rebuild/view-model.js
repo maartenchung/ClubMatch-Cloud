@@ -67,17 +67,18 @@ function createLiveViewModel(input){
   const scoreAgainst=second(input.score?.against??input.match?.scoreAgainst??input.match?.score_against);
   const breakActive=!!input.break?.active;
   const breakSeconds=breakActive?second(input.break?.seconds):0;
+  const formationCode=input.match?.formation_code||input.match?.formationCode||'4-3-3';
   const scoreboard=Object.freeze({
     scoreFor,scoreAgainst,display:`${scoreFor}–${scoreAgainst}`,
     effectiveMatchSecond:second(liveState.effectiveMatchSecond),clock:formatClock(liveState.effectiveMatchSecond),
-    status:input.match?.status||'live',period:input.state?.period||'',clockStatus:input.state?.clock_status||'',
+    status:input.match?.status||'live',period:input.state?.period||'',clockStatus:input.state?.clock_status||'',formationCode,
     breakActive,breakSeconds,breakClock:formatClock(breakSeconds)
   });
   const sharedPlayers=Object.freeze({players,field,bench,byId});
   return Object.freeze({
-    effectiveMatchSecond:scoreboard.effectiveMatchSecond,clock:scoreboard.clock,breakActive,breakSeconds,breakClock:scoreboard.breakClock,
+    effectiveMatchSecond:scoreboard.effectiveMatchSecond,clock:scoreboard.clock,breakActive,breakSeconds,breakClock:scoreboard.breakClock,formationCode,
     scoreboard,timeline,players,field,bench,byId,
-    pitch:Object.freeze({...sharedPlayers,byPosition}),tiles:sharedPlayers,
+    pitch:Object.freeze({...sharedPlayers,byPosition,formationCode}),tiles:sharedPlayers,
     substitutionMonitor:Object.freeze({...sharedPlayers,timeline}),dashboard:Object.freeze({...sharedPlayers,scoreboard,timeline})
   });
 }
@@ -87,8 +88,9 @@ function validateLiveViewModel(model){
   if(model.field.length!==11)errors.push(`field count ${model.field.length}, expected 11`);
   const ids=model.players.map(player=>player.id);if(new Set(ids).size!==ids.length)errors.push('duplicate player IDs');
   if(model.pitch.field!==model.tiles.field||model.pitch.field!==model.dashboard.field)errors.push('field projections do not share one source');
-  if(model.pitch.bench!==model.tiles.bench||model.pitch.bench!==model.dashboard.bench)errors.push('bench projections do not share one source');
+  if(model.pitch.bench!==model.tiles.bench||model.pitch.bench!==model.dashboard.bench)errors.push('bench projections do not share source');
   if(model.dashboard.scoreboard!==model.scoreboard)errors.push('dashboard scoreboard does not share source');
+  if(model.pitch.formationCode!==model.formationCode||model.scoreboard.formationCode!==model.formationCode)errors.push('formation code does not share source');
   if(!model.breakActive&&model.breakSeconds!==0)errors.push('inactive break clock must be zero');
   model.players.forEach(player=>{
     if(player.metrics.length!==METRIC_DEFINITIONS.length)errors.push(`${player.id}: unstable metric slots`);
