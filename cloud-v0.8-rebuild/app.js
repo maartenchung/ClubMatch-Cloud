@@ -6,7 +6,7 @@ const SUPABASE_KEY='sb_publishable_skGPpngOQ_1OpEbreV2kXA__2OL_Mbp';
 const RESET_REDIRECT='https://maartenchung.github.io/ClubMatch-Cloud/cloud-v0.8-rebuild/';
 const byId=id=>document.getElementById(id);
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let client=null,runtime=null,renderer=null,lifecycleSync=null,matchSelection=null,preparation=null,preparationUi=null,correctionUi=null,dashboard=null,dashboardUi=null,security=null,securityUi=null,lastFrame=null,busy=false;
+let client=null,runtime=null,renderer=null,lifecycleSync=null,matchSelection=null,preparation=null,preparationUi=null,correctionUi=null,voiceController=null,voiceUi=null,dashboard=null,dashboardUi=null,security=null,securityUi=null,lastFrame=null,busy=false;
 
 function status(message,ok=false){const el=byId('v08Status');if(!el)return;el.textContent=message;el.classList.toggle('ok',ok);el.classList.toggle('bad',!ok&&!!message)}
 function setBusy(value){busy=!!value;document.querySelectorAll('[data-v08-action]').forEach(btn=>{btn.disabled=busy||btn.dataset.v08Allowed==='0'})}
@@ -22,10 +22,10 @@ function applyActionPolicy(frame={field:[],bench:[]}){
   setAllowed('[data-clock="pause"]',policy.pause);setAllowed('[data-clock="resume"]',policy.resume);setAllowed('[data-clock="halftime"]',policy.halftime);setAllowed('[data-clock="second_half"]',policy.secondHalf);setAllowed('[data-clock="injury_time"]',policy.injuryTime);setAllowed('[data-clock="finish"]',policy.finish);
   setAllowed('#deleteMatchBtn',policy.deleteMatch);byId('deleteMatchBtn').classList.toggle('hidden',!policy.deleteMatch);return policy;
 }
-function resetLiveUi(){lastFrame=null;renderer?.clear?.();correctionUi?.clear?.();textMatch({});if(global.ClubMatchV08ActionPolicy?.createActionPolicy)applyActionPolicy({field:[],bench:[]})}
+function resetLiveUi(){lastFrame=null;voiceUi?.clear?.();renderer?.clear?.();correctionUi?.clear?.();textMatch({});if(global.ClubMatchV08ActionPolicy?.createActionPolicy)applyActionPolicy({field:[],bench:[]})}
 function stopUserWork(){runtime?.stop?.();preparationUi?.hide?.();dashboardUi?.hide?.();resetLiveUi()}
 function updateActionControls(frame){lastFrame=frame;fillSelect('subOut',frame.field);fillSelect('subIn',frame.bench);fillSelect('posPlayer',frame.field);fillSelect('swapA',frame.field);fillSelect('swapB',frame.field);fillSelect('goalScorer',frame.field,true);fillSelect('goalAssist',frame.field,true);textMatch(runtime?.snapshot?.match||{});applyActionPolicy(frame)}
-function renderModel(model,meta={}){const frame=global.ClubMatchV08UiFrame.createUiFrame(model);renderer.render(frame);updateActionControls(frame);correctionUi?.render?.(meta.snapshot||runtime?.snapshot);return frame}
+function renderModel(model,meta={}){const frame=global.ClubMatchV08UiFrame.createUiFrame(model);renderer.render(frame);updateActionControls(frame);correctionUi?.render?.(meta.snapshot||runtime?.snapshot);if(meta.confirmed!==false)voiceUi?.setSnapshot?.(meta.snapshot||runtime?.snapshot);return frame}
 function markActiveMatch(matchId){document.querySelectorAll('.matchChoice').forEach(x=>x.classList.toggle('active',x.dataset.matchId===matchId))}
 function setSessionIdentity(session){byId('sessionEmail').textContent=session?.user?.email||session?.user?.id||''}
 
@@ -90,6 +90,9 @@ async function init(){
     await ensureModule('preparation-controller.js',()=>!!global.ClubMatchV08Preparation?.createPreparationController,'wedstrijdvoorbereiding');
     await ensureModule('preparation-ui.js',()=>!!global.ClubMatchV08PreparationUi?.createPreparationUi,'voorbereidingsscherm');
     await ensureModule('correction-ui.js',()=>!!global.ClubMatchV08Corrections?.createCorrectionUi,'correctiescherm');
+    await ensureModule('voice-command.js',()=>!!global.ClubMatchV08VoiceCommand?.parseCommand,'spraakparser');
+    await ensureModule('voice-controller.js',()=>!!global.ClubMatchV08VoiceController?.createVoiceController,'spraakcontroller');
+    await ensureModule('voice-ui.js',()=>!!global.ClubMatchV08VoiceUi?.createVoiceUi,'spraakscherm');
     await ensureModule('dashboard-controller.js',()=>!!global.ClubMatchV08Dashboard?.createDashboardController,'dashboard');
     await ensureModule('dashboard-ui.js',()=>!!global.ClubMatchV08DashboardUi?.createDashboardUi,'dashboardscherm');
     await ensureModule('security-controller.js',()=>!!global.ClubMatchV08Security?.createSecurityController,'beveiliging');
@@ -98,6 +101,8 @@ async function init(){
     renderer=global.ClubMatchV08DomRenderer.createRenderer(document);
     runtime=global.ClubMatchV08Runtime.createRuntime({supabase:client,render:renderModel,onDeleted:resetLiveUi,onError:error=>status(`Cloud-synchronisatie: ${error.message||error}`)});
     correctionUi=global.ClubMatchV08Corrections.createCorrectionUi({document,runtime,run});
+    voiceController=global.ClubMatchV08VoiceController.createVoiceController({runtime,parseCommand:global.ClubMatchV08VoiceCommand.parseCommand});
+    voiceUi=global.ClubMatchV08VoiceUi.createVoiceUi({document,controller:voiceController,run});voiceUi.render();
     matchSelection=global.ClubMatchV08MatchSelection.createMatchSelection();
     preparation=global.ClubMatchV08Preparation.createPreparationController({client,onChange:state=>{if(preparationUi?.visible)preparationUi.render(state)}});
     preparationUi=global.ClubMatchV08PreparationUi.createPreparationUi({document,controller:preparation,run,onSaved:async snapshot=>{matchSelection.remember(snapshot.match.id);await refreshOpenMatches({restore:false});markActiveMatch(snapshot.match.id)},onStarted:async matchId=>{matchSelection.remember(matchId);preparationUi.hide();await refreshOpenMatches({restore:false});const response=await client.rpc('get_my_open_matches');if(response.error)throw response.error;const match=(response.data||[]).find(item=>item.match_id===matchId);if(!match)throw new Error('Gestarte wedstrijd niet teruggevonden');await openLiveMatch(match,{remember:false})}});
