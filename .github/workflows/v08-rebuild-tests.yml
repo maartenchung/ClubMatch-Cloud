@@ -63,6 +63,7 @@ jobs:
           node --check voice-ui.js
           node --check dashboard-controller.js
           node --check dashboard-ui.js
+          node --check match-library-ui.js
           node --check management-controller.js
           node --check management-ui.js
           node --check training-controller.js
@@ -117,7 +118,9 @@ jobs:
         run: node voice-integration.test.mjs
       - name: Dashboard match selection delete and 1-100 rating
         run: node dashboard-controller.test.mjs
-      - name: Training attendance and assessment controller
+      - name: Saved preparations and match history
+        run: node match-library-ui.test.mjs
+      - name: Training attendance and one-click assessment save
         run: node training-controller.test.mjs
       - name: Team season player and club management controller
         run: node management-controller.test.mjs
