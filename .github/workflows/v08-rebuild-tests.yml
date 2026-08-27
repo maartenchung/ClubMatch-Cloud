@@ -34,24 +34,38 @@ jobs:
         run: |
           node --check app.js
           node --check cloud-client.js
-          node --check security-controller.js
-          node --check security-ui.js
-          node --check action-policy.js
+          node --check pitch-layout.js
+          node --check event-describer.js
+          node --check live-state.js
+          node --check snapshot-adapter.js
+          node --check view-model.js
+          node --check mutation-controller.js
           node --check clock-projector.js
+          node --check runtime.js
+          node --check ui-frame.js
+          node --check dom-renderer.js
+          node --check action-policy.js
           node --check lifecycle-sync.js
           node --check match-selection.js
           node --check formation-layout.js
           node --check preparation-controller.js
           node --check preparation-ui.js
           node --check correction-ui.js
+          node --check basis-lineup-ui.js
+          node --check live-pitch-controller.js
+          node --check match-phase-controller.js
+          node --check match-phase-ui.js
+          node --check live-controls-ui.js
+          node --check player-action-controller.js
+          node --check player-action-ui.js
           node --check voice-command.js
           node --check voice-controller.js
           node --check voice-ui.js
           node --check dashboard-controller.js
           node --check dashboard-ui.js
-          node --check dom-renderer.js
-          node --check ui-frame.js
-          node --check runtime.js
+          node --check security-controller.js
+          node --check security-ui.js
+          node --check ux-theme.js
       - name: Version-pinned browser assets
         run: node asset-versioning.test.mjs
       - name: GitHub Pages password recovery redirect
@@ -64,7 +78,7 @@ jobs:
         run: node security-ui.test.mjs
       - name: Action availability policy
         run: node action-policy.test.mjs
-      - name: One-second match and halftime clocks
+      - name: Match pause and halftime clocks
         run: node clock-projector.test.mjs
       - name: Mobile and desktop lifecycle resync
         run: node lifecycle-sync.test.mjs
@@ -78,10 +92,20 @@ jobs:
         run: node correction-ui.test.mjs
       - name: Direct correction UI integration
         run: node correction-integration.test.mjs
-      - name: Dutch voice commands by name and shirt number
+      - name: Dutch live event descriptions and monitoring changes
+        run: node event-describer.test.mjs
+      - name: Live clock controls placement and finish confirmation
+        run: node live-controls-integration.test.mjs
+      - name: Confirmed quick player action controller
+        run: node player-action-controller.test.mjs
+      - name: Quick player action app integration
+        run: node player-action-integration.test.mjs
+      - name: Dutch voice commands by name shirt number and player action
         run: node voice-command.test.mjs
       - name: Voice proposal and explicit confirmation gate
         run: node voice-controller.test.mjs
+      - name: Restart-safe browser speech sessions
+        run: node voice-ui-restart.test.mjs
       - name: Confirmed-snapshot voice app integration
         run: node voice-integration.test.mjs
       - name: Dashboard team filter and history
