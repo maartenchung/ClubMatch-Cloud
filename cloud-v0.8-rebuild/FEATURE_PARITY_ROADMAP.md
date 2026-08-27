@@ -19,11 +19,11 @@ Status: `✅ klaar` · `🟡 basis aanwezig / verder afmaken` · `⬜ nog bouwen
 - ✅ Exact 11 basisspelers server-side gevalideerd
 - ✅ Posities uniek server-side gevalideerd
 - ✅ Formatie opslaan
-- 🟡 Visuele veldopstelling
-- 🟡 Formatiepresets en automatische positie-indeling
-- 🟡 Duidelijke bank/reservelijst
-- ⬜ Rugnummer-/naamselectie optimaliseren
-- ⬜ Voorbereiding volledig mobiel optimaliseren
+- ✅ Visuele veldopstelling
+- ✅ Formatiepresets en automatische positie-indeling
+- ✅ Duidelijke bank/reservelijst
+- 🟡 Rugnummer-/naamselectie verder optimaliseren voor snelheid
+- ⬜ Voorbereiding volledig mobiel finetunen
 
 ### Live wedstrijd
 - ✅ Confirmed Cloud state als enige waarheid
@@ -45,16 +45,17 @@ Status: `✅ klaar` · `🟡 basis aanwezig / verder afmaken` · `⬜ nog bouwen
 - ✅ Eventtijdlijn
 - ✅ Stop wedstrijd
 - ✅ Veilig verwijderen afgeronde wedstrijd
-- ⬜ Goaltype
-- ⬜ Correctie wissel achteraf
-- ⬜ Correctie positie achteraf
-- ⬜ Correctie goal achteraf
-- ⬜ Event ongeldig maken/herstellen vanuit UI
-- ⬜ Spraakbediening naam/rugnummer
+- ⬜ Goaltype + notitie direct bij normale live-invoer
+- ✅ Correctie wissel achteraf
+- ✅ Correctie positie achteraf
+- ✅ Correctie goal achteraf
+- ✅ Event ongeldig maken vanuit UI met append-only auditgeschiedenis
+- ✅ Spraakbediening naam/rugnummer met tekstfallback en expliciete bevestiging vóór schrijven
+- 🟡 Uitgebreidere spraakgrammatica/commando's na praktijktest
 
 ### Refresh / apparaten
 - ✅ Actieve wedstrijd herstellen na refresh
-- ✅ Basis- en current state uit Cloud herladen
+- ✅ Basis- en huidige status uit Cloud herladen
 - ✅ Focus/pageshow/online lifecycle resync
 - 🟡 Polling fallback elke 5 seconden
 - ⬜ Echte Supabase Realtime cross-device push
@@ -93,7 +94,8 @@ Status: `✅ klaar` · `🟡 basis aanwezig / verder afmaken` · `⬜ nog bouwen
 - ⬜ Security notification e-mails
 - ⬜ Productie-SMTP
 - ⬜ CAPTCHA/rate-limit profiel
-- ⬜ Auditlog admin/security/destructieve mutaties
+- 🟡 Auditbaarheid live-events: originele events + correctie/void-events append-only
+- ⬜ Auditlog admin/security/destructieve beheeracties
 - 🔒 Pentest vóór commerciële productie
 
 ### Architectuur / kwaliteit
@@ -104,6 +106,7 @@ Status: `✅ klaar` · `🟡 basis aanwezig / verder afmaken` · `⬜ nog bouwen
 - ✅ CI na iedere v0.8-push
 - ✅ Regressiegates 1–17
 - ✅ Browser-assets versie-gepind tegen cache-regressies
+- ✅ Spraak/tekst gebruikt dezelfde confirmed runtime en kan niet automatisch schrijven
 - ⬜ Browser E2E-suite desktop
 - ⬜ Android/mobile E2E-suite
 - ⬜ Realtime transport
@@ -114,16 +117,24 @@ Status: `✅ klaar` · `🟡 basis aanwezig / verder afmaken` · `⬜ nog bouwen
 - ⬜ Multi-team/seizoen beheer
 - ⬜ Generieke branding per club
 - ⬜ Notificaties/WhatsApp-laag
-- ⬜ Voice-command laag
+- ✅ Voice-command laag met naam/rugnummer en tekstfallback
 - ⬜ Abonnement/entitlement model
 - ⬜ Audit/export/dataretentie
 
 ## Releasevolgorde v0.8
 1. **Parity Core** — voorbereiding, visuele opstelling, live, correcties, refresh/device consistency.
-2. **Parity Complete** — spraak, historie/dashboard, beheerfuncties die in v0.7.6 werden verwacht.
-3. **Security Beta Gate** — MFA/AAL2, roles/RLS, security checks, real-device E2E.
-4. **Scale Beta** — Realtime, multi-team/club beheer, export/notifications.
+2. **Parity Complete** — spraak, goalmetadata, historie/dashboard, beheerfuncties die in v0.7.6 werden verwacht.
+3. **Security Beta Gate** — MFA/AAL2, rollen/RLS, security checks, real-device E2E.
+4. **Scale Beta** — Realtime, multi-team/club beheer, export/notificaties.
 5. **Commercial Gate** — pentest, observability, SMTP/security mails, abonnement/entitlements, operations.
+
+## Huidige eerstvolgende ontwikkelvolgorde
+1. Goaltype + notitie in normale live-invoer.
+2. Wedstrijddetail/historie en betere filters/sortering.
+3. Team-/spelerbeheer inclusief rugnummer en voorkeursposities.
+4. Gebruikers/rollen/admin + server-side AAL2 voor gevoelige acties.
+5. Echte Realtime cross-device push en daarna desktop/Android E2E.
+6. Export, notificaties/WhatsApp en commerciële entitlementlaag.
 
 ## Regel
 Geen feature wordt als `✅ klaar` beschouwd wanneer alleen de UI bestaat. Backendcontract + recovery/refresh + relevante test moeten ook werken.
