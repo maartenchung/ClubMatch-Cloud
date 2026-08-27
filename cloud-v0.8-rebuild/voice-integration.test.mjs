@@ -1,0 +1,9 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+const app=fs.readFileSync(new URL('./app.js',import.meta.url),'utf8');
+assert.ok(app.includes('ClubMatchV08VoiceController.createVoiceController({runtime'),'spraakcontroller moet dezelfde live-runtime gebruiken');
+assert.ok(app.includes('ClubMatchV08VoiceUi.createVoiceUi({document,controller:voiceController,run})'),'spraakinterface moet via de bevestigingscontroller lopen');
+assert.ok(app.includes("if(meta.confirmed!==false)voiceUi?.setSnapshot?.(meta.snapshot||runtime?.snapshot)"),'spraakselectie mag alleen door bevestigde snapshots worden ververst');
+assert.ok(app.includes('voiceUi?.clear?.()'),'stop/logout/voorbereiding moet microfoon en opdracht wissen');
+assert.ok(!app.includes("runtime.deleteMatch(command"),'spraak mag verwijderen niet direct ontsluiten');
+console.log('PASS voice-integration: shared runtime + confirmed snapshot + confirmation gate');
