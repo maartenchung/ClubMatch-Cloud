@@ -9,7 +9,7 @@ function playerFrame(player){
   invariant(player?.id,'Player view is required');
   invariant(Array.isArray(player.metrics)&&player.metrics.length===4,'Stable four-slot player metrics are required');
   return Object.freeze({
-    id:player.id,name:player.name,shortName:player.shortName,shirtNumber:player.shirtNumber,role:player.role,position:player.position,
+    id:player.id,name:player.name,shortName:player.shortName,shirtNumber:player.shirtNumber,role:player.role,position:player.position,startedPosition:player.startedPosition,
     changeState:player.changeState,cssClass:player.statusStyle?.cssClass||'swapNever080',tone:player.statusStyle?.tone||'neutral',
     inCount:player.inCount,outCount:player.outCount,substitutionCount:player.substitutionCount,
     metrics:freezeList(player.metrics.map(metric=>({key:metric.key,label:metric.label,display:metric.display,active:metric.active})))
@@ -17,7 +17,7 @@ function playerFrame(player){
 }
 
 function scoreboardFrame(scoreboard){return Object.freeze({
-  display:scoreboard.display,clock:scoreboard.clock,status:scoreboard.status,period:scoreboard.period,clockStatus:scoreboard.clockStatus,
+  display:scoreboard.display,clock:scoreboard.clock,status:scoreboard.status,period:scoreboard.period,clockStatus:scoreboard.clockStatus,formationCode:scoreboard.formationCode,
   breakActive:scoreboard.breakActive,breakSeconds:scoreboard.breakSeconds,breakClock:scoreboard.breakClock
 })}
 
@@ -38,9 +38,9 @@ function createUiFrame(model){
     substitutions:player.substitutionCount,changeState:player.changeState,cssClass:player.statusStyle.cssClass
   })));
   const timeline=freezeList(model.timeline.map(event=>({id:event.id,type:event.type||event.event_type||'',clock:event.clock,minuteLabel:event.minuteLabel})));
-  const scoreboard=scoreboardFrame(model.scoreboard);
+  const scoreboard=scoreboardFrame(model.scoreboard),formationCode=model.formationCode||scoreboard.formationCode||'4-3-3';
   return Object.freeze({
-    clock:model.clock,breakActive:model.breakActive,breakClock:model.breakClock,scoreboard,field,bench,playerById,pitch,monitor,timeline,
+    clock:model.clock,breakActive:model.breakActive,breakClock:model.breakClock,formationCode,scoreboard,field,bench,playerById,pitch,monitor,timeline,
     dashboard:Object.freeze({field,bench,scoreboard,timeline})
   });
 }
@@ -49,8 +49,10 @@ function validateUiFrame(frame){
   const errors=[];
   if(frame.field.length!==11)errors.push(`field count ${frame.field.length}, expected 11`);
   if(frame.pitch.length!==frame.field.length)errors.push('pitch and field tile count differ');
+  if(!frame.formationCode)errors.push('formation code missing');
   if(frame.dashboard.field!==frame.field||frame.dashboard.bench!==frame.bench)errors.push('dashboard does not share the same frame arrays');
   if(frame.dashboard.scoreboard!==frame.scoreboard)errors.push('dashboard scoreboard does not share frame');
+  if(frame.scoreboard.formationCode!==frame.formationCode)errors.push('formation does not share scoreboard source');
   if(frame.breakActive!==frame.scoreboard.breakActive||frame.breakClock!==frame.scoreboard.breakClock)errors.push('break clock does not share scoreboard source');
   const allowed=new Set(['swapNever080','swapPast080','swapIn080','swapOut080']);
   [...frame.field,...frame.bench].forEach(player=>{
