@@ -1,4 +1,4 @@
-/* ClubMatch Cloud v0.8 - device/tablet security gate UX */
+/* ClubMatch Cloud v0.8 - device/tablet auth-state visibility without MFA assumptions */
 (function(global){
 'use strict';
 const doc=global.document;
@@ -12,8 +12,8 @@ function challengeVisible(){const panel=doc?.getElementById?.('securityMfaChalle
 function inspect(){
   if(!doc)return false;const panel=doc.getElementById('securityMfaChallenge'),visible=challengeVisible();
   if(visible){
-    topStatus('2FA-verificatie vereist op dit apparaat · verifieer eerst, daarna wordt de actieve wedstrijd uit Cloud hervat.');
-    if(!lastVisible){try{panel.scrollIntoView({behavior:'smooth',block:'start'})}catch{}global.setTimeout?.(()=>doc.getElementById('loginMfaCode')?.focus?.(),120)}
+    topStatus('Beveiligingscontrole geopend op dit apparaat. ClubMatch controleert de actuele sessiestatus; er wordt niet aangenomen dat 2FA is ingesteld.');
+    if(!lastVisible){try{panel.scrollIntoView({behavior:'smooth',block:'start'})}catch{}}
   }
   lastVisible=visible;return visible;
 }
