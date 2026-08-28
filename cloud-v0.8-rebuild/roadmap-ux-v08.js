@@ -21,9 +21,9 @@ function installSharedCloudClient(){
 }
 
 function retireActionField(){doc?.getElementById?.('v08ActionField')?.remove?.()}
-function boot(){retireActionField();if(doc?.body)new MutationObserver(retireActionField).observe(doc.body,{childList:true,subtree:true})}
+function boot(){retireActionField()}
 
 /* Install synchronously, before DOMContentLoaded boots stabilization, Fast Resume and app.js. */
 installSharedCloudClient();
-if(doc?.readyState==='loading')doc.addEventListener('DOMContentLoaded',boot);else boot();
+if(doc?.readyState==='loading')doc.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })(typeof window!=='undefined'?window:globalThis);
