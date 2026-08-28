@@ -43,6 +43,7 @@ jobs:
           node --check action-field-ui.js
           node --check action-field-standalone.js
           node --check smart-registration-v08.js
+          node --check fast-resume-v08.js
           node --check event-feed-ui.js
           node --check live-notice-ui.js
           node --check roadmap-ux-v08.js
@@ -90,6 +91,8 @@ jobs:
         run: node live-ux-fixes.test.mjs
       - name: Smart player-bound quick registration
         run: node smart-registration.test.mjs
+      - name: Confirmed Cloud Fast Resume
+        run: node fast-resume.test.mjs
       - name: GitHub Pages password recovery redirect
         run: grep -F "const RESET_REDIRECT='https://maartenchung.github.io/ClubMatch-Cloud/cloud-v0.8-rebuild/';" app.js
       - name: Native Cloud transport, recovery and MFA
