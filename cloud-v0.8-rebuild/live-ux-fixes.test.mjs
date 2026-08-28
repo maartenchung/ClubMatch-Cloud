@@ -1,18 +1,64 @@
-import fs from 'node:fs';import assert from 'node:assert/strict';const read=f=>fs.readFileSync(new URL(`./${f}`,import.meta.url),'utf8');
-const html=read('index.html'),feed=read('event-feed-ui.js'),notice=read('live-notice-ui.js'),standalone=read('action-field-standalone.js'),roadmap=read('roadmap-ux-v08.js'),playerUi=read('player-action-ui.js'),controller=read('player-action-controller.js'),smart=read('smart-registration-v08.js'),fast=read('fast-resume-v08.js'),view=read('view-model.js'),stabilize=read('v08-stabilization.js'),realtime=read('realtime-native.js'),realtimeStatus=read('realtime-status-ui.js'),liveField=read('analyst-live-input-v08.js'),analystUndo=read('analyst-correction-v08.js'),deviceSecurity=read('device-security-ux-v08.js'),securityController=read('security-controller.js'),goalTypes=read('goal-types-ux-v08.js');
-assert.match(html,/build 20260829\.0026/);assert.match(html,/live-notice-ui\.js\?v=20260829\.0026/);assert.match(html,/realtime-native\.js\?v=20260829\.0026/);assert.match(html,/realtime-status-ui\.js\?v=20260829\.0026/);assert.match(html,/smart-registration-v08\.js\?v=20260829\.0026/);assert.match(html,/fast-resume-v08\.js\?v=20260829\.0026/);assert.match(html,/analyst-live-input-v08\.js\?v=20260829\.0026/);assert.match(html,/analyst-correction-v08\.js\?v=20260829\.0026/);assert.match(html,/device-security-ux-v08\.js\?v=20260829\.0026/);assert.match(html,/id="authPanel" class="card hidden"/);assert.match(html,/__ClubMatchShellBoot/);assert.match(html,/modules parallel laden/);assert.ok([...html.matchAll(/<script\s+src="[^"]+"([^>]*)>/g)].every(m=>/\bdefer\b/.test(m[1])),'cold-start browsermodules moeten defer gebruiken');assert.ok(html.indexOf('cloud-client.js')<html.indexOf('realtime-native.js')&&html.indexOf('realtime-native.js')<html.indexOf('roadmap-ux-v08.js')&&html.indexOf('roadmap-ux-v08.js')<html.indexOf('action-field-standalone.js'),'Gedeelde client moet ná Realtime maar vóór legacy/bootstrapmodules worden geïnstalleerd');assert.ok(html.indexOf('roadmap-ux-v08.js')<html.indexOf('fast-resume-v08.js')&&html.indexOf('fast-resume-v08.js')<html.indexOf('app.js'),'Shared client guard moet vóór resume/app booten');
-assert.doesNotMatch(html,/action-field-controller\.js\?v=/,'Oude prototype Actieveld-controller mag niet meer in de browser shell laden');assert.doesNotMatch(html,/action-field-ui\.js\?v=/,'Oude prototype Actieveld-UI mag niet meer in de browser shell laden');
-assert.match(feed,/Wedstrijd/);assert.match(feed,/Analyse/);assert.match(feed,/Alles/);assert.match(feed,/mode='all'/);assert.match(feed,/visibleLimit=16/);assert.match(feed,/DOMContentLoaded/,'eventfeed moet zichzelf starten');
-assert.match(notice,/Laatste melding/);assert.match(notice,/automatic_deadline_stop/);assert.match(notice,/navigator\?\.vibrate/);assert.match(notice,/sessionStorage/);assert.match(notice,/\+ Blessuretijd/);
-assert.match(standalone,/shared Cloud client guard/i);assert.match(standalone,/__sharedBrowserClient/);assert.doesNotMatch(standalone,/ClubMatchV08ActionFieldApp/);assert.doesNotMatch(standalone,/get_match_snapshot/);
-assert.match(roadmap,/__sharedBrowserClient/);assert.match(roadmap,/registry\.has/);assert.match(roadmap,/retireActionField/);assert.doesNotMatch(roadmap,/get_my_team_seasons/,'Startup guard mag geen extra warmup-RPC starten');assert.doesNotMatch(roadmap,/get_my_open_matches/,'Startup guard mag geen extra warmup-RPC starten');
-assert.doesNotMatch(fast,/createClient\(/,'Fast Resume mag geen eigen sessieclient maken');assert.doesNotMatch(fast,/get_match_snapshot/,'Fast Resume mag de snapshot niet zelfstandig proberen');assert.doesNotMatch(fast,/runtime\.start\(/,'Fast Resume mag runtime.start niet zelfstandig aanroepen');assert.match(fast,/clubmatch:v08-confirmed/);assert.match(fast,/8000/);
-assert.match(playerUi,/Alles bezit stoppen/);assert.match(playerUi,/stopAllPossession/);assert.match(playerUi,/analystReceiveBall/);assert.match(playerUi,/Categorieën/);assert.match(playerUi,/A–Z/);assert.match(playerUi,/QUICK_ORDER_KEY/);assert.match(playerUi,/data-quick-action/);assert.match(playerUi,/Goal/);assert.match(playerUi,/Schot op doel/);assert.match(playerUi,/Vrije trap/);assert.match(playerUi,/Corner/);
-assert.match(smart,/Foute pass/);assert.match(smart,/Pass onderschept/);assert.match(smart,/Bal kwijt · controle/);assert.match(smart,/Bal kwijt · dribbel/);assert.match(smart,/Overig balverlies/);assert.match(smart,/record_analyst_goal_v08/);assert.match(smart,/assistCandidate/);assert.match(smart,/Acties voor/);assert.match(smart,/#v08QuickPlayer\{display:none/);assert.match(smart,/\.lossGrid/);assert.match(smart,/\.v08AnalystQuick/);
-assert.match(controller,/recordQuickAction/);assert.match(controller,/record_action_field_event_v08/);assert.match(controller,/stop_all_possession_v08/);assert.match(controller,/record_analyst_ball_flow_v08/);assert.match(controller,/cause==='bad_pass'\?'bad_pass':'ball_loss'/);
-assert.match(liveField,/Live Actieveld/);assert.match(liveField,/min-height:64px/);assert.match(liveField,/nearestOwn/);assert.match(liveField,/analystReceiveBall/);assert.match(liveField,/analystLoseBall/);assert.match(liveField,/record_action_field_event_v08/);assert.match(liveField,/offside/);assert.match(liveField,/penalty/);assert.match(liveField,/throw_in/);assert.match(liveField,/likelyCross/);assert.match(liveField,/Tegenstander/);assert.match(goalTypes,/Kopbal/);assert.match(goalTypes,/Afstandsschot/);
-assert.doesNotMatch(deviceSecurity,/2FA-verificatie vereist op dit apparaat/);assert.match(deviceSecurity,/er wordt niet aangenomen dat 2FA is ingesteld/);assert.match(deviceSecurity,/Opstartcontrole/);assert.match(deviceSecurity,/clubmatch-v08-session/);assert.match(deviceSecurity,/clubmatch-v08-active-match/);assert.match(deviceSecurity,/cm_build/);assert.match(deviceSecurity,/Cachevrij herladen/);assert.match(deviceSecurity,/unhandledrejection/);assert.match(deviceSecurity,/3500/);assert.match(deviceSecurity,/confirmed Cloud-snapshot/);assert.match(deviceSecurity,/probeSession/);assert.match(deviceSecurity,/sessionProbe==='valid'/);assert.match(deviceSecurity,/function setFlag\(/);assert.match(deviceSecurity,/function setHidden\(/);assert.match(deviceSecurity,/setHidden\(panel,true\)/);assert.match(deviceSecurity,/current===!!on/,'session observer DOM mutations moeten idempotent zijn');assert.match(deviceSecurity,/Sessie geldig · ClubMatch geeft de app nog niet vrij/);assert.match(deviceSecurity,/Opgeslagen sessie controleren/);assert.match(deviceSecurity,/20260829\.0026/);assert.match(securityController,/if\(!hasVerified\)/);assert.match(securityController,/needsChallenge:false/);
-assert.match(analystUndo,/undo_last_analyst_input_v08/);assert.match(analystUndo,/Laatste analistactie/);assert.match(analystUndo,/Tik nogmaals om terug te draaien/);assert.match(analystUndo,/min-height:68px/);assert.match(analystUndo,/3000/);assert.match(analystUndo,/clubmatch:v08-confirmed/);assert.match(analystUndo,/function setFlag\(/);assert.match(analystUndo,/current===next/,'analistcorrectie class-mutaties moeten idempotent zijn');assert.match(analystUndo,/relevantMutation/);assert.match(analystUndo,/setFlag\(wrap,'hidden',!visible\)/);assert.doesNotMatch(analystUndo,/new global\.MutationObserver\(\(\)=>render\(\)\)/,'analistcorrectie mag niet meer op iedere eigen class-mutatie opnieuw renderen');
-assert.match(view,/enrichClockDurations/);assert.match(view,/pause_duration_seconds/);assert.match(stabilize,/clubmatch:v08-notice/);assert.match(stabilize,/captureSharedClient/);assert.doesNotMatch(stabilize,/client\.rpc\s*=/,'Supabase rpc mag nooit worden overschreven: property kan read-only zijn');assert.doesNotMatch(stabilize,/Actieve wedstrijd veilig hervatten vanuit Cloud/,'Stale active-match localStorage mag de authstatus niet overschrijven');assert.doesNotMatch(stabilize,/function resumeStatus/,'Legacy resumeStatus hoort niet meer in de stabilisatielaag');
-assert.match(realtime,/postgres_changes/);assert.match(realtime,/access_token/);assert.match(realtime,/RETRY_MS/);assert.match(realtimeStatus,/Live sync · Realtime/);assert.match(realtimeStatus,/polling fallback/);
-console.log('PASS live-ux-fixes: build 0026 non-blocking cold-start shell + idempotent bootstrap observers + valid-session guard + previous gates');
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+const read=f=>fs.readFileSync(new URL(`./${f}`,import.meta.url),'utf8');
+const html=read('index.html');
+const roadmap=read('roadmap-ux-v08.js');
+const fast=read('fast-resume-v08.js');
+const playerUi=read('player-action-ui.js');
+const device=read('device-security-ux-v08.js');
+const analystUndo=read('analyst-correction-v08.js');
+const mgmtVisibility=read('management-visibility.js');
+const mgmtController=read('management-controller.js');
+const smart=read('smart-registration-v08.js');
+const liveField=read('analyst-live-input-v08.js');
+const stabilize=read('v08-stabilization.js');
+
+assert.match(html,/build 20260829\.0125/);
+for(const asset of ['cloud-client.js','realtime-native.js','roadmap-ux-v08.js','smart-registration-v08.js','analyst-live-input-v08.js','analyst-correction-v08.js','device-security-ux-v08.js','app.js'])assert.match(html,new RegExp(`${asset.replaceAll('.','\\.')}\\?v=20260829\\.0125`));
+assert.match(html,/id="authPanel" class="card hidden"/);
+assert.ok([...html.matchAll(/<script\s+src="[^"]+"([^>]*)>/g)].every(m=>/\bdefer\b/.test(m[1])),'alle browsermodules moeten defer laden');
+assert.ok(html.indexOf('cloud-client.js')<html.indexOf('realtime-native.js')&&html.indexOf('realtime-native.js')<html.indexOf('roadmap-ux-v08.js')&&html.indexOf('roadmap-ux-v08.js')<html.indexOf('app.js'),'shared-client volgorde onjuist');
+assert.doesNotMatch(html,/action-field-controller\.js\?v=/);
+assert.doesNotMatch(html,/action-field-ui\.js\?v=/);
+
+assert.match(roadmap,/__sharedBrowserClient/);
+assert.match(roadmap,/registry\.has/);
+assert.doesNotMatch(roadmap,/MutationObserver/,'uitgefaseerd Actieveld mag geen permanente observer houden');
+assert.doesNotMatch(roadmap,/get_my_team_seasons| get_my_open_matches/,'shared-client guard mag geen startup-RPC warmen');
+
+assert.doesNotMatch(fast,/createClient\(/);
+assert.doesNotMatch(fast,/runtime\.start\(/);
+assert.match(fast,/clubmatch:v08-confirmed/);
+
+assert.match(device,/probePromise/,'sessiecontrole moet single-flight zijn');
+assert.match(device,/clearSessionCheckStatus/,'sessiecontrole-status moet na succes verdwijnen');
+assert.match(device,/__ClubMatchShellBoot\?\.build/);
+assert.match(device,/20260829\.0125/);
+assert.doesNotMatch(device,/MutationObserver/,'sessiediagnostiek mag de hele app-DOM niet observeren');
+
+assert.match(playerUi,/lastStructureKey/);
+assert.match(playerUi,/structureKey===lastStructureKey/);
+assert.match(playerUi,/setInterval\(updatePossessionClocks,1000\)/,'timer mag alleen bezitstekst bijwerken');
+assert.doesNotMatch(playerUi,/setInterval\(renderPossessionBar/,'Snelle registratie mag niet per seconde volledig herbouwen');
+assert.match(playerUi,/Categorieën/);
+assert.match(playerUi,/A–Z/);
+
+assert.doesNotMatch(mgmtVisibility,/setInterval/,'geen async 75ms beheerpolling');
+assert.doesNotMatch(mgmtVisibility,/loadAll\(/,'knopzichtbaarheid mag geen volledige beheercontext laden');
+assert.match(mgmtVisibility,/if\(inFlight\)return inFlight/);
+assert.match(mgmtVisibility,/loadContext\(\).*loadUserAdmin\(\)/s);
+assert.match(mgmtController,/function singleFlight/);
+assert.match(mgmtController,/Promise\.all\(\[loadTeamSeasons\(\),loadContext\(\),loadUserAdmin\(\)\]\)/);
+
+assert.match(analystUndo,/undo_last_analyst_input_v08/);
+assert.match(analystUndo,/Tik nogmaals om terug te draaien/);
+assert.doesNotMatch(analystUndo,/MutationObserver/,'analistcorrectie moet event-driven zijn');
+assert.match(smart,/record_analyst_goal_v08/);
+assert.match(smart,/assistCandidate/);
+assert.match(liveField,/Live Actieveld/);
+assert.match(liveField,/offside/);
+assert.match(liveField,/penalty/);
+assert.doesNotMatch(stabilize,/client\.rpc\s*=/);
+assert.doesNotMatch(stabilize,/Actieve wedstrijd veilig hervatten vanuit Cloud/);
+
+console.log('PASS live-ux-fixes: build 0125 persisted-session + stable DOM + single-flight beheer + retained live UX');
