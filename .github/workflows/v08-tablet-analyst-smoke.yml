@@ -1,0 +1,104 @@
+name: ClubMatch v0.8 analyst device smoke
+
+on:
+  push:
+    branches:
+      - clubmatch-v0.8-rebuild
+    paths:
+      - 'cloud-v0.8-rebuild/**'
+      - '.github/workflows/v08-tablet-analyst-smoke.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'cloud-v0.8-rebuild/**'
+      - '.github/workflows/v08-tablet-analyst-smoke.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  analyst-device-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    defaults:
+      run:
+        working-directory: cloud-v0.8-rebuild
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build analyst fixture
+        run: |
+          cat > _analyst-device-smoke.html <<'HTML'
+          <!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>.hidden{display:none!important}.card{padding:10px}</style></head><body>
+          <main id="appPanel"><section id="v08ScoreCard" class="card"><div id="v08PossessionBar"></div></section></main>
+          <script>localStorage.setItem('clubmatch.v08.action.mode','analyst');</script>
+          <script src="cloud-client.js"></script>
+          <script src="pitch-layout.js"></script>
+          <script src="player-action-controller.js"></script>
+          <script src="analyst-live-input-v08.js"></script>
+          <script>
+          document.addEventListener('DOMContentLoaded',()=>{
+            const runtime={activeMatchId:'device-smoke',snapshot:null,refresh:async()=>{},recordGoal:async()=>{}};
+            const positions=['LW','ST','RW','LCM','DM','RCM','LB','LCB','RCB','RB','GK'];
+            const names=['Wai Sam','Matz','Kayden','Siem','Vigo','Ben','Shane','Dani','Boaz','Sem','Keeper'];
+            const players=positions.map((position,index)=>({player_id:`p${index+1}`,shirt_number:index+1,display_name:names[index],full_name:names[index],selected:true,is_on_field:true,current_position:position,starting_position:position}));
+            const snapshot={match:{id:'device-smoke',status:'live',formation_code:'4-3-3'},state:{clock_status:'paused',period:'first_half'},players,events:[]};
+            runtime.snapshot=snapshot;
+            window.dispatchEvent(new CustomEvent('clubmatch:v08-runtime-ready',{detail:{runtime}}));
+            window.dispatchEvent(new CustomEvent('clubmatch:v08-confirmed',{detail:{runtime,snapshot}}));
+            window.ClubMatchV08AnalystLiveInput?.render?.();
+            setTimeout(()=>{
+              window.ClubMatchV08AnalystLiveInput?.render?.();
+              const field=document.getElementById('v08LiveActionField'),own=[...(field?.querySelectorAll('.lafOwn')||[])],opp=[...(field?.querySelectorAll('.lafOpp')||[])];
+              own[0]?.click();own[1]?.click();opp[0]?.click();own[2]?.click();
+              const trail=[...(field?.querySelectorAll('.lafTrailRank')||[])].map(el=>el.textContent.trim()).slice(0,4).join(',');
+              const current=own[2]?.querySelector('.lafSeq')?.textContent||'';
+              const previousOpp=opp[0]?.querySelector('.lafSeq')?.textContent||'';
+              const before=own[1]?.querySelector('.lafSeq')?.textContent||'';
+              document.documentElement.dataset.lafSmoke=field&&!field.classList.contains('hidden')&&own.length===11&&opp.length===11?'ok':'fail';
+              document.documentElement.dataset.lafTrail=trail;
+              document.documentElement.dataset.lafCurrent=current;
+              document.documentElement.dataset.lafPrevious=previousOpp;
+              document.documentElement.dataset.lafBefore=before;
+              document.documentElement.dataset.lafWidth=String(field?.getBoundingClientRect?.().width||0);
+            },50);
+          },{once:true});
+          </script></body></html>
+          HTML
+      - name: Start fixture server
+        run: |
+          python3 -m http.server 8770 >/tmp/clubmatch-device-http.log 2>&1 &
+          echo $! >/tmp/clubmatch-device-server.pid
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8770/_analyst-device-smoke.html >/dev/null && exit 0; sleep .1; done
+          cat /tmp/clubmatch-device-http.log
+          exit 1
+      - name: Real Chromium tablet 768x1024
+        run: |
+          CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          test -n "$CHROME" || { echo 'Geen Chromium beschikbaar'; exit 1; }
+          rm -rf /tmp/clubmatch-tablet-profile
+          timeout 25s "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --no-first-run --user-data-dir=/tmp/clubmatch-tablet-profile --window-size=768,1024 --virtual-time-budget=5000 --run-all-compositor-stages-before-draw --dump-dom http://127.0.0.1:8770/_analyst-device-smoke.html >/tmp/clubmatch-tablet-dom.html 2>/tmp/clubmatch-tablet-chrome.log || { cat /tmp/clubmatch-tablet-chrome.log; exit 1; }
+          grep -F 'data-laf-smoke="ok"' /tmp/clubmatch-tablet-dom.html >/dev/null || { echo 'Live Actieveld ontbreekt op tabletviewport'; cat /tmp/clubmatch-tablet-dom.html; exit 1; }
+          grep -F 'data-laf-trail="0,−1,−2,−3"' /tmp/clubmatch-tablet-dom.html >/dev/null || { echo 'Tablet hield snelle klikvolgorde niet bij'; exit 1; }
+          grep -F 'data-laf-current="0"' /tmp/clubmatch-tablet-dom.html >/dev/null || { echo 'Huidige tabletspeler kreeg geen 0'; exit 1; }
+          grep -F 'data-laf-previous="−1"' /tmp/clubmatch-tablet-dom.html >/dev/null || { echo 'Tegenstander kreeg op tablet geen −1'; exit 1; }
+          grep -F 'Wai Sam' /tmp/clubmatch-tablet-dom.html >/dev/null || { echo 'Spelernaam ontbreekt op tabletkaart'; exit 1; }
+          grep -F 'id="lafActionDock"' /tmp/clubmatch-tablet-dom.html >/dev/null || { echo 'Compacte actiedock ontbreekt'; exit 1; }
+          echo 'PASS tablet analyst smoke: veld zichtbaar + namen + snelle 0/−1/−2/−3 klikrespons'
+      - name: Real Chromium desktop rapid clicks
+        run: |
+          CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          rm -rf /tmp/clubmatch-desktop-profile
+          timeout 25s "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --no-first-run --user-data-dir=/tmp/clubmatch-desktop-profile --window-size=1440,1000 --virtual-time-budget=5000 --run-all-compositor-stages-before-draw --dump-dom http://127.0.0.1:8770/_analyst-device-smoke.html >/tmp/clubmatch-desktop-dom.html 2>/tmp/clubmatch-desktop-chrome.log || { cat /tmp/clubmatch-desktop-chrome.log; exit 1; }
+          grep -F 'data-laf-smoke="ok"' /tmp/clubmatch-desktop-dom.html >/dev/null || { echo 'Desktop Live Actieveld ontbreekt'; cat /tmp/clubmatch-desktop-dom.html; exit 1; }
+          grep -F 'data-laf-trail="0,−1,−2,−3"' /tmp/clubmatch-desktop-dom.html >/dev/null || { echo 'Vier snelle desktopklikken hielden volgorde niet direct bij'; exit 1; }
+          grep -F 'data-laf-current="0"' /tmp/clubmatch-desktop-dom.html >/dev/null || { echo 'Huidige desktopspeler kreeg geen 0'; exit 1; }
+          grep -F 'data-laf-previous="−1"' /tmp/clubmatch-desktop-dom.html >/dev/null || { echo 'Tegenstander kreeg geen −1'; exit 1; }
+          grep -F 'data-laf-before="−2"' /tmp/clubmatch-desktop-dom.html >/dev/null || { echo 'Voorgaande eigen speler kreeg geen −2'; exit 1; }
+          echo 'PASS desktop analyst smoke: vier snelle klikken + 0/−1/−2/−3 zonder browserhang'
+      - name: Cleanup
+        if: always()
+        run: |
+          kill "$(cat /tmp/clubmatch-device-server.pid 2>/dev/null)" 2>/dev/null || true
+          rm -f _analyst-device-smoke.html
