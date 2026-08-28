@@ -1,14 +1,15 @@
-/* ClubMatch Cloud v0.8 - isolated top-level workspaces */
+/* ClubMatch Cloud v0.8 - isolated top-level workspaces with persistent hub */
 (function(global){
 'use strict';
 function createWorkspaceManager(options={}){
   const doc=options.document||global.document,app=options.app||doc?.getElementById?.('appPanel');
   if(!doc||!app)throw new Error('Appscherm ontbreekt voor workspaces');
   let saved=null,activeName='matches',activePanel=null,observer=null;
+  const isPersistent=el=>el?.hasAttribute?.('data-workspace-persistent');
   function apply(){
     if(!saved||!activePanel)return;
     [...app.children].forEach(el=>{
-      if(el===activePanel){el.classList.remove('hidden');return}
+      if(el===activePanel||isPersistent(el)){el.classList.remove('hidden');return}
       if(!saved.has(el))saved.set(el,el.classList.contains('hidden'));
       el.classList.add('hidden');
     });
