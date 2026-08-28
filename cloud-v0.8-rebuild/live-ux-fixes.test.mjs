@@ -1,6 +1,6 @@
 import fs from 'node:fs';import assert from 'node:assert/strict';const read=f=>fs.readFileSync(new URL(`./${f}`,import.meta.url),'utf8');
 const html=read('index.html'),feed=read('event-feed-ui.js'),notice=read('live-notice-ui.js'),standalone=read('action-field-standalone.js'),roadmap=read('roadmap-ux-v08.js'),playerUi=read('player-action-ui.js'),controller=read('player-action-controller.js'),actionField=read('action-field-ui.js'),view=read('view-model.js'),stabilize=read('v08-stabilization.js');
-assert.match(html,/build 20260828\.1701/);assert.match(html,/live-notice-ui\.js\?v=20260828\.1701/);
+assert.match(html,/build 20260828\.2145/);assert.match(html,/live-notice-ui\.js\?v=20260828\.2145/);
 assert.match(feed,/Wedstrijd/);assert.match(feed,/Analyse/);assert.match(feed,/Toon oudere gebeurtenissen/);assert.match(feed,/visibleLimit=12/);assert.match(feed,/DOMContentLoaded/,'eventfeed moet zichzelf starten');
 assert.match(notice,/Laatste melding/);assert.match(notice,/automatic_deadline_stop/);assert.match(notice,/navigator\?\.vibrate/);assert.match(notice,/sessionStorage/);assert.match(notice,/\+ Blessuretijd/);
 assert.doesNotMatch(standalone,/get_match_snapshot/);assert.match(standalone,/clubmatch:v08-confirmed/);assert.match(roadmap,/Actieveld = waar en hoe/);assert.match(roadmap,/afQuick/);
