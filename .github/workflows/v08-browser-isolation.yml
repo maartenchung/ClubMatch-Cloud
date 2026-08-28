@@ -21,7 +21,11 @@ jobs:
           set +e
           CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
           test -n "$CHROME" || exit 2
-          for N in 0 1 10 20 30 40 50 57 80; do
+          python3 -m http.server 8766 >/tmp/cm-prefix-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID 2>/dev/null || true; rm -f _cm-prefix-*.html' EXIT
+          sleep 0.5
+          for N in 0 1 10 20 30 35 40 45 50 52 54 55 56 57 80; do
             N="$N" python3 - <<'PY'
           import os,re
           n=int(os.environ['N'])
@@ -32,10 +36,10 @@ jobs:
               seen+=1
               return m.group(0) if seen<=n else ''
           html=re.sub(r'<script\s+src="[^"]+"[^>]*></script>',keep,html)
-          open(f'/tmp/cm-{n}.html','w',encoding='utf-8').write(html)
+          open(f'_cm-prefix-{n}.html','w',encoding='utf-8').write(html)
           PY
             rm -rf "/tmp/cm-profile-$N"
-            timeout 7s "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --disable-background-networking --disable-component-update --disable-sync --no-first-run --user-data-dir="/tmp/cm-profile-$N" --virtual-time-budget=2000 --dump-dom "file:///tmp/cm-$N.html" >"/tmp/cm-$N.dom" 2>"/tmp/cm-$N.log"
+            timeout 7s "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --disable-background-networking --disable-component-update --disable-sync --no-first-run --user-data-dir="/tmp/cm-profile-$N" --virtual-time-budget=2000 --dump-dom "http://127.0.0.1:8766/_cm-prefix-$N.html" >"/tmp/cm-$N.dom" 2>"/tmp/cm-$N.log"
             RC=$?
             STATUS="$(grep -o 'id="v08Status"[^>]*>[^<]*' "/tmp/cm-$N.dom" | head -1)"
             echo "PREFIX=$N RC=$RC STATUS=$STATUS"
