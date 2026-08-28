@@ -3,6 +3,7 @@
 'use strict';
 const SUPABASE_URL='https://fnbqyogbamufytcabfzm.supabase.co';
 const SUPABASE_KEY='sb_publishable_skGPpngOQ_1OpEbreV2kXA__2OL_Mbp';
+function installStartupWatchdog(){const doc=global.document,el=doc?.getElementById?.('v08Status');if(!el)return;if(/Initialiseren/i.test(el.textContent||''))el.textContent='Modules en sessie laden…';const isReady=()=>/gereed|✓/i.test(el.textContent||'');global.setTimeout?.(()=>{if(!isReady()&&!/mislukt|startfout/i.test(el.textContent||'')){el.textContent='Opstart duurt langer dan normaal · sessie en Cloud-data worden nog gecontroleerd…';el.classList?.remove?.('bad')}},8000);const fail=message=>{if(isReady())return;el.textContent=`Startfout: ${message||'onbekende browserfout'}`;el.classList?.add?.('bad')};global.addEventListener?.('error',event=>fail(event?.error?.message||event?.message));global.addEventListener?.('unhandledrejection',event=>fail(event?.reason?.message||event?.reason))}
 function installSharedClientGuard(){
  const api=global.ClubMatchV08CloudClient;if(!api?.createClient||api.__sharedBrowserClient)return;
  const original=api.createClient.bind(api);let shared=null;
@@ -10,7 +11,7 @@ function installSharedClientGuard(){
  global.ClubMatchV08CloudClient={...api,createClient,__sharedBrowserClient:true};
  if(global.supabase)global.supabase.createClient=createClient;
 }
-installSharedClientGuard();
+installStartupWatchdog();installSharedClientGuard();
 function install(){
  if(!global.ClubMatchV08CloudClient?.createClient||!global.ClubMatchV08ActionField?.createActionFieldController||!global.ClubMatchV08ActionFieldUi?.createActionFieldUi)return false;
  if(global.ClubMatchV08ActionFieldApp)return true;
