@@ -34,6 +34,8 @@ jobs:
         run: |
           node --check app.js
           node --check cloud-client.js
+          node --check realtime-native.js
+          node --check realtime-status-ui.js
           node --check pitch-layout.js
           node --check event-describer.js
           node --check action-field-event-describer.js
@@ -89,6 +91,8 @@ jobs:
         run: grep -F "const RESET_REDIRECT='https://maartenchung.github.io/ClubMatch-Cloud/cloud-v0.8-rebuild/';" app.js
       - name: Native Cloud transport, recovery and MFA
         run: node cloud-client.test.mjs
+      - name: Native Realtime Postgres Changes transport
+        run: node realtime-native.test.mjs
       - name: Password recovery and MFA security controller
         run: node security-controller.test.mjs
       - name: Password recovery live validation UI
