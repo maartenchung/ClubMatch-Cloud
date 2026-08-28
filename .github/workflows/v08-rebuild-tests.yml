@@ -39,32 +39,32 @@ jobs:
             echo 'Geen Chromium/Chrome beschikbaar op runner'
             exit 1
           fi
-          rm -rf /tmp/clubmatch-chrome-profile
-          "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --remote-debugging-port=9222 --user-data-dir=/tmp/clubmatch-chrome-profile about:blank >/tmp/clubmatch-chrome.log 2>&1 &
-          CHROME_PID=$!
-          trap 'kill $CHROME_PID $SERVER_PID 2>/dev/null || true' EXIT
-          for i in $(seq 1 50); do
-            if curl -sf --connect-timeout 1 --max-time 1 http://127.0.0.1:9222/json/version >/tmp/clubmatch-cdp-version.json; then break; fi
-            sleep 0.2
-          done
-          curl -sf --connect-timeout 1 --max-time 1 http://127.0.0.1:9222/json/version >/dev/null || {
-            echo 'Chromium CDP startte niet'
-            cat /tmp/clubmatch-chrome.log
-            exit 1
-          }
-          TAB_JSON="$(curl -sf --connect-timeout 1 --max-time 3 -X PUT 'http://127.0.0.1:9222/json/new?http://127.0.0.1:8765/index.html')"
-          WS_URL="$(printf '%s' "$TAB_JSON" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>process.stdout.write(JSON.parse(s).webSocketDebuggerUrl||''))")"
-          if [ -z "$WS_URL" ]; then
-            echo 'Geen CDP WebSocket URL ontvangen'
-            printf '%s\n' "$TAB_JSON"
-            exit 1
-          fi
-          timeout 30s env CM_CDP_WS="$WS_URL" node browser-cold-start-smoke.mjs || {
-            echo 'Chromium cold-start probe faalde of liep in timeout'
+          rm -rf /tmp/clubmatch-smoke-profile
+          trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
+          timeout 30s "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --disable-background-networking --disable-component-update --disable-sync --no-first-run --user-data-dir=/tmp/clubmatch-smoke-profile --virtual-time-budget=15000 --dump-dom http://127.0.0.1:8765/index.html >/tmp/clubmatch-dom.html 2>/tmp/clubmatch-chrome.log || {
+            echo 'Chromium cold-start kon de DOM niet binnen 30s opleveren'
             cat /tmp/clubmatch-chrome.log
             cat /tmp/clubmatch-http.log
             exit 1
           }
+          echo '--- ClubMatch browserstatus ---'
+          grep -o 'id="v08Status"[^>]*>[^<]*' /tmp/clubmatch-dom.html | head -1 || true
+          grep -F 'ClubMatch Cloud v0.8 gereed.' /tmp/clubmatch-dom.html || {
+            echo 'ClubMatch bereikte in echte Chromium geen gereed-status'
+            grep -o 'id="v08Status"[^>]*>[^<]*' /tmp/clubmatch-dom.html | head -1 || true
+            grep -o 'id="v08BootStage"[^>]*>[^<]*' /tmp/clubmatch-dom.html | head -1 || true
+            cat /tmp/clubmatch-chrome.log
+            exit 1
+          }
+          grep -F 'id="authPanel" class="card"' /tmp/clubmatch-dom.html || {
+            echo 'Uitgelogde cold-start gaf loginpaneel niet vrij nadat bootstrap gereed was'
+            exit 1
+          }
+          if grep -F 'id="appPanel" class=""' /tmp/clubmatch-dom.html; then
+            echo 'Uitgelogde cold-start mag app niet tonen'
+            exit 1
+          fi
+          echo 'PASS echte Chromium cold-start: volledige shell bereikt gereed-status en toont daarna pas Inloggen'
       - name: Browser shell syntax
         run: |
           node --check app.js
