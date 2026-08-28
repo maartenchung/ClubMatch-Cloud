@@ -1,6 +1,6 @@
 # ClubMatch Cloud — Master Product Roadmap
 
-Laatste actualisatie: 28 augustus 2026 · build 20260828.2331
+Laatste actualisatie: 28 augustus 2026 · build 20260828.2347
 
 Deze roadmap is de actuele productwaarheid voor ClubMatch Cloud. Hij combineert wedstrijdpariteit, Cloud Beta, Trainingen, Club Intelligence, beheer/security, schaalbaarheid en commercialisering.
 
@@ -18,7 +18,7 @@ Status: `✅ gebouwd + geautomatiseerd getest` · `🟡 gebouwd/basis aanwezig, 
 - ✅ Shared browserclient: Auth/RPC/Realtime worden niet door UX-lagen overschreven.
 - ✅ Refresh-warmup is read-only veilig; `client.rpc` wordt nergens gemonkeypatcht.
 - ✅ Fast Resume is observer-only en mag nooit zelfstandig een tweede runtime/start-route openen.
-- ✅ Device security UX maakt een AAL2/2FA-blokkade expliciet zichtbaar en hervat na succesvolle verificatie via de normale Cloud-route.
+- ✅ Device security UX doet geen aanname dat MFA/2FA is ingesteld. Supabase bevat op build 2347 nul MFA-factoren; een MFA-challenge mag alleen volgen uit echte toekomstige factor-/AAL-status.
 
 ---
 
@@ -70,7 +70,7 @@ Status: `✅ gebouwd + geautomatiseerd getest` · `🟡 gebouwd/basis aanwezig, 
 
 ## 1.4 Balbezit, Snelle registratie en Live Actieveld
 
-**Productbesluit build 2331:** in Analistmodus zijn er bewust twee complementaire invoerwijzen: `Snelle registratie` voor grote één-tik-acties en `Live Actieveld` voor ruimtelijke balvolgorde/context. Ze schrijven naar dezelfde confirmed Cloud-events en vormen geen twee gescheiden statistieksystemen.
+**Productbesluit build 2347:** in Analistmodus zijn er bewust twee complementaire invoerwijzen: `Snelle registratie` voor grote één-tik-acties en `Live Actieveld` voor ruimtelijke balvolgorde/context. Ze schrijven naar dezelfde confirmed Cloud-events en vormen geen twee gescheiden statistieksystemen.
 
 ### Snelle registratie
 
@@ -95,6 +95,10 @@ Status: `✅ gebouwd + geautomatiseerd getest` · `🟡 gebouwd/basis aanwezig, 
 - ✅ Touch targets zijn vergroot: snelle acties/spelerknoppen zijn circa 58–64 px hoog en op coarse/touch-input minimaal 64 px.
 - ✅ In Analistmodus worden mogelijke volgende eigen spelers op veldafstand gerangschikt; de dichtstbijzijnde afspeelopties staan vooraan zonder lange passes onmogelijk te maken.
 - ✅ Snelle touchinvoer gebruikt een eigen wachtrij zodat een volgende tik niet stilzwijgend verloren gaat terwijl de vorige Cloud-write nog wordt bevestigd.
+- ✅ `↶ Laatste analistactie` is touch-first aanwezig: eerste tik wapent, tweede tik binnen 3 seconden voert de correctie uit; op coarse/touch is de knop minimaal 68 px hoog.
+- ✅ Laatste analistinvoer wordt server-side als transactie/bundel teruggedraaid. Een A→B-balcirculatie corrigeert dus de gekoppelde pass-, ontvangst-, bezit- en teambezitevents samen in plaats van één cosmetische regel te verbergen.
+- ✅ Originele events blijven append-only/auditbaar; de confirmed snapshot markeert doel-events van `analyst_action_voided` als niet-effectieve originelen zodat live bezit, analyses en events opnieuw uit de gecorrigeerde Cloud-waarheid projecteren.
+- ✅ Analist-goal undo gebruikt de bestaande `void_goal`-engine zodat ook het scorebord audit-safe wordt gecorrigeerd.
 
 ### Live Actieveld
 
@@ -128,9 +132,10 @@ Status: `✅ gebouwd + geautomatiseerd getest` · `🟡 gebouwd/basis aanwezig, 
 - ✅ Wedstrijdhistorie.
 - ✅ Historisch wedstrijddetail met opstelling, fases, gebeurtenissen en correcties.
 - ✅ Correcties/voids voor wissels, posities en goals zijn append-only/audit-safe.
+- ✅ Laatste analistregistratie kan als volledige gekoppelde invoerbundel audit-safe worden teruggedraaid; correctie verschijnt zelf als gebeurtenis.
 - ✅ CSV-export per wedstrijd.
 - ✅ Veilige aparte delete-flow met extra bevestiging.
-- ⬜ Generiek correctieframework voor foutieve snelle/analist-/ruimtelijke acties, bezit en attendance verder uitbreiden.
+- 🟡 Generiek correctieframework is nu uitgebreid met `laatste analistbundel undo`; willekeurige oudere snelle/ruimtelijke acties, attendance, actor/assist her-toewijzen en detailbewerking moeten nog generiek worden gemaakt.
 - ⬜ XLSX-export van wedstrijden/dashboard/spelers/trainingen.
 - ⬜ PDF-rapport waar zinvol.
 
@@ -160,8 +165,10 @@ Status: `✅ gebouwd + geautomatiseerd getest` · `🟡 gebouwd/basis aanwezig, 
 - ✅ Startup-warmup voert alleen read-only Cloud-reads uit; geen overschrijving van read-only Supabase-methoden.
 - ✅ Shared browserclient staat vóór alle consumers; tablet/desktop mogen niet elk binnen één pagina concurrerende auth-clients maken.
 - ✅ Fast Resume observeert confirmed herstel en start zelf geen tweede runtime.
+- ✅ Supabase-verificatie build 2347: momenteel nul MFA-factoren; tablet-vastlopen mag daarom niet als 2FA/AAL2-probleem worden geclassificeerd.
+- 🟡 Tablet/bootstrap-probleem blijft open: in live logs is een devicepad zichtbaar met succesvolle tokenrefresh en `/auth/v1/user` 200, waarna niet altijd de eerste wedstrijd-RPC volgt. Dit wordt behandeld als browser/bootstrap/session/cache-compatibiliteit tot een concrete fout is gemeten.
+- ⬜ Boot-stage diagnostiek toevoegen: `session → security → app zichtbaar → teamcontext → open matches → runtime start → eerste confirmed snapshot`, inclusief zichtbare fout/stage op het apparaat.
 - 🟡 Mobiel ↔ tablet ↔ desktop bijna-directe sync technisch gebouwd en getest; echte twee-device praktijktest blijft releasevoorwaarde.
-- 🟡 Tablet-securitypad is gecorrigeerd qua UX: geldige sessie + vereiste AAL2 toont expliciet de 2FA-gate, scrolt die in beeld en hervat na verificatie via de normale Cloud-route. Echte tabletpraktijktest blijft nodig.
 - 🟡 Concurrente mutatieherkenning is gebouwd: als een andere coach de `state_version` intussen wijzigt, wordt de nieuwste confirmed Cloud-status geladen en krijgt de gebruiker expliciet te zien dat zijn actie niet is uitgevoerd.
 - 🟡 Conflictherstel is geautomatiseerd getest; echte twee-coaches/device praktijktest ontbreekt nog.
 - 🟡 Offline/reconnect heeft status, backoff en polling recovery; echte offline-mutatiequeue/replay ontbreekt nog.
@@ -192,7 +199,8 @@ Doelrechten:
 - ✅ Publishable key only in browser.
 - ✅ RLS/RPC-autorisatiebasis.
 - ✅ Password recovery.
-- ✅ TOTP primitives/UI en per-device challengeflow.
+- ✅ TOTP/MFA primitives en UI zijn aanwezig voor toekomstige activering.
+- ℹ️ Build 2347: er zijn momenteel **0 MFA-factoren** geënrolld in het Supabase-project.
 - ⬜ MFA verplicht voor platform-/club-admin.
 - ⬜ Server-side AAL2 voor verwijderen en gevoelige beheer-RPC's.
 - ⬜ Leaked Password Protection inschakelen.
@@ -248,7 +256,7 @@ Doelrechten:
 
 ## 3.5 Ruimtelijke Live Input / Gesture Capture
 
-**Productbesluit build 2331:** het oude aparte Actieveld-prototype blijft retired. Een nieuw `Live Actieveld` is heringevoerd als Analistmodus-input die dezelfde event-/bezitengine gebruikt als Snelle registratie. Geen eigen parallelle waarheid.
+**Productbesluit build 2347:** het oude aparte Actieveld-prototype blijft retired. Een nieuw `Live Actieveld` is heringevoerd als Analistmodus-input die dezelfde event-/bezitengine gebruikt als Snelle registratie. Geen eigen parallelle waarheid.
 
 - ✅ Onderliggende oude gesture/controller-contracten blijven als R&D geautomatiseerd testbaar maar worden niet in de browser-shell geladen.
 - ✅ Bestaande action-field-eventhistorie blijft leesbaar.
@@ -306,11 +314,11 @@ Eerdere prijsrichtingen blijven hypothesen; eerst pilots, gebruik, kosten en waa
 
 ## Sprint P0 — Smart Live UX afronden
 
-1. **Echte tabletpraktijktest van build 2331:** 2FA-devicegate → actieve wedstrijd hervatten → Analistmodus → snelle acties + Live Actieveld zonder herladen.
+1. **Tablet/bootstrap diagnosticeren en oplossen:** géén MFA-aanname; exacte boot-stage zichtbaar maken en op de tablet bepalen waar `sessie geldig → eerste wedstrijd-RPC` stopt.
 2. **Touchtempo valideren:** eigen A → eigen B → tegenstander → eigen C, snelle schoten/goals en 10–20 opeenvolgende taps; meten of de inputqueue achterloopt.
 3. **Ruimtelijke scenario's valideren:** zijlijn/ingooi, vrije trap, buitenspel, penaltyzone, corner, overtreding en goal met assist/voorzet.
 4. **Volledige wedstrijdscenario's:** rust + rust undo, automatische eindstop, blessuretijd, late speler, wissel, formatie en wedstrijdafsluiting.
-5. **Generieke correcties:** snelle/analist-/ruimtelijke acties, bezit, attendance en foutieve assist/context audit-safe kunnen herstellen.
+5. **Correcties v2:** willekeurige oudere snelle/analist-/ruimtelijke acties selecteren en audit-safe corrigeren; attendance en actor/assist her-toewijzen toevoegen. Laatste analistbundel undo is ✅.
 
 ## Sprint P1 — Reliability & Multi-device
 
