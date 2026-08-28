@@ -44,7 +44,11 @@ function createPreparationController(options={}){
     meta={matchId:snap.match.id,teamSeasonId:snap.match.team_season_id,opponentName:snap.match.opponent_name||'',matchDate:matchSummary.match_date||'',scheduledTime:clean(matchSummary.scheduled_time).slice(0,5),officialDurationMinutes:Number(snap.match.official_duration_minutes)||80,formationCode:snap.match.formation_code||'4-3-3'};dirty=false;
     return emit();
   }
-  function setMeta(patch={}){meta={...meta,...patch};dirty=true;return emit()}
+  function setMeta(patch={}){
+    const next={...meta,...patch};
+    const changed=clean(next.matchId)!==clean(meta.matchId)||clean(next.teamSeasonId)!==clean(meta.teamSeasonId)||clean(next.opponentName)!==clean(meta.opponentName)||clean(next.matchDate)!==clean(meta.matchDate)||clean(next.scheduledTime)!==clean(meta.scheduledTime)||Number(next.officialDurationMinutes)!==Number(meta.officialDurationMinutes)||clean(next.formationCode)!==clean(meta.formationCode);
+    meta=next;if(changed)dirty=true;return emit();
+  }
   function setFormation(code){
     const formation=global.ClubMatchV08Formation?.getFormation?.(code)||{code:'4-3-3',slots:formationSlots('4-3-3')};const allowed=new Set(formation.slots);
     meta={...meta,formationCode:formation.code};players=players.map(p=>p.starter&&!allowed.has(clean(p.position))?{...p,position:''}:p);dirty=true;return emit();
