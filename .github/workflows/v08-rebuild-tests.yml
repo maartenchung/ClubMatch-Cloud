@@ -30,6 +30,32 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Real Chromium cold-start smoke
+        run: |
+          python3 -m http.server 8765 >/tmp/clubmatch-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
+          sleep 1
+          CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          if [ -z "$CHROME" ]; then
+            echo 'Geen Chromium/Chrome beschikbaar op runner'
+            exit 1
+          fi
+          "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --virtual-time-budget=12000 --dump-dom http://127.0.0.1:8765/index.html >/tmp/clubmatch-dom.html 2>/tmp/clubmatch-chrome.log || {
+            cat /tmp/clubmatch-chrome.log
+            exit 1
+          }
+          grep -F 'ClubMatch Cloud v0.8 gereed.' /tmp/clubmatch-dom.html || {
+            echo 'ClubMatch bereikte in echte Chromium geen gereed-status'
+            cat /tmp/clubmatch-dom.html
+            cat /tmp/clubmatch-chrome.log
+            exit 1
+          }
+          grep -F 'id="authPanel" class="card"' /tmp/clubmatch-dom.html || {
+            echo 'Uitgelogde cold-start gaf loginpaneel niet pas na bootstrap vrij'
+            cat /tmp/clubmatch-dom.html
+            exit 1
+          }
       - name: Browser shell syntax
         run: |
           node --check app.js
