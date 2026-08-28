@@ -93,6 +93,8 @@ jobs:
         run: node smart-registration.test.mjs
       - name: Confirmed Cloud Fast Resume
         run: node fast-resume.test.mjs
+      - name: Shared browser Cloud client
+        run: node shared-cloud-client.test.mjs
       - name: GitHub Pages password recovery redirect
         run: grep -F "const RESET_REDIRECT='https://maartenchung.github.io/ClubMatch-Cloud/cloud-v0.8-rebuild/';" app.js
       - name: Native Cloud transport, recovery and MFA
