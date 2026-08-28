@@ -19,7 +19,7 @@ permissions:
 jobs:
   node-tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 6
     defaults:
       run:
         working-directory: cloud-v0.8-rebuild
@@ -65,6 +65,34 @@ jobs:
             exit 1
           fi
           echo 'PASS echte Chromium cold-start: volledige shell bereikt gereed-status en toont daarna pas Inloggen'
+      - name: Real Chromium persisted-session smoke
+        run: |
+          CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          test -n "$CHROME" || exit 1
+          python3 - <<'PY'
+          from pathlib import Path
+          html=Path('index.html').read_text(encoding='utf-8')
+          marker='<script src="'
+          inject='''<script>\nlocalStorage.setItem('clubmatch-v08-session',JSON.stringify({access_token:'fake-access',refresh_token:'fake-refresh',expires_at:4102444800,user:{id:'test-user',email:'test@example.com'}}));\nwindow.fetch=async function(input,init={}){const u=String(input);const json=(v,s=200)=>Promise.resolve(new Response(JSON.stringify(v),{status:s,headers:{'Content-Type':'application/json'}}));if(u.includes('/auth/v1/user'))return json({id:'test-user',email:'test@example.com',factors:[]});if(u.includes('/rest/v1/rpc/get_my_team_seasons'))return json([]);if(u.includes('/rest/v1/rpc/get_my_open_matches'))return json([]);if(u.includes('/rest/v1/rpc/'))return json([]);return json({});};\n</script>\n'''
+          idx=html.find(marker)
+          if idx<0: raise SystemExit('geen extern script gevonden')
+          Path('_persisted-session-smoke.html').write_text(html[:idx]+inject+html[idx:],encoding='utf-8')
+          PY
+          python3 -m http.server 8766 >/tmp/clubmatch-persisted-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID 2>/dev/null || true; rm -f _persisted-session-smoke.html' EXIT
+          rm -rf /tmp/clubmatch-persisted-profile
+          timeout 20s "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --disable-background-networking --disable-component-update --disable-sync --no-first-run --user-data-dir=/tmp/clubmatch-persisted-profile --virtual-time-budget=8000 --dump-dom http://127.0.0.1:8766/_persisted-session-smoke.html >/tmp/clubmatch-persisted-dom.html 2>/tmp/clubmatch-persisted-chrome.log || {
+            echo 'FAIL persisted-session: browserthread kwam niet vrij'
+            cat /tmp/clubmatch-persisted-chrome.log
+            exit 1
+          }
+          echo '--- Persisted-session browserstatus ---'
+          grep -o 'id="v08Status"[^>]*>[^<]*' /tmp/clubmatch-persisted-dom.html | head -1 || true
+          grep -F 'test@example.com' /tmp/clubmatch-persisted-dom.html >/dev/null || { echo 'Sessiegebruiker werd niet hersteld'; exit 1; }
+          grep -F 'id="appPanel" class=""' /tmp/clubmatch-persisted-dom.html >/dev/null || { echo 'Geldige opgeslagen sessie gaf app niet vrij'; exit 1; }
+          if grep -F 'Opgeslagen sessie controleren…' /tmp/clubmatch-persisted-dom.html >/dev/null; then echo 'Sessiestatus bleef hangen'; exit 1; fi
+          echo 'PASS echte Chromium persisted-session: sessie hersteld, app klikbaar en browserthread vrij'
       - name: Browser shell syntax
         run: |
           node --check app.js
