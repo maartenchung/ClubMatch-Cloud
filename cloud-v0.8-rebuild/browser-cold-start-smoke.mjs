@@ -7,10 +7,11 @@ let nextId=1;
 const pending=new Map();
 const exceptions=[];
 
-function send(method,params={}){
+function send(method,params={},timeoutMs=5000){
   return new Promise((resolve,reject)=>{
     const id=nextId++;
-    pending.set(id,{resolve,reject});
+    const timer=setTimeout(()=>{pending.delete(id);reject(new Error(`CDP timeout bij ${method}`))},timeoutMs);
+    pending.set(id,{resolve:value=>{clearTimeout(timer);resolve(value)},reject:error=>{clearTimeout(timer);reject(error)}});
     ws.send(JSON.stringify({id,method,params}));
   });
 }
@@ -28,7 +29,10 @@ ws.addEventListener('message',event=>{
     exceptions.push(detail?.exception?.description||detail?.text||'Onbekende browserexception');
   }
 });
-await new Promise((resolve,reject)=>{ws.addEventListener('open',resolve,{once:true});ws.addEventListener('error',reject,{once:true})});
+await Promise.race([
+  new Promise((resolve,reject)=>{ws.addEventListener('open',resolve,{once:true});ws.addEventListener('error',reject,{once:true})}),
+  new Promise((_,reject)=>setTimeout(()=>reject(new Error('CDP WebSocket opende niet binnen 5s')),5000))
+]);
 await send('Runtime.enable');
 
 const expression=`(()=>{
@@ -54,7 +58,7 @@ const expression=`(()=>{
 const started=Date.now();
 let last=null;
 while(Date.now()-started<20000){
-  const response=await send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});
+  const response=await send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true},3000);
   last=response?.result?.value||null;
   console.log('BROWSER',JSON.stringify(last));
   if(last?.resourceErrors?.length)throw new Error(`Browser resourcefout: ${last.resourceErrors.join(', ')}`);
