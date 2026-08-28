@@ -39,10 +39,14 @@ jobs:
           node --check pitch-layout.js
           node --check event-describer.js
           node --check action-field-event-describer.js
+          node --check live-input-event-describer-v08.js
           node --check action-field-controller.js
           node --check action-field-ui.js
           node --check action-field-standalone.js
           node --check smart-registration-v08.js
+          node --check analyst-live-input-v08.js
+          node --check goal-types-ux-v08.js
+          node --check device-security-ux-v08.js
           node --check fast-resume-v08.js
           node --check event-feed-ui.js
           node --check live-notice-ui.js
@@ -89,6 +93,8 @@ jobs:
         run: node asset-versioning.test.mjs
       - name: Live UX fixes contract
         run: node live-ux-fixes.test.mjs
+      - name: Analyst touch field and visible events
+        run: node analyst-live-input.test.mjs
       - name: Smart player-bound quick registration
         run: node smart-registration.test.mjs
       - name: Confirmed Cloud Fast Resume

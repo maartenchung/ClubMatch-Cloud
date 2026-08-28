@@ -1,6 +1,6 @@
 # ClubMatch Cloud — Master Product Roadmap
 
-Laatste actualisatie: 28 augustus 2026 · build 20260828.2225
+Laatste actualisatie: 28 augustus 2026 · build 20260828.2331
 
 Deze roadmap is de actuele productwaarheid voor ClubMatch Cloud. Hij combineert wedstrijdpariteit, Cloud Beta, Trainingen, Club Intelligence, beheer/security, schaalbaarheid en commercialisering.
 
@@ -16,7 +16,9 @@ Status: `✅ gebouwd + geautomatiseerd getest` · `🟡 gebouwd/basis aanwezig, 
 - Confirmed Cloud state blijft de enige bron van waarheid; geen permanente optimistic UI-state.
 - ✅ Browserassets zijn build-gepind om oude JavaScript-cache te voorkomen.
 - ✅ Shared browserclient: Auth/RPC/Realtime worden niet door UX-lagen overschreven.
-- ✅ Refresh-warmup is read-only veilig; `client.rpc` wordt nergens meer gemonkeypatcht.
+- ✅ Refresh-warmup is read-only veilig; `client.rpc` wordt nergens gemonkeypatcht.
+- ✅ Fast Resume is observer-only en mag nooit zelfstandig een tweede runtime/start-route openen.
+- ✅ Device security UX maakt een AAL2/2FA-blokkade expliciet zichtbaar en hervat na succesvolle verificatie via de normale Cloud-route.
 
 ---
 
@@ -55,8 +57,10 @@ Status: `✅ gebouwd + geautomatiseerd getest` · `🟡 gebouwd/basis aanwezig, 
 - 🟡 Drag & drop live veld en bank ↔ veld; echte devicepraktijktest blijft nodig.
 - 🟡 Live formatie atomair wijzigen; praktijktest blijft nodig.
 - ✅ Goals voor/tegen, scorer, assist, goaltype, notitie en scorebord.
+- ✅ Goaltypes uitgebreid met o.a. Kopbal, Volley, Intikker, Afstandsschot, 1-op-1 en Directe vrije trap.
 - ✅ Gebeurtenissentijdlijn in het Nederlands met score/correcties.
-- ✅ Gebeurtenissen compact als `Wedstrijd`, `Analyse` of `Alles`, met oudere events uitklapbaar.
+- ✅ Gebeurtenissen zijn filterbaar als `Alles`, `Analyse` of `Wedstrijd`; `Alles` is standaard zodat nieuwe analistacties niet verborgen lijken.
+- ✅ Nieuwe snelle/analist-/ruimtelijke events komen na confirmed Cloud-refresh direct in Gebeurtenissen met wedstrijdtijd.
 - ✅ Later aangekomen speler kan tijdens de wedstrijd aan bank/selectie worden toegevoegd; reden/tijd worden bewaard.
 - ✅ Dropdowns worden niet onnodig bij elke live refresh opnieuw opgebouwd.
 - ✅ Wedstrijd stoppen vraagt bevestiging en is gescheiden van definitief verwijderen.
@@ -64,9 +68,11 @@ Status: `✅ gebouwd + geautomatiseerd getest` · `🟡 gebouwd/basis aanwezig, 
 - ✅ Rust kan append-only/audit-safe ongedaan worden gemaakt zolang de wedstrijd in rust staat.
 - 🟡 Automatische server-side eindstop, verlenging en strafschoppen aanwezig; volledige echte wedstrijdscenario's nog valideren.
 
-## 1.4 Balbezit en slimme Snelle registratie
+## 1.4 Balbezit, Snelle registratie en Live Actieveld
 
-**Productbesluit:** `Snelle registratie` is de canonieke live-invoer voor speler- en teamacties. Er is geen tweede zichtbare Actieveld-registratie meer.
+**Productbesluit build 2331:** in Analistmodus zijn er bewust twee complementaire invoerwijzen: `Snelle registratie` voor grote één-tik-acties en `Live Actieveld` voor ruimtelijke balvolgorde/context. Ze schrijven naar dezelfde confirmed Cloud-events en vormen geen twee gescheiden statistieksystemen.
+
+### Snelle registratie
 
 - ✅ Gedetailleerd spelerbezit/Analistmodus blijft optioneel.
 - ✅ Team-balbezit kan onafhankelijk worden gestart: `Ons bezit` of `Tegenstander`.
@@ -80,14 +86,38 @@ Status: `✅ gebouwd + geautomatiseerd getest` · `🟡 gebouwd/basis aanwezig, 
 - ✅ Speler kiezen in Coachmodus wisselt alleen actieve speler/bezit; er wordt geen pass verzonnen.
 - ✅ Speler kiezen in Analistmodus gebruikt A → B en kan dus de passketen automatisch vastleggen.
 - ✅ Eén actiecatalogus bevat o.a. Goal, Schot, Schot op doel, Kans, Pass, Vooruit spelen, Spel verleggen, Voorzet, Vrije trap, Corner, Ingooi, Balwinst/-verlies, onderschepping, duels, overtredingen en redding.
-- ✅ Oude losse rode balverliesrij is verwijderd uit de live UX.
-- ✅ Balverliesoorzaken zijn gewone acties geworden: `Foute pass`, `Pass onderschept`, `Balverlies · duel`, `Bal kwijt · controle`, `Bal kwijt · dribbel`, `Overig balverlies`.
+- ✅ Balverliesoorzaken zijn gewone acties: `Foute pass`, `Pass onderschept`, `Balverlies · duel`, `Bal kwijt · controle`, `Bal kwijt · dribbel`, `Overig balverlies`.
 - ✅ Acties kunnen worden weergegeven als `Categorieën` of `A–Z`; voorkeur wordt lokaal onthouden.
-- ✅ Bij eigen team zijn acties geblokkeerd totdat een actieve speler is gekozen; zo kan een actie niet per ongeluk aan de verkeerde speler worden gekoppeld.
-- ✅ Tegenstanderacties blijven als teamactie registreerbaar zonder tegenstander-roster.
-- ✅ Analist-Goal gebruikt actieve speler als scorer en zoekt binnen een korte recente passketen een aangever; indien gevonden wordt assist automatisch gekoppeld.
+- ✅ Tegenstanderacties blijven als teamactie registreerbaar zonder volledig tegenstander-roster.
+- ✅ Analist-Goal gebruikt actieve speler als scorer en zoekt binnen een korte recente passketen een aangever.
 - ✅ Analist-Goal registreert compound: schot + schot op doel + goal; assistcontext wordt backend-side bevestigd.
 - ✅ Voorbeeldketen is geautomatiseerd getest: Kayden → Matz → Goal herkent Kayden als recente aangever van Matz.
+- ✅ Touch targets zijn vergroot: snelle acties/spelerknoppen zijn circa 58–64 px hoog en op coarse/touch-input minimaal 64 px.
+- ✅ In Analistmodus worden mogelijke volgende eigen spelers op veldafstand gerangschikt; de dichtstbijzijnde afspeelopties staan vooraan zonder lange passes onmogelijk te maken.
+- ✅ Snelle touchinvoer gebruikt een eigen wachtrij zodat een volgende tik niet stilzwijgend verloren gaat terwijl de vorige Cloud-write nog wordt bevestigd.
+
+### Live Actieveld
+
+- ✅ Live Actieveld verschijnt naast Snelle registratie wanneer Analistmodus actief is.
+- ✅ Eigen spelers staan op formatiecoördinaten; tegenstander wordt voorlopig als positionele `T1…T11`-laag weergegeven zolang geen tegenstander-roster beschikbaar is.
+- ✅ Eigen speler A → eigen speler B gebruikt dezelfde analistbalstroom en registreert pass/ontvangst/bezit.
+- ✅ Eigen speler → tegenstander registreert balverlies en start tegenstanderbezit.
+- ✅ Tegenstander → eigen speler registreert balverovering en start eigen speler-/teambezit.
+- ✅ Opeenvolgende tegenstander-touches worden als ruimtelijke pass/balcontact opgeslagen, inclusief wedstrijdtijd en locatie.
+- ✅ Wide → box-traject kan als waarschijnlijke voorzet worden aangeboden/afgeleid wanneer de ruimtelijke relatie sterk genoeg is; gewone verre passes worden niet automatisch als voorzet gelabeld.
+- ✅ Veldtik opent een contextmenu met veldlocatie en balbezitzijde als context.
+- ✅ Vrije trap kan op exacte veldlocatie worden geregistreerd.
+- ✅ Buitenspel is een ruimtelijke actie en wisselt logisch het balbezit naar de andere partij.
+- ✅ Penalty wordt als optie aangeboden in de relevante zestienmeterzone op basis van actuele balbezitzijde; toekenning scoort niet automatisch.
+- ✅ Bij de zijlijn worden ingooien aangeboden en bij eigen ingooi staan dichtstbijzijnde eigen spelers als werper vooraan.
+- ✅ Bij tegenstanderbezit worden dichtstbijzijnde eigen spelers als mogelijke overtreder aangeboden; de gebruiker bevestigt wie het was.
+- ✅ Goal vanuit Actieveld gebruikt de normale score-engine; laatste eigen balvolgorde kan assist/voorzet voorstellen maar blijft aanpasbaar.
+- ✅ Na goal wordt actief bezit afgesloten zodat bezitduur niet doorloopt na de score.
+- 🟡 Tegenstander-identiteit is nu positioneel (`T1…T11`); echte opponent lineup/roster is een toekomstige uitbreiding.
+- 🟡 Praktijktest op tablet tijdens snel baltempo is verplicht om knopvolgorde, touchfouten, queue-latency en cognitieve belasting te kalibreren.
+
+### Analysekwaliteit
+
 - ✅ Dashboard toont team-balbezit eerste helft, tweede helft en totaal; verlenging apart indien gebruikt.
 - ✅ Speleranalyses bevatten pass ontvangen/geslaagd, balverliesverhouding, duels, schoten en oorzaken waar gemeten.
 - 🟡 Meetkwaliteit blijft expliciet: gemiste acties mogen niet als volledige wedstrijdstatistiek worden gepresenteerd.
@@ -100,7 +130,7 @@ Status: `✅ gebouwd + geautomatiseerd getest` · `🟡 gebouwd/basis aanwezig, 
 - ✅ Correcties/voids voor wissels, posities en goals zijn append-only/audit-safe.
 - ✅ CSV-export per wedstrijd.
 - ✅ Veilige aparte delete-flow met extra bevestiging.
-- ⬜ Generiek correctieframework voor foutieve snelle/analistacties, bezit en attendance verder uitbreiden.
+- ⬜ Generiek correctieframework voor foutieve snelle/analist-/ruimtelijke acties, bezit en attendance verder uitbreiden.
 - ⬜ XLSX-export van wedstrijden/dashboard/spelers/trainingen.
 - ⬜ PDF-rapport waar zinvol.
 
@@ -128,12 +158,15 @@ Status: `✅ gebouwd + geautomatiseerd getest` · `🟡 gebouwd/basis aanwezig, 
 - ✅ WebSocket join, token-refresh, heartbeat, reconnect-backoff, eventrouting en cleanup geautomatiseerd getest.
 - ✅ Zichtbare syncstatus: `Realtime`, `verbinden`, `polling fallback` of `offline`.
 - ✅ Startup-warmup voert alleen read-only Cloud-reads uit; geen overschrijving van read-only Supabase-methoden.
+- ✅ Shared browserclient staat vóór alle consumers; tablet/desktop mogen niet elk binnen één pagina concurrerende auth-clients maken.
+- ✅ Fast Resume observeert confirmed herstel en start zelf geen tweede runtime.
 - 🟡 Mobiel ↔ tablet ↔ desktop bijna-directe sync technisch gebouwd en getest; echte twee-device praktijktest blijft releasevoorwaarde.
+- 🟡 Tablet-securitypad is gecorrigeerd qua UX: geldige sessie + vereiste AAL2 toont expliciet de 2FA-gate, scrolt die in beeld en hervat na verificatie via de normale Cloud-route. Echte tabletpraktijktest blijft nodig.
 - 🟡 Concurrente mutatieherkenning is gebouwd: als een andere coach de `state_version` intussen wijzigt, wordt de nieuwste confirmed Cloud-status geladen en krijgt de gebruiker expliciet te zien dat zijn actie niet is uitgevoerd.
 - 🟡 Conflictherstel is geautomatiseerd getest; echte twee-coaches/device praktijktest ontbreekt nog.
 - 🟡 Offline/reconnect heeft status, backoff en polling recovery; echte offline-mutatiequeue/replay ontbreekt nog.
 - 🔒 Echte desktopbrowser E2E-suite.
-- 🔒 Echte Android/mobile E2E-suite.
+- 🔒 Echte Android/mobile/tablet E2E-suite.
 
 ## 2.2 Gebruikers, rollen en tenantbeheer
 
@@ -159,7 +192,7 @@ Doelrechten:
 - ✅ Publishable key only in browser.
 - ✅ RLS/RPC-autorisatiebasis.
 - ✅ Password recovery.
-- ✅ TOTP primitives/UI.
+- ✅ TOTP primitives/UI en per-device challengeflow.
 - ⬜ MFA verplicht voor platform-/club-admin.
 - ⬜ Server-side AAL2 voor verwijderen en gevoelige beheer-RPC's.
 - ⬜ Leaked Password Protection inschakelen.
@@ -213,15 +246,18 @@ Doelrechten:
 - ⬜ Nabeoordeling: tactische gebeurtenissen, player actions en ratingontwikkeling.
 - ⬜ Teamprofiel/patronen: balverlies, veroveringen, duels, schoten, kansen en balbezit.
 
-## 3.5 Ruimtelijke Gesture Capture — R&D, niet in huidige live UX
+## 3.5 Ruimtelijke Live Input / Gesture Capture
 
-**Productbesluit build 2225:** het zichtbare `Actieveld` is uit de productie/browser-shell gehaald omdat het naast Snelle registratie een tweede invoeroppervlak en extra cognitieve belasting gaf.
+**Productbesluit build 2331:** het oude aparte Actieveld-prototype blijft retired. Een nieuw `Live Actieveld` is heringevoerd als Analistmodus-input die dezelfde event-/bezitengine gebruikt als Snelle registratie. Geen eigen parallelle waarheid.
 
-- ✅ Onderliggende gesture/controller/event-contracten blijven in de repository als R&D en blijven geautomatiseerd testbaar.
-- ✅ Bestaande action-field-eventhistorie blijft leesbaar via de event-describer.
-- ✅ Snelle registratie bevat alle relevante voormalige Actieveld-snelacties zonder locatie.
-- ⬜ Alleen herintroduceren als echte mobiel/tablet tests aantonen dat locatie/veegdata voldoende extra waarde geeft zonder dubbelregistratie.
-- ⬜ Bij eventuele terugkeer: uitsluitend ruimtelijke context/route, nooit een tweede actiecatalogus.
+- ✅ Onderliggende oude gesture/controller-contracten blijven als R&D geautomatiseerd testbaar maar worden niet in de browser-shell geladen.
+- ✅ Bestaande action-field-eventhistorie blijft leesbaar.
+- ✅ Nieuw Live Actieveld gebruikt formatiecoördinaten en touch-first spelerselectie.
+- ✅ Ruimtelijke x/y-data wordt samen met wedstrijdtijd in Cloud-events opgeslagen.
+- ✅ Contextacties: vrije trap, corner, ingooi, buitenspel en penalty.
+- ✅ Balvolgorde en bezit kunnen via eigen spelers én tegenstanderlaag worden vastgelegd.
+- 🟡 Gesture/veegherkenning kan later bovenop de nieuwe touchflow terugkomen als praktijktest bewijst dat dit sneller is dan tikken.
+- ⬜ Heatmaps, passmaps, schotlocaties en zone-analytics uit ruimtelijke eventdata.
 
 ---
 
@@ -270,26 +306,28 @@ Eerdere prijsrichtingen blijven hypothesen; eerst pilots, gebruik, kosten en waa
 
 ## Sprint P0 — Smart Live UX afronden
 
-1. **Smart Snelle registratie op echte mobiel/tablet valideren:** speler kiezen → actie; A → B; Kayden → Matz → Goal/assist; Categorieën/A–Z; éénhandig gebruik en fouttikken.
-2. **Volledige wedstrijdscenario's:** rust + rust undo, automatische eindstop, blessuretijd, late speler, wissel, formatie en wedstrijdafsluiting.
-3. **Live veld device-tests:** drag/drop, bank ↔ veld, positieruil en formatie op desktop + Android.
-4. **Generieke correcties:** snelle/analistacties, bezit, attendance en foutieve assist/context audit-safe kunnen herstellen.
+1. **Echte tabletpraktijktest van build 2331:** 2FA-devicegate → actieve wedstrijd hervatten → Analistmodus → snelle acties + Live Actieveld zonder herladen.
+2. **Touchtempo valideren:** eigen A → eigen B → tegenstander → eigen C, snelle schoten/goals en 10–20 opeenvolgende taps; meten of de inputqueue achterloopt.
+3. **Ruimtelijke scenario's valideren:** zijlijn/ingooi, vrije trap, buitenspel, penaltyzone, corner, overtreding en goal met assist/voorzet.
+4. **Volledige wedstrijdscenario's:** rust + rust undo, automatische eindstop, blessuretijd, late speler, wissel, formatie en wedstrijdafsluiting.
+5. **Generieke correcties:** snelle/analist-/ruimtelijke acties, bezit, attendance en foutieve assist/context audit-safe kunnen herstellen.
 
 ## Sprint P1 — Reliability & Multi-device
 
 1. Realtime push op twee echte devices valideren.
 2. Twee coaches tegelijk: conflict recovery, duidelijke lokale feedback en geen dubbele mutaties.
-3. Offline/reconnect verder afmaken; beleid voor offline writes/replay expliciet maken.
-4. Echte desktopbrowser + Android E2E-suite opzetten en als releasegate gebruiken.
-5. Fast Resume verder optimaliseren: actieve match/score/clock/line-up eerst, secundaire modules daarna.
+3. High-frequency live-input waar nodig bundelen in atomaire server-RPC's zodat 10+ snelle taps geen lange clientqueue veroorzaken.
+4. Offline/reconnect verder afmaken; beleid voor offline writes/replay expliciet maken.
+5. Echte desktopbrowser + Android/tablet E2E-suite opzetten en als releasegate gebruiken.
 
 ## Sprint P2 — Dashboard & Intelligence v2
 
 1. Team-balbezit, Speler 360 en actieverhoudingen met echte wedstrijddata kalibreren.
-2. Filters + directe wedstrijddetail-koppeling.
-3. Rating v2 met positiegewichten, score-uitleg en betrouwbaarheid.
-4. Trends, belasting/speeltijd, trainings-/wedstrijdtrend en Ontwikkelscore.
-5. Meetkwaliteit/completeness zichtbaar maken.
+2. Ruimtelijke data benutten voor passmap, schotmap, balverlies-/veroveringszones en heatmaps zodra meetkwaliteit voldoende is.
+3. Filters + directe wedstrijddetail-koppeling.
+4. Rating v2 met positiegewichten, score-uitleg en betrouwbaarheid.
+5. Trends, belasting/speeltijd, trainings-/wedstrijdtrend en Ontwikkelscore.
+6. Meetkwaliteit/completeness zichtbaar maken.
 
 ## Sprint P3 — Beheer, rollen & Security Beta
 
