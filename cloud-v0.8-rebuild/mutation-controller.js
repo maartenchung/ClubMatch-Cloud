@@ -1,4 +1,4 @@
-/* ClubMatch Cloud v0.8 - confirmed-state mutation controller */
+/* ClubMatch Cloud v0.8 - confirmed-state mutation controller with stale-state conflict recovery */
 (function(global){
 'use strict';
 
@@ -15,6 +15,11 @@ function findBaseEvent(snapshot,eventId,types){const allowed=Array.isArray(types
 function isVoided(snapshot,eventId){return (snapshot?.events||[]).some(e=>/_voided$/.test(e.event_type)&&e.target_event_id===eventId)}
 function selectedPlayerIds(snapshot){return new Set((snapshot?.players||[]).filter(p=>p.selected).map(p=>p.player_id))}
 function normalizedAssignments(assignments=[]){return assignments.map(item=>({player_id:item.player_id||item.playerId,position:String(item.position||'').trim()}))}
+function stateVersion(snapshot){return Math.max(0,Number(snapshot?.state?.state_version)||0)}
+function createConflictError(action,beforeVersion,afterVersion,cause){
+  const error=new Error('Actie niet uitgevoerd: de wedstrijdstatus is intussen op een ander apparaat gewijzigd. De nieuwste Cloud-status is geladen; controleer de actuele situatie en voer de actie zo nodig opnieuw in.');
+  error.code='CLUBMATCH_CONFLICT';error.action=action;error.beforeVersion=beforeVersion;error.afterVersion=afterVersion;error.cause=cause;return error;
+}
 
 function createMutationController(options){
   invariant(options&&typeof options.rpc==='function','RPC is verplicht','CLUBMATCH_CONFIG');
@@ -27,8 +32,26 @@ function createMutationController(options){
     invariant(snapshot?.match&&snapshot?.state,'Bevestigde wedstrijdsnapshot is onvolledig','CLUBMATCH_SNAPSHOT');const liveState=deriveSnapshot(snapshot);invariant(liveState&&liveState.players,'Afgeleide live-status is onvolledig','CLUBMATCH_SNAPSHOT');return {snapshot,liveState};
   }
   function enqueue(task){pendingCount++;const run=queue.then(task,task);queue=run.catch(()=>{}).finally(()=>{pendingCount--});return run}
+  async function recoverConcurrentFailure(spec,before,clientEventId,cause){
+    let latest;
+    try{latest=await readConfirmed(spec.matchId)}catch{return null}
+    const beforeVersion=stateVersion(before.snapshot),afterVersion=stateVersion(latest.snapshot);
+    if(afterVersion<=beforeVersion)return null;
+    renderConfirmed(latest.snapshot,latest.liveState,{action:spec.action,clientEventId,conflict:true,source:'conflict-recovery',beforeVersion,afterVersion,mutationError:cause?.message||String(cause||'')});
+    return createConflictError(spec.action,beforeVersion,afterVersion,cause);
+  }
   async function execute(spec){
-    return enqueue(async()=>{const before=await readConfirmed(spec.matchId),clientEventId=spec.clientEventId||idFactory();invariant(clientEventId,'client_event_id kon niet worden aangemaakt','CLUBMATCH_CLIENT_EVENT_ID');const mutation=spec.build(before.liveState,clientEventId,before.snapshot);invariant(mutation?.rpc&&mutation?.params,'Mutatiespecificatie is onvolledig','CLUBMATCH_CONFIG');const mutationResult=await callRpc(mutation.rpc,mutation.params);const after=await readConfirmed(spec.matchId);const beforeVersion=Number(before.snapshot.state.state_version||0),afterVersion=Number(after.snapshot.state.state_version||0);invariant(afterVersion>=beforeVersion,'Bevestigde statusversie ging achteruit','CLUBMATCH_STATE_VERSION');renderConfirmed(after.snapshot,after.liveState,{action:spec.action,clientEventId,mutationResult,beforeVersion,afterVersion});return {action:spec.action,clientEventId,mutationResult,before,after}})
+    return enqueue(async()=>{
+      const before=await readConfirmed(spec.matchId),clientEventId=spec.clientEventId||idFactory();
+      invariant(clientEventId,'client_event_id kon niet worden aangemaakt','CLUBMATCH_CLIENT_EVENT_ID');
+      const mutation=spec.build(before.liveState,clientEventId,before.snapshot);invariant(mutation?.rpc&&mutation?.params,'Mutatiespecificatie is onvolledig','CLUBMATCH_CONFIG');
+      let mutationResult;
+      try{mutationResult=await callRpc(mutation.rpc,mutation.params)}catch(error){const conflict=await recoverConcurrentFailure(spec,before,clientEventId,error);if(conflict)throw conflict;throw error}
+      const after=await readConfirmed(spec.matchId),beforeVersion=stateVersion(before.snapshot),afterVersion=stateVersion(after.snapshot);
+      invariant(afterVersion>=beforeVersion,'Bevestigde statusversie ging achteruit','CLUBMATCH_STATE_VERSION');
+      renderConfirmed(after.snapshot,after.liveState,{action:spec.action,clientEventId,mutationResult,beforeVersion,afterVersion});
+      return {action:spec.action,clientEventId,mutationResult,before,after};
+    })
   }
 
   function substitute(input){return execute({action:'SUBSTITUTION',matchId:input.matchId,clientEventId:input.clientEventId,build(state,clientEventId){const out=state.players[input.outId],inn=state.players[input.inId];invariant(out&&inn&&input.outId!==input.inId,'Kies twee verschillende wedstrijdspelers');invariant(out.currentRole==='FIELD','Uitgaande speler staat niet op het bevestigde veld');invariant(inn.currentRole==='BENCH','Inkomende speler staat niet op de bevestigde bank');const position=(input.position||out.currentPosition||'').trim();invariant(position,'Positie van de inkomende speler is verplicht');return {rpc:'record_substitution',params:{p_match_id:input.matchId,p_player_out_id:input.outId,p_player_in_id:input.inId,p_new_position:position,p_client_event_id:clientEventId}}}})}
@@ -54,5 +77,5 @@ function createMutationController(options){
 
   return {readConfirmed,substitute,changePosition,swapPositions,changeFormation,recordGoal,correctSubstitution,voidSubstitution,correctPositionChange,voidPositionChange,correctGoal,voidGoal,advanceClock,deleteMatch,get pendingCount(){return pendingCount}};
 }
-global.ClubMatchV08MutationController={createMutationController,exactTime,findBaseEvent,isVoided,normalizedAssignments};
+global.ClubMatchV08MutationController={createMutationController,exactTime,findBaseEvent,isVoided,normalizedAssignments,stateVersion,createConflictError};
 })(typeof window!=='undefined'?window:globalThis);

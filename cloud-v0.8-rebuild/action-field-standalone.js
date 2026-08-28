@@ -1,16 +1,43 @@
-/* ClubMatch Cloud v0.8 - action field bridge driven by ONE confirmed-state runtime */
+/* ClubMatch Cloud v0.8 - browser startup + shared Cloud client guard; Action Field UI retired */
 (function(global){
 'use strict';
-const SUPABASE_URL='https://fnbqyogbamufytcabfzm.supabase.co';
-const SUPABASE_KEY='sb_publishable_skGPpngOQ_1OpEbreV2kXA__2OL_Mbp';
-function installStartupWatchdog(){const doc=global.document,el=doc?.getElementById?.('v08Status');if(!el)return;if(/Initialiseren/i.test(el.textContent||''))el.textContent='Sessie herstellen en actuele Cloud-status laden…';const isReady=()=>/gereed|✓/i.test(el.textContent||'');global.setTimeout?.(()=>{if(!isReady()&&!/mislukt|startfout/i.test(el.textContent||'')){el.textContent='Hervatten duurt langer dan normaal · actuele Cloud-status wordt nog gecontroleerd…';el.classList?.remove?.('bad')}},8000);const fail=message=>{if(isReady())return;el.textContent=`Startfout: ${message||'onbekende browserfout'}`;el.classList?.add?.('bad')};global.addEventListener?.('error',event=>fail(event?.error?.message||event?.message));global.addEventListener?.('unhandledrejection',event=>fail(event?.reason?.message||event?.reason))}
-function installSharedClientGuard(){const api=global.ClubMatchV08CloudClient;if(!api?.createClient||api.__sharedBrowserClient)return;const original=api.createClient.bind(api);let shared=null;function createClient(url,key,options={}){const custom=options&&Object.keys(options).length>0;if(custom)return original(url,key,options);if(!shared)shared=original(url,key,options);return shared}global.ClubMatchV08CloudClient={...api,createClient,__sharedBrowserClient:true};if(global.supabase)global.supabase.createClient=createClient}
-installStartupWatchdog();installSharedClientGuard();
-let mainRuntime=null,controller=null,ui=null,client=null;
-function ensure(runtime){if(runtime)mainRuntime=runtime;if(controller||!mainRuntime||!global.ClubMatchV08CloudClient?.createClient||!global.ClubMatchV08ActionField?.createActionFieldController||!global.ClubMatchV08ActionFieldUi?.createActionFieldUi)return !!controller;client=global.ClubMatchV08CloudClient.createClient(SUPABASE_URL,SUPABASE_KEY);controller=global.ClubMatchV08ActionField.createActionFieldController({client,runtime:mainRuntime,onChange:state=>ui?.render?.(state)});ui=global.ClubMatchV08ActionFieldUi.createActionFieldUi({document:global.document,controller,run:async(label,fn)=>{try{return await fn()}catch(error){console.error(label,error);global.alert?.(`${label} mislukt: ${error.message||error}`);throw error}}});global.ClubMatchV08ActionFieldApp=Object.freeze({client,controller,ui,runtime:mainRuntime,stop(){controller?.setSnapshot?.(null)}});return true}
-global.addEventListener?.('clubmatch:v08-runtime-ready',event=>ensure(event?.detail?.runtime));
-global.addEventListener?.('clubmatch:v08-confirmed',event=>{if(ensure(event?.detail?.runtime))controller.setSnapshot(event?.detail?.snapshot||null)});
-global.addEventListener?.('clubmatch:v08-stopped',()=>controller?.setSnapshot?.(null));
-function boot(){installSharedClientGuard();let tries=0;const timer=global.setInterval(()=>{tries++;if(ensure()||tries>200)global.clearInterval(timer)},50)}
-if(global.document?.readyState==='loading')global.document.addEventListener('DOMContentLoaded',boot);else boot();
+
+function installStartupWatchdog(){
+  const doc=global.document,el=doc?.getElementById?.('v08Status');
+  if(!el)return;
+  if(/Initialiseren/i.test(el.textContent||''))el.textContent='Sessie herstellen en actuele Cloud-status laden…';
+  const isReady=()=>/gereed|✓|actief/i.test(el.textContent||'');
+  global.setTimeout?.(()=>{
+    if(!isReady()&&!/mislukt|startfout/i.test(el.textContent||'')){
+      el.textContent='Hervatten duurt langer dan normaal · actuele Cloud-status wordt nog gecontroleerd…';
+      el.classList?.remove?.('bad');
+    }
+  },8000);
+  const fail=message=>{
+    if(isReady())return;
+    el.textContent=`Startfout: ${message||'onbekende browserfout'}`;
+    el.classList?.add?.('bad');
+  };
+  global.addEventListener?.('error',event=>fail(event?.error?.message||event?.message));
+  global.addEventListener?.('unhandledrejection',event=>fail(event?.reason?.message||event?.reason));
+}
+
+function installSharedClientGuard(){
+  const api=global.ClubMatchV08CloudClient;
+  if(!api?.createClient||api.__sharedBrowserClient)return;
+  const original=api.createClient.bind(api);
+  let shared=null;
+  function createClient(url,key,options={}){
+    const custom=options&&Object.keys(options).length>0;
+    if(custom)return original(url,key,options);
+    if(!shared)shared=original(url,key,options);
+    return shared;
+  }
+  global.ClubMatchV08CloudClient={...api,createClient,__sharedBrowserClient:true};
+  if(global.supabase)global.supabase.createClient=createClient;
+}
+
+installStartupWatchdog();
+installSharedClientGuard();
+global.ClubMatchV08BrowserBootstrap=Object.freeze({installStartupWatchdog,installSharedClientGuard});
 })(typeof window!=='undefined'?window:globalThis);
