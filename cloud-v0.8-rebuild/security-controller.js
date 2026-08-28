@@ -27,8 +27,12 @@ function createSecurityController(options={}){
   }
   async function refreshMfa(){
     const factors=await client.auth.mfa.listFactors();if(factors.error)throw factors.error;
+    const all=factors.data.all||[],hasVerified=all.some(f=>f?.status==='verified');
+    // No enrolled/verified factor means an AAL2 challenge is impossible. Do not put a
+    // second /auth/v1/user request in the critical app bootstrap for an unused feature.
+    if(!hasVerified){mfaState={currentLevel:'aal1',nextLevel:'aal1',factors:all,needsChallenge:false};return emit()}
     const aal=await client.auth.mfa.getAuthenticatorAssuranceLevel();if(aal.error)throw aal.error;
-    const all=factors.data.all||[],currentLevel=aal.data.currentLevel,nextLevel=aal.data.nextLevel;
+    const currentLevel=aal.data.currentLevel,nextLevel=aal.data.nextLevel;
     mfaState={currentLevel,nextLevel,factors:all,needsChallenge:currentLevel==='aal1'&&nextLevel==='aal2'};return emit();
   }
   async function beginTotpEnrollment(friendlyName='ClubMatch Authenticator'){
