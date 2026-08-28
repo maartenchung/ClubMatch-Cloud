@@ -73,7 +73,7 @@ jobs:
           from pathlib import Path
           html=Path('index.html').read_text(encoding='utf-8')
           marker='<script src="'
-          inject='''<script>\nlocalStorage.setItem('clubmatch-v08-session',JSON.stringify({access_token:'fake-access',refresh_token:'fake-refresh',expires_at:4102444800,user:{id:'test-user',email:'test@example.com'}}));\nwindow.fetch=async function(input,init={}){const u=String(input);const json=(v,s=200)=>Promise.resolve(new Response(JSON.stringify(v),{status:s,headers:{'Content-Type':'application/json'}}));if(u.includes('/auth/v1/user'))return json({id:'test-user',email:'test@example.com',factors:[]});if(u.includes('/rest/v1/rpc/get_my_team_seasons'))return json([]);if(u.includes('/rest/v1/rpc/get_my_open_matches'))return json([]);if(u.includes('/rest/v1/rpc/'))return json([]);return json({});};\n</script>\n'''
+          inject='''<script>\nlocalStorage.setItem('clubmatch-v08-session',JSON.stringify({access_token:'fake-access',refresh_token:'fake-refresh',expires_at:4102444800,user:{id:'test-user',email:'test@example.com'}}));\nwindow.fetch=async function(input,init={}){const u=String(input);const json=(v,s=200)=>Promise.resolve(new Response(JSON.stringify(v),{status:s,headers:{'Content-Type':'application/json'}}));if(u.includes('/auth/v1/user'))return json({id:'test-user',email:'test@example.com',factors:[]});if(u.includes('/rest/v1/rpc/get_my_team_seasons'))return json([]);if(u.includes('/rest/v1/rpc/get_my_open_matches'))return json([{match_id:'match-smoke',team_name:'O16-1',opponent_name:'Smoke FC',club_name:'Hercules',match_date:'2026-08-29',scheduled_time:'00:00',status:'live',state_version:7}]);if(u.includes('/rest/v1/rpc/'))return json([]);return json({});};\ndocument.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{const b=document.getElementById('refreshMatchesBtn');if(b&&typeof b.click==='function')b.click();setTimeout(()=>document.documentElement.setAttribute('data-cm-click-probe','ok'),250)},1200),{once:true});\n</script>\n'''
           idx=html.find(marker)
           if idx<0: raise SystemExit('geen extern script gevonden')
           Path('_persisted-session-smoke.html').write_text(html[:idx]+inject+html[idx:],encoding='utf-8')
@@ -88,11 +88,14 @@ jobs:
             exit 1
           }
           echo '--- Persisted-session browserstatus ---'
-          grep -o 'id="v08Status"[^>]*>[^<]*' /tmp/clubmatch-persisted-dom.html | head -1 || true
+          STATUS="$(grep -o 'id="v08Status"[^>]*>[^<]*' /tmp/clubmatch-persisted-dom.html | head -1 || true)"
+          echo "$STATUS"
           grep -F 'test@example.com' /tmp/clubmatch-persisted-dom.html >/dev/null || { echo 'Sessiegebruiker werd niet hersteld'; exit 1; }
           grep -F 'id="appPanel" class=""' /tmp/clubmatch-persisted-dom.html >/dev/null || { echo 'Geldige opgeslagen sessie gaf app niet vrij'; exit 1; }
-          if grep -F 'Opgeslagen sessie controleren…' /tmp/clubmatch-persisted-dom.html >/dev/null; then echo 'Sessiestatus bleef hangen'; exit 1; fi
-          echo 'PASS echte Chromium persisted-session: sessie hersteld, app klikbaar en browserthread vrij'
+          grep -F 'Smoke FC' /tmp/clubmatch-persisted-dom.html >/dev/null || { echo 'Open wedstrijdkaart werd niet opgebouwd'; exit 1; }
+          grep -F 'data-cm-click-probe="ok"' /tmp/clubmatch-persisted-dom.html >/dev/null || { echo 'FAIL: browser event-loop reageerde niet op knopklik/timer'; exit 1; }
+          if printf '%s' "$STATUS" | grep -F 'Opgeslagen sessie controleren' >/dev/null; then echo 'Sessiestatus bleef hangen'; exit 1; fi
+          echo 'PASS echte Chromium persisted-session: sessie + wedstrijdkaart + klikrespons blijven vrij'
       - name: Browser shell syntax
         run: |
           node --check app.js
