@@ -1,8 +1,16 @@
-/* ClubMatch Cloud v0.8 - standalone action-field bridge using confirmed Cloud snapshots */
+/* ClubMatch Cloud v0.8 - standalone action-field bridge using ONE shared browser Cloud client */
 (function(global){
 'use strict';
 const SUPABASE_URL='https://fnbqyogbamufytcabfzm.supabase.co';
 const SUPABASE_KEY='sb_publishable_skGPpngOQ_1OpEbreV2kXA__2OL_Mbp';
+function installSharedClientGuard(){
+ const api=global.ClubMatchV08CloudClient;if(!api?.createClient||api.__sharedBrowserClient)return;
+ const original=api.createClient.bind(api);let shared=null;
+ function createClient(url,key,options={}){const hasCustom=options&&Object.keys(options).length>0;if(hasCustom)return original(url,key,options);if(!shared)shared=original(url,key,options);return shared}
+ global.ClubMatchV08CloudClient={...api,createClient,__sharedBrowserClient:true};
+ if(global.supabase)global.supabase.createClient=createClient;
+}
+installSharedClientGuard();
 function install(){
  if(!global.ClubMatchV08CloudClient?.createClient||!global.ClubMatchV08ActionField?.createActionFieldController||!global.ClubMatchV08ActionFieldUi?.createActionFieldUi)return false;
  if(global.ClubMatchV08ActionFieldApp)return true;
