@@ -34,26 +34,34 @@ jobs:
         run: |
           python3 -m http.server 8765 >/tmp/clubmatch-http.log 2>&1 &
           SERVER_PID=$!
-          trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
-          sleep 1
           CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
           if [ -z "$CHROME" ]; then
             echo 'Geen Chromium/Chrome beschikbaar op runner'
             exit 1
           fi
-          "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --virtual-time-budget=12000 --dump-dom http://127.0.0.1:8765/index.html >/tmp/clubmatch-dom.html 2>/tmp/clubmatch-chrome.log || {
+          rm -rf /tmp/clubmatch-chrome-profile
+          "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --remote-debugging-port=9222 --user-data-dir=/tmp/clubmatch-chrome-profile about:blank >/tmp/clubmatch-chrome.log 2>&1 &
+          CHROME_PID=$!
+          trap 'kill $CHROME_PID $SERVER_PID 2>/dev/null || true' EXIT
+          for i in $(seq 1 50); do
+            if curl -sf http://127.0.0.1:9222/json/version >/tmp/clubmatch-cdp-version.json; then break; fi
+            sleep 0.2
+          done
+          curl -sf http://127.0.0.1:9222/json/version >/dev/null || {
+            echo 'Chromium CDP startte niet'
             cat /tmp/clubmatch-chrome.log
             exit 1
           }
-          grep -F 'ClubMatch Cloud v0.8 gereed.' /tmp/clubmatch-dom.html || {
-            echo 'ClubMatch bereikte in echte Chromium geen gereed-status'
-            cat /tmp/clubmatch-dom.html
-            cat /tmp/clubmatch-chrome.log
+          TAB_JSON="$(curl -sf -X PUT 'http://127.0.0.1:9222/json/new?http://127.0.0.1:8765/index.html')"
+          WS_URL="$(printf '%s' "$TAB_JSON" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>process.stdout.write(JSON.parse(s).webSocketDebuggerUrl||''))")"
+          if [ -z "$WS_URL" ]; then
+            echo 'Geen CDP WebSocket URL ontvangen'
+            printf '%s\n' "$TAB_JSON"
             exit 1
-          }
-          grep -F 'id="authPanel" class="card"' /tmp/clubmatch-dom.html || {
-            echo 'Uitgelogde cold-start gaf loginpaneel niet pas na bootstrap vrij'
-            cat /tmp/clubmatch-dom.html
+          fi
+          CM_CDP_WS="$WS_URL" node browser-cold-start-smoke.mjs || {
+            cat /tmp/clubmatch-chrome.log
+            cat /tmp/clubmatch-http.log
             exit 1
           }
       - name: Browser shell syntax
@@ -115,6 +123,7 @@ jobs:
           node --check security-controller.js
           node --check security-ui.js
           node --check ux-theme.js
+          node --check browser-cold-start-smoke.mjs
       - name: Version-pinned browser assets
         run: node asset-versioning.test.mjs
       - name: Live UX fixes contract
