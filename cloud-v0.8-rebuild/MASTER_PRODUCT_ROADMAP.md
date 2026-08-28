@@ -14,6 +14,7 @@ Status: `✅ gebouwd + geautomatiseerd getest` · `🟡 gebouwd/basis aanwezig, 
 - 🛠 v0.8-development gebeurt op `clubmatch-v0.8-rebuild`.
 - Publicatie gebeurt via `clubmatch-pages-v08` nadat de volledige v0.8-CI groen is.
 - Confirmed Cloud state blijft de autoriteit; geen permanente optimistic UI-state.
+- ✅ Browserassets zijn build-gepind zodat nieuwe releases geen oude JavaScript-cache blijven gebruiken.
 
 ---
 
@@ -43,7 +44,7 @@ Status: `✅ gebouwd + geautomatiseerd getest` · `🟡 gebouwd/basis aanwezig, 
 
 - ✅ Eén confirmed Cloud state als bron van waarheid.
 - ✅ Doorlopende wedstrijdklok, rustklok en pauzeklok.
-- ✅ Rustduur wordt bij start tweede helft als gebeurtenis vastgelegd/geprojecteerd.
+- ✅ Rustduur wordt bij hervatten/start tweede helft als gebeurtenis vastgelegd/geprojecteerd; oudere events kunnen de echte duur uit Cloud-timestamps reconstrueren.
 - ✅ Live status toont fase, eigen teamnaam, tegenstander en blessuretijd.
 - ✅ Blessuretijd toont ingestelde minuten en voortgang naast de officiële wedstrijdklok.
 - ✅ Veld + bank + speeltijd + banktijd + huidige beurt.
@@ -53,20 +54,28 @@ Status: `✅ gebouwd + geautomatiseerd getest` · `🟡 gebouwd/basis aanwezig, 
 - 🟡 Live formatie tijdens wedstrijd atomair wijzigen; praktijktest blijft nodig.
 - ✅ Goals voor/tegen, scorer, assist, goaltype, notitie en scorebord.
 - ✅ Gebeurtenissentijdlijn in het Nederlands met score/correcties.
+- ✅ Gebeurtenissen kunnen compact worden bekeken als `Wedstrijd`, `Analyse` of `Alles`, met oudere events achter een uitklapper.
 - ✅ Snelle speleractie kan een doelpunt registreren inclusief type en optionele assist.
 - ✅ Overtreding/vrije trap mee en overtreding/vrije trap tegen herkenbaar in snelle acties.
 - ✅ Speler die tijdens wedstrijd later aankomt kan vanaf dat moment aan de bank/selectie worden toegevoegd; reden en tijd komen in gebeurtenissen.
 - ✅ Dropdowns worden niet meer elke live refresh opnieuw opgebouwd als de opties gelijk zijn; bedoeld om flikkeren tijdens scroll te stoppen.
 - ✅ Stoppen vraagt bevestiging en is gescheiden van definitief verwijderen.
+- ✅ Automatische eindgrens toont een blijvende waarschuwing met exacte stoptijd en directe vervolgactie voor blessuretijd/einde; trillen/geluid waar browser/device dit toestaat.
 - 🟡 Automatische server-side eindstop, verlenging en strafschoppen aanwezig; volledige wedstrijdscenario's nog echt testen.
 
 ## 1.4 Balbezit en snelle registratie
 
 - ✅ Gedetailleerd spelerbezit/Analistmodus blijft optioneel.
 - ✅ Team-balbezit kan onafhankelijk van een speler worden gestart: `Ons bezit` of `Tegenstander`.
+- ✅ Eén `Alles bezit stoppen` sluit team- én spelerbezit; rust/pauze/einde sluiten lopende bezitregistratie server-side waar nodig.
 - ✅ Wisselen tussen beide kanten stopt de vorige timer en start de nieuwe atomair.
 - ✅ Team-bezit stopt automatisch bij rust en wedstrijd einde.
 - ✅ Duur van bezitmomenten wordt in gebeurtenissen opgeslagen/getoond.
+- ✅ A → B in Analistmodus registreert atomair/logisch: pass geslaagd A + pass ontvangen B + spelerbezit B + teambezit eigen team.
+- ✅ Logisch zekere afleidingen worden automatisch toegevoegd, zoals schot op doel → schot en balwinst/onderschepping → bezit; onzekere aannames worden niet stilzwijgend toegevoegd.
+- ✅ Snelle registratie biedt dezelfde zichtbare actietypen als Actieveld zonder locatiegegevens, inclusief Goal, Schot, Schot op doel, Vrije trap, Corner, Ingooi, Voorzet, Pass, Balwinst/-verlies, duels en redding.
+- ✅ Snelle registratie kan worden gesorteerd op `Categorieën` of `A–Z`; de gebruikerskeuze wordt lokaal onthouden.
+- ✅ Snelle registratie ondersteunt `Ons team` / `Tegenstander` en optioneel een eigen veldspeler als actor.
 - ✅ Dashboard toont team-balbezit eerste helft, tweede helft en totaal; verlenging apart indien gebruikt.
 - ✅ Speleranalyses bevatten pass ontvangen, pass geslaagd, balverliesverhouding, duels, schoten en oorzaken van balverlies waar gemeten.
 - 🟡 Meetkwaliteit blijft expliciet belangrijk: gemiste acties mogen niet als volledige wedstrijdstatistiek worden gepresenteerd.
@@ -98,11 +107,15 @@ Status: `✅ gebouwd + geautomatiseerd getest` · `🟡 gebouwd/basis aanwezig, 
 ## 2.1 Realtime en herstel
 
 - ✅ Lifecycle-resync bij refresh/focus/pageshow/online.
-- 🟡 Polling fallback.
-- ⬜ Echte Supabase Realtime push voor match/events/projecties.
-- ⬜ Mobiel ↔ tablet ↔ desktop vrijwel directe sync.
-- ⬜ Conflictafhandeling als twee coaches tegelijk muteren.
-- ⬜ Offline/reconnect-strategie en duidelijke statusindicator.
+- ✅ Polling fallback blijft actief als vangnet; Realtime is niet de enige herstelroute.
+- ✅ Native Supabase Realtime Postgres Changes voor `match_state` UPDATE en `match_events` INSERT, gefilterd op de actieve wedstrijd.
+- ✅ `match_state` en `match_events` zijn via `supabase_realtime` gepubliceerd met bestaande RLS/authenticated SELECT als autorisatiegrens.
+- ✅ Eén canonieke native Realtime-transportlaag zonder externe CDN-afhankelijkheid en zonder Auth/RPC-methoden te overschrijven.
+- ✅ Realtime WebSocket join, token-refresh, heartbeat, reconnect-backoff, eventrouting en cleanup zijn geautomatiseerd getest.
+- ✅ Zichtbare live-syncstatus: `Realtime`, `verbinden`, `polling fallback` of `offline`.
+- 🟡 Mobiel ↔ tablet ↔ desktop vrijwel directe sync is technisch gebouwd en geautomatiseerd getest; echte twee-device praktijktest blijft releasevoorwaarde.
+- ⬜ Conflictafhandeling als twee coaches tegelijk muteren bovenop de bestaande serialized mutation/state-version basis.
+- 🟡 Offline/reconnect-strategie heeft status, reconnect-backoff en polling recovery; echte offline-mutatiequeue en praktijktest ontbreken nog.
 - 🔒 Echte desktopbrowser E2E-suite.
 - 🔒 Echte Android/mobile E2E-suite.
 
@@ -188,17 +201,14 @@ Status: `✅ gebouwd + geautomatiseerd getest` · `🟡 gebouwd/basis aanwezig, 
 
 Doel: invoer tijdens snel spel veel sneller maken dan formulieren en dropdowns, zonder de tactische opstelling te beschadigen.
 
-- ⬜ Naast de tactische `Live opstelling` een aparte tab/weergave `Actieveld`.
-- ⬜ Eigen spelers én tegenstander/tegenstanderzones zichtbaar op het Actieveld.
-- ⬜ Tik eigen speler = speler/bezit selecteren.
-- ⬜ Sleep eigen speler → eigen speler = voorstel `pass`.
-- ⬜ Sleep richting tegenstander/ruimte/buiten = voorstel `balverlies/passpoging`.
-- ⬜ Swipe richting doel = voorstel `schot`; daarna één tik voor op doel/mis/goal.
-- ⬜ Tik tegenstander of tegenstanderzone = snelle overgang naar `tegenstander bezit`.
-- ⬜ Long-press speler = compacte actiepalette.
-- ⬜ Gebaren leveren eerst een duidelijke actievoorstel/correctiemogelijkheid; ambigu gebaar mag niet stilzwijgend statistieken vervuilen.
-- ⬜ Team-balbezitknoppen blijven altijd de snelle fallback als individuele acties niet bijgehouden kunnen worden.
-- ⬜ Eerste prototype eerst mobiel/tablet testen op snelheid, fouttikken en éénhandig gebruik voordat het de standaard live-interface wordt.
+- ✅ Apart `Actieveld` bestaat naast de tactische live-opstelling; tactische posities worden niet door een analysegebaar gewijzigd.
+- ✅ Eigen spelers en tegenstander/contextzones kunnen in het Actieveld worden gebruikt.
+- ✅ Tik/selecteer eigen speler voor speler/bezit-context.
+- ✅ Speler A → speler B ondersteunt passvoorstel/balstroom; in Analistmodus zijn de zekere pass/ontvangst/bezit-afleidingen gekoppeld.
+- ✅ Acties zoals pass, voorzet, schot, schot op doel, vrije trap, corner, ingooi, balverlies/-winst, duel en redding zijn als actievoorstel beschikbaar.
+- ✅ Gebaren leveren eerst een actievoorstel/correctiemogelijkheid; ambigu gebaar mag niet stilzwijgend statistieken vervuilen.
+- ✅ Team-balbezitknoppen blijven de snelle fallback als individuele acties niet bijgehouden kunnen worden.
+- 🟡 Eerste prototype is geautomatiseerd getest; echte mobiel/tablet praktijktest op snelheid, fouttikken en éénhandig gebruik blijft nodig.
 
 ---
 
@@ -246,22 +256,21 @@ Eerdere prijsrichtingen blijven hypothesen; eerst pilots, gebruik, kosten en waa
 # Huidige uitvoeringsvolgorde
 
 ## Sprint P0 — Live UX & Parity afronden
-1. Fase/rust/blessuretijd/teamnamen en stabiele dropdowns in echte mobiel/tablet/browserpraktijk valideren.
-2. Team-balbezit en late speler end-to-end in een echte wedstrijd testen.
+1. Fase/rust/blessuretijd/teamnamen, snelle registratie en stabiele dropdowns in echte mobiel/tablet/browserpraktijk valideren.
+2. Team-/spelerbezit, automatische eindstop en late speler end-to-end in een echte wedstrijd testen.
 3. Basis/live veld + bank + drag/drop + formatie + legenda device-tests.
-4. Resterende v0.7.6-paritypunten opnieuw classificeren.
+4. Actieveld en Categorieën/A–Z snelle registratie op éénhandig mobiel gebruik valideren.
 
 ## Sprint P1 — Dashboard & Intelligence v2
 1. Team-balbezit, Speler 360 en actieverhoudingen met echte wedstrijddata kalibreren.
 2. Filters en directe wedstrijddetail-koppeling.
 3. Rating v2 + positiegewichten + uitleg/betrouwbaarheid.
 4. Trainings-/wedstrijdtrends en Ontwikkelscore.
-5. `Actieveld` klikbaar prototype ontwerpen en vervolgens mobiel/tablet valideren.
 
 ## Sprint P2 — Beheer, rollen en Realtime
 1. Team/seizoen/spelerbeheer afmaken.
 2. Rollen/rechtenmatrix incl. echt ouder/verzorger-kindmodel.
-3. Supabase Realtime + conflict/reconnect.
+3. Realtime push op twee echte devices valideren; daarna conflictbehandeling en offline/reconnect verder afmaken.
 4. Desktop + Android E2E.
 
 ## Sprint P3 — Security Beta
