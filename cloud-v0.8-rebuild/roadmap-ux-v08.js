@@ -1,39 +1,29 @@
-/* ClubMatch Cloud v0.8 - safe refresh warmup; Action Field UI retired */
+/* ClubMatch Cloud v0.8 - shared Cloud client guard; Action Field UI retired */
 (function(global){
 'use strict';
 const doc=global.document;
-const URL='https://fnbqyogbamufytcabfzm.supabase.co',KEY='sb_publishable_skGPpngOQ_1OpEbreV2kXA__2OL_Mbp';
-let warmStartup=()=>Promise.resolve();
 
-function installSafeWarmStartup(){
+function installSharedCloudClient(){
   const api=global.ClubMatchV08CloudClient;
-  if(!api?.createClient)return;
-  const client=api.createClient(URL,KEY);
-  warmStartup=async()=>{
-    try{
-      const session=(await client.auth.getSession()).data?.session;
-      if(!session)return;
-      await Promise.allSettled([
-        client.rpc('get_my_team_seasons'),
-        client.rpc('get_my_open_matches')
-      ]);
-    }catch(error){
-      console.debug('ClubMatch veilige startup-warmup overgeslagen',error);
-    }
-  };
+  if(!api?.createClient||api.__sharedBrowserClient)return;
+  const original=api.createClient.bind(api),registry=new Map();
+  function createClient(url,key,options={}){
+    const custom=!!(options?.fetch||options?.storage||options?.shared===false);
+    if(custom)return original(url,key,options);
+    const storageKey=options?.storageKey||'clubmatch-v08-session';
+    const cacheKey=`${url}|${key}|${storageKey}`;
+    if(registry.has(cacheKey))return registry.get(cacheKey);
+    const client=original(url,key,options);registry.set(cacheKey,client);return client;
+  }
+  global.ClubMatchV08CloudClient={...api,__sharedBrowserClient:true,createClient};
+  if(global.supabase&&typeof global.supabase==='object')global.supabase.createClient=createClient;
+  global.__clubmatchV08CloudClientRegistry=registry;
 }
 
-function retireActionField(){
-  doc?.getElementById?.('v08ActionField')?.remove?.();
-}
+function retireActionField(){doc?.getElementById?.('v08ActionField')?.remove?.()}
+function boot(){retireActionField();if(doc?.body)new MutationObserver(retireActionField).observe(doc.body,{childList:true,subtree:true})}
 
-function boot(){
-  installSafeWarmStartup();
-  warmStartup();
-  retireActionField();
-  if(doc?.body)new MutationObserver(retireActionField).observe(doc.body,{childList:true,subtree:true});
-}
-
-installSafeWarmStartup();
+/* Install synchronously, before DOMContentLoaded boots stabilization, Fast Resume and app.js. */
+installSharedCloudClient();
 if(doc?.readyState==='loading')doc.addEventListener('DOMContentLoaded',boot);else boot();
 })(typeof window!=='undefined'?window:globalThis);
