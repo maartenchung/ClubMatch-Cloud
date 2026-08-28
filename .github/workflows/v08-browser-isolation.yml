@@ -16,32 +16,31 @@ jobs:
         working-directory: cloud-v0.8-rebuild
     steps:
       - uses: actions/checkout@v4
-      - name: Chromium prefix isolation
+      - name: Chromium app interaction isolation
         run: |
           set +e
           CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
           test -n "$CHROME" || exit 2
-          python3 -m http.server 8766 >/tmp/cm-prefix-http.log 2>&1 &
+          python3 -m http.server 8766 >/tmp/cm-isolation-http.log 2>&1 &
           SERVER_PID=$!
-          trap 'kill $SERVER_PID 2>/dev/null || true; rm -f _cm-prefix-*.html' EXIT
+          trap 'kill $SERVER_PID 2>/dev/null || true; rm -f _cm-isolate-*.html' EXIT
           sleep 0.5
-          for N in 0 1 10 20 30 35 40 45 50 52 54 55 56 57 80; do
-            N="$N" python3 - <<'PY'
+          CANDIDATES='none device-security-ux-v08.js v08-stabilization.js roadmap-ux-v08.js event-feed-ui.js live-notice-ui.js fast-resume-v08.js realtime-status-ui.js workspace-manager.js management-visibility.js ux-theme.js smart-registration-v08.js analyst-correction-v08.js'
+          for OMIT in $CANDIDATES; do
+            OMIT="$OMIT" python3 - <<'PY'
           import os,re
-          n=int(os.environ['N'])
+          omit=os.environ['OMIT']
           html=open('index.html',encoding='utf-8').read()
-          seen=0
-          def keep(m):
-              global seen
-              seen+=1
-              return m.group(0) if seen<=n else ''
-          html=re.sub(r'<script\s+src="[^"]+"[^>]*></script>',keep,html)
-          open(f'_cm-prefix-{n}.html','w',encoding='utf-8').write(html)
+          if omit!='none':
+              html=re.sub(r'<script\s+src="'+re.escape(omit)+r'\?v=[^"]+"[^>]*></script>','',html)
+          safe=omit.replace('.js','').replace('-','_')
+          open(f'_cm-isolate-{safe}.html','w',encoding='utf-8').write(html)
           PY
-            rm -rf "/tmp/cm-profile-$N"
-            timeout 7s "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --disable-background-networking --disable-component-update --disable-sync --no-first-run --user-data-dir="/tmp/cm-profile-$N" --virtual-time-budget=2000 --dump-dom "http://127.0.0.1:8766/_cm-prefix-$N.html" >"/tmp/cm-$N.dom" 2>"/tmp/cm-$N.log"
+            SAFE="$(printf '%s' "$OMIT" | sed 's/\.js$//;s/-/_/g')"
+            rm -rf "/tmp/cm-isolate-profile-$SAFE"
+            timeout 7s "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --disable-background-networking --disable-component-update --disable-sync --no-first-run --user-data-dir="/tmp/cm-isolate-profile-$SAFE" --virtual-time-budget=2000 --dump-dom "http://127.0.0.1:8766/_cm-isolate-$SAFE.html" >"/tmp/cm-isolate-$SAFE.dom" 2>"/tmp/cm-isolate-$SAFE.log"
             RC=$?
-            STATUS="$(grep -o 'id="v08Status"[^>]*>[^<]*' "/tmp/cm-$N.dom" | head -1)"
-            echo "PREFIX=$N RC=$RC STATUS=$STATUS"
+            STATUS="$(grep -o 'id="v08Status"[^>]*>[^<]*' "/tmp/cm-isolate-$SAFE.dom" | head -1)"
+            echo "OMIT=$OMIT RC=$RC STATUS=$STATUS"
           done
           exit 0
