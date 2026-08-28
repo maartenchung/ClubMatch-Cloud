@@ -13,8 +13,8 @@ const smart=read('smart-registration-v08.js');
 const liveField=read('analyst-live-input-v08.js');
 const stabilize=read('v08-stabilization.js');
 
-assert.match(html,/build 20260829\.0125/);
-for(const asset of ['cloud-client.js','realtime-native.js','roadmap-ux-v08.js','smart-registration-v08.js','analyst-live-input-v08.js','analyst-correction-v08.js','device-security-ux-v08.js','app.js'])assert.match(html,new RegExp(`${asset.replaceAll('.','\\.')}\\?v=20260829\\.0125`));
+assert.match(html,/build 20260829\.0150/);
+for(const asset of ['cloud-client.js','realtime-native.js','roadmap-ux-v08.js','smart-registration-v08.js','analyst-live-input-v08.js','analyst-correction-v08.js','device-security-ux-v08.js','app.js'])assert.match(html,new RegExp(`${asset.replaceAll('.','\\.')}\\?v=20260829\\.0150`));
 assert.match(html,/id="authPanel" class="card hidden"/);
 assert.ok([...html.matchAll(/<script\s+src="[^"]+"([^>]*)>/g)].every(m=>/\bdefer\b/.test(m[1])),'alle browsermodules moeten defer laden');
 assert.ok(html.indexOf('cloud-client.js')<html.indexOf('realtime-native.js')&&html.indexOf('realtime-native.js')<html.indexOf('roadmap-ux-v08.js')&&html.indexOf('roadmap-ux-v08.js')<html.indexOf('app.js'),'shared-client volgorde onjuist');
@@ -33,7 +33,6 @@ assert.match(fast,/clubmatch:v08-confirmed/);
 assert.match(device,/probePromise/,'sessiecontrole moet single-flight zijn');
 assert.match(device,/clearSessionCheckStatus/,'sessiecontrole-status moet na succes verdwijnen');
 assert.match(device,/__ClubMatchShellBoot\?\.build/);
-assert.match(device,/20260829\.0125/);
 assert.doesNotMatch(device,/MutationObserver/,'sessiediagnostiek mag de hele app-DOM niet observeren');
 
 assert.match(playerUi,/lastStructureKey/);
@@ -56,9 +55,18 @@ assert.doesNotMatch(analystUndo,/MutationObserver/,'analistcorrectie moet event-
 assert.match(smart,/record_analyst_goal_v08/);
 assert.match(smart,/assistCandidate/);
 assert.match(liveField,/Live Actieveld/);
+assert.match(liveField,/instant input/);
+assert.match(liveField,/lafActionDock/);
+assert.match(liveField,/clickTrail/);
+assert.match(liveField,/optimisticOwn/);
+assert.match(liveField,/optimisticOpponent/);
+assert.match(liveField,/class="lafName"/);
+assert.match(liveField,/class="lafSeq"/);
+assert.doesNotMatch(liveField,/MutationObserver/,'Live Actieveld moet event-driven blijven');
+assert.doesNotMatch(liveField,/setInterval/,'Live Actieveld mag geen periodieke DOM-poller hebben');
 assert.match(liveField,/offside/);
 assert.match(liveField,/penalty/);
 assert.doesNotMatch(stabilize,/client\.rpc\s*=/);
 assert.doesNotMatch(stabilize,/Actieve wedstrijd veilig hervatten vanuit Cloud/);
 
-console.log('PASS live-ux-fixes: build 0125 persisted-session + stable DOM + single-flight beheer + retained live UX');
+console.log('PASS live-ux-fixes: build 0150 instant analyst field + persisted-session stability + retained live UX');
