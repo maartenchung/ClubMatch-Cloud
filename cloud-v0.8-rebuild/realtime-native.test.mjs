@@ -1,0 +1,17 @@
+import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';
+
+const sockets=[];class FakeWebSocket{constructor(url){this.url=url;this.readyState=0;this.sent=[];sockets.push(this)}send(value){this.sent.push(JSON.parse(value))}open(){this.readyState=1;this.onopen?.()}message(value){this.onmessage?.({data:JSON.stringify(value)})}close(){this.readyState=3;this.onclose?.()}}
+let authListener=null;const baseClient=Object.freeze({rpc:async()=>({data:null,error:null}),auth:{async getSession(){return {data:{session:{access_token:'jwt-test'}},error:null}},onAuthStateChange(fn){authListener=fn;return {data:{subscription:{unsubscribe(){}}}}}},get session(){return {access_token:'jwt-test'}}});
+const context={console,globalThis:null,window:null,WebSocket:FakeWebSocket,setInterval:()=>1,clearInterval(){},setTimeout:()=>1,clearTimeout(){},ClubMatchV08CloudClient:{createClient(){return baseClient},decodeJwtPayload(){return{}}},supabase:{}};context.globalThis=context;context.window=context;vm.createContext(context);vm.runInContext(fs.readFileSync(new URL('./realtime-native.js',import.meta.url),'utf8'),context);
+const client=context.ClubMatchV08CloudClient.createClient('https://abc.supabase.co','sb_publishable_test',{WebSocket:FakeWebSocket});assert.equal(client.rpc,baseClient.rpc,'Realtime mag rpc niet vervangen');assert.equal(typeof client.channel,'function');
+let stateHits=0,eventHits=0,status='';const channel=client.channel('clubmatch-v08-m1')
+ .on('postgres_changes',{event:'UPDATE',schema:'public',table:'match_state',filter:'match_id=eq.m1'},()=>stateHits++)
+ .on('postgres_changes',{event:'INSERT',schema:'public',table:'match_events',filter:'match_id=eq.m1'},()=>eventHits++)
+ .subscribe(next=>status=next);
+await Promise.resolve();await Promise.resolve();assert.equal(sockets.length,1);assert.match(sockets[0].url,/realtime\/v1\/websocket/);assert.match(sockets[0].url,/apikey=sb_publishable_test/);sockets[0].open();const join=sockets[0].sent[0];assert.equal(join.event,'phx_join');assert.equal(join.payload.config.postgres_changes.length,2);assert.equal(join.payload.config.postgres_changes[1].table,'match_events');assert.equal(join.payload.access_token,'jwt-test');
+sockets[0].message({topic:'realtime:clubmatch-v08-m1',event:'phx_reply',ref:join.ref,join_ref:join.join_ref,payload:{status:'ok',response:{postgres_changes:[{id:101,event:'UPDATE',schema:'public',table:'match_state'},{id:102,event:'INSERT',schema:'public',table:'match_events'}]}}});assert.equal(status,'SUBSCRIBED');
+sockets[0].message({topic:'realtime:clubmatch-v08-m1',event:'postgres_changes',payload:{ids:[102],data:{schema:'public',table:'match_events',type:'INSERT',record:{match_id:'m1'},old_record:{}}}});assert.equal(eventHits,1);assert.equal(stateHits,0);
+sockets[0].message({topic:'realtime:clubmatch-v08-m1',event:'postgres_changes',payload:{ids:[101],data:{schema:'public',table:'match_state',type:'UPDATE',record:{match_id:'m1'},old_record:{}}}});assert.equal(stateHits,1);
+authListener?.('TOKEN_REFRESHED',{access_token:'jwt-new'});assert.equal(sockets[0].sent.at(-1).event,'access_token');assert.equal(sockets[0].sent.at(-1).payload.access_token,'jwt-new');
+await client.removeChannel(channel);assert.equal(status,'CLOSED');assert.equal(sockets[0].readyState,3);
+console.log('PASS realtime-native: authenticated Phoenix join + match_state/match_events dispatch + token refresh + cleanup');
