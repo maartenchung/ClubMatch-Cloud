@@ -6,7 +6,7 @@ const URL='https://fnbqyogbamufytcabfzm.supabase.co';
 const KEY='sb_publishable_skGPpngOQ_1OpEbreV2kXA__2OL_Mbp';
 const SESSION_KEY='clubmatch-v08-session';
 const MATCH_KEY='clubmatch-v08-active-match';
-const BUILD='20260829.0026';
+const BUILD=global.__ClubMatchShellBoot?.build||'20260829.0125';
 const STARTED=Date.now();
 let lastChallenge=false,lastStage='',lastError='',watchdog=null,client=null,probePromise=null,sessionProbe='unknown',sessionEmail='';
 function setFlag(el,name,on){if(!el?.classList)return false;const current=el.classList.contains(name);if(current===!!on)return false;el.classList.toggle(name,!!on);return true}
