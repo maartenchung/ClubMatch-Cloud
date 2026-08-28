@@ -1,10 +1,11 @@
 import fs from 'node:fs';import assert from 'node:assert/strict';const read=f=>fs.readFileSync(new URL(`./${f}`,import.meta.url),'utf8');
-const app=read('app.js'),events=read('event-describer.js'),actions=read('player-action-ui.js'),dash=read('dashboard-ui.js'),phase=read('match-phase-ui.js'),renderer=read('dom-renderer.js'),basis=read('basis-lineup-ui.js'),visibility=read('management-visibility.js'),html=read('index.html');
+const app=read('app.js'),events=read('event-describer.js'),actions=read('player-action-ui.js'),dash=read('dashboard-ui.js'),phase=read('match-phase-ui.js'),renderer=read('dom-renderer.js'),basis=read('basis-lineup-ui.js'),visibility=read('management-visibility.js'),html=read('index.html'),view=read('view-model.js');
 assert.ok(app.includes("if(el.dataset.v08OptionsSig===signature)return"),'unchanged select options must not be rebuilt during live refresh');
 assert.ok(app.includes('get_late_arrival_candidates_v08')&&app.includes('add_late_player_to_match_v08'),'late arrival must be a confirmed Cloud action');
 assert.ok(events.includes('halftime_duration_seconds')&&events.includes('rust duur'),'second-half event must expose registered rest duration');
+assert.ok(events.includes('pause_duration_seconds')&&view.includes('enrichClockDurations'),'resume event must expose actual pause duration');
 assert.ok(events.includes("type==='team_possession'")&&events.includes('duur ${fmtDuration(p.duration_seconds)}'),'team possession duration must be visible in Events/history projections');
-assert.ok(actions.includes('Ons bezit')&&actions.includes('Tegenstander')&&actions.includes('Bezit stoppen'),'team possession must be usable without selecting a player');
+assert.ok(actions.includes('Ons bezit')&&actions.includes('Tegenstander')&&actions.includes('Alles bezit stoppen'),'one control must stop player and team possession together');
 assert.ok(actions.includes('Doelpunt gemaakt')&&actions.includes('paGoalType')&&actions.includes('paGoalAssist'),'quick player goal must include type and assist');
 assert.ok(actions.includes('vrije trap tegen')&&actions.includes('vrije trap mee'),'free-kick context must be explicit in quick actions');
 assert.ok(dash.includes('Eerste helft')&&dash.includes('Tweede helft')&&dash.includes('Team-balbezit')&&dash.includes('Totaal'),'Dashboard must show possession by half and total');
@@ -13,4 +14,4 @@ assert.ok(renderer.includes('v08InjuryClock')&&renderer.includes('injuryTimeMinu
 assert.ok(html.includes('id="v08HomeLabel"')&&html.includes('id="v08OpponentLabel"'),'scoreboard team labels must be dynamic targets');
 assert.ok(basis.includes('width:112px;min-height:66px')&&basis.includes('min-height:62px'),'historical basis tiles must be compact');
 assert.ok(visibility.includes("button.classList.toggle('hidden',!allowed)"),'Beheer must be hidden for users without management rights');
-console.log('PASS live UX roadmap: stable selects + rest/phase/injury + team possession + late arrival + quick goal/free-kick + permissions');
+console.log('PASS live UX roadmap: stable resume + pause duration + unified possession + injury time + permissions');
