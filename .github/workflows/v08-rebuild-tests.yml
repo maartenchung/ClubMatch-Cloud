@@ -36,6 +36,10 @@ jobs:
           node --check cloud-client.js
           node --check pitch-layout.js
           node --check event-describer.js
+          node --check action-field-event-describer.js
+          node --check action-field-controller.js
+          node --check action-field-ui.js
+          node --check action-field-standalone.js
           node --check live-state.js
           node --check snapshot-adapter.js
           node --check view-model.js
@@ -111,6 +115,10 @@ jobs:
         run: node player-action-integration.test.mjs
       - name: Live UX possession phase and permissions
         run: node live-ux-roadmap.test.mjs
+      - name: Action field gesture controller
+        run: node action-field-controller.test.mjs
+      - name: Action field UI timeline and Cloud integration
+        run: node action-field-integration.test.mjs
       - name: Dutch voice commands by name shirt number and player action
         run: node voice-command.test.mjs
       - name: Voice proposal and explicit confirmation gate
