@@ -1,0 +1,78 @@
+name: ClubMatch v0.8 tablet analyst smoke
+
+on:
+  push:
+    branches:
+      - clubmatch-v0.8-rebuild
+    paths:
+      - 'cloud-v0.8-rebuild/**'
+      - '.github/workflows/v08-tablet-analyst-smoke.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'cloud-v0.8-rebuild/**'
+      - '.github/workflows/v08-tablet-analyst-smoke.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  tablet-analyst-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    defaults:
+      run:
+        working-directory: cloud-v0.8-rebuild
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build tablet fixture
+        run: |
+          cat > _analyst-tablet-smoke.html <<'HTML'
+          <!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>.hidden{display:none!important}.card{padding:10px}</style></head><body>
+          <main id="appPanel"><section id="v08ScoreCard" class="card"><div id="v08PossessionBar"></div></section></main>
+          <script>localStorage.setItem('clubmatch.v08.action.mode','analyst');</script>
+          <script src="cloud-client.js"></script>
+          <script src="pitch-layout.js"></script>
+          <script src="player-action-controller.js"></script>
+          <script src="analyst-live-input-v08.js"></script>
+          <script>
+          document.addEventListener('DOMContentLoaded',()=>{
+            const runtime={activeMatchId:'tablet-smoke',snapshot:null,refresh:async()=>{},recordGoal:async()=>{}};
+            const positions=['LW','ST','RW','LCM','DM','RCM','LB','LCB','RCB','RB','GK'];
+            const names=['Wai Sam','Matz','Kayden','Siem','Vigo','Ben','Shane','Dani','Boaz','Sem','Keeper'];
+            const players=positions.map((position,index)=>({player_id:`p${index+1}`,shirt_number:index+1,display_name:names[index],full_name:names[index],selected:true,is_on_field:true,current_position:position,starting_position:position}));
+            const snapshot={match:{id:'tablet-smoke',status:'live',formation_code:'4-3-3'},state:{clock_status:'paused',period:'first_half'},players,events:[]};
+            runtime.snapshot=snapshot;
+            window.dispatchEvent(new CustomEvent('clubmatch:v08-runtime-ready',{detail:{runtime}}));
+            window.dispatchEvent(new CustomEvent('clubmatch:v08-confirmed',{detail:{runtime,snapshot}}));
+            setTimeout(()=>{
+              const field=document.getElementById('v08LiveActionField');
+              const first=field?.querySelector('.lafOwn');
+              first?.click();
+              const seq=first?.querySelector('.lafSeq')?.textContent||'';
+              document.documentElement.dataset.lafSmoke=field&&!field.classList.contains('hidden')&&first?'ok':'fail';
+              document.documentElement.dataset.lafSeq=seq;
+              document.documentElement.dataset.lafWidth=String(field?.getBoundingClientRect?.().width||0);
+            },150);
+          },{once:true});
+          </script></body></html>
+          HTML
+      - name: Real Chromium tablet 768x1024
+        run: |
+          CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          test -n "$CHROME" || { echo 'Geen Chromium beschikbaar'; exit 1; }
+          python3 -m http.server 8770 >/tmp/clubmatch-tablet-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID 2>/dev/null || true; rm -f _analyst-tablet-smoke.html' EXIT
+          rm -rf /tmp/clubmatch-tablet-profile
+          timeout 20s "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --no-first-run --user-data-dir=/tmp/clubmatch-tablet-profile --window-size=768,1024 --virtual-time-budget=2500 --dump-dom http://127.0.0.1:8770/_analyst-tablet-smoke.html >/tmp/clubmatch-tablet-dom.html 2>/tmp/clubmatch-tablet-chrome.log || {
+            cat /tmp/clubmatch-tablet-chrome.log
+            exit 1
+          }
+          grep -F 'data-laf-smoke="ok"' /tmp/clubmatch-tablet-dom.html >/dev/null || { echo 'Live Actieveld ontbreekt op tabletviewport'; cat /tmp/clubmatch-tablet-dom.html; exit 1; }
+          grep -F 'data-laf-seq="0"' /tmp/clubmatch-tablet-dom.html >/dev/null || { echo 'Spelerklik reageerde niet direct met volgorde 0'; exit 1; }
+          grep -F 'Wai Sam' /tmp/clubmatch-tablet-dom.html >/dev/null || { echo 'Spelernaam ontbreekt op tabletkaart'; exit 1; }
+          grep -F 'id="lafActionDock"' /tmp/clubmatch-tablet-dom.html >/dev/null || { echo 'Compacte actiedock ontbreekt'; exit 1; }
+          echo 'PASS tablet analyst smoke: veld zichtbaar + naam + directe klikvolgorde 0 + compacte actiedock'
