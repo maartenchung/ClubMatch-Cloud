@@ -38,7 +38,7 @@ function install(){
       async connect(){
         if(this.manualClose)return;
         if(!WebSocketImpl){this.status('CHANNEL_ERROR',new Error('WebSocket wordt door deze browser niet ondersteund'));return}
-        this.cleanupSocket(false);
+        this.cleanupSocket(true,false);
         let sessionResult;
         try{sessionResult=await base.auth.getSession()}catch(error){this.status('CHANNEL_ERROR',error);this.scheduleReconnect();return}
         const token=sessionResult?.data?.session?.access_token;
@@ -92,10 +92,14 @@ function install(){
       startHeartbeat(){this.stopHeartbeat();this.heartbeatTimer=global.setInterval?.(()=>{this.send('heartbeat',{},this.nextRef(),null)},20000)||null}
       stopHeartbeat(){if(this.heartbeatTimer!==null)global.clearInterval?.(this.heartbeatTimer);this.heartbeatTimer=null}
       scheduleReconnect(){if(this.manualClose||this.reconnectTimer!==null)return;const delay=RETRY_MS[Math.min(this.retryIndex,RETRY_MS.length-1)];this.retryIndex+=1;this.reconnectTimer=global.setTimeout?.(()=>{this.reconnectTimer=null;this.connect()},delay)||null}
-      cleanupSocket(close=true){this.stopHeartbeat();if(this.reconnectTimer!==null)global.clearTimeout?.(this.reconnectTimer);this.reconnectTimer=null;const socket=this.socket;this.socket=null;this.joined=false;if(close&&socket){try{if(socket.readyState===1)this.send('phx_leave',{},this.nextRef());socket.close?.()}catch{}}}
+      cleanupSocket(close=true,sendLeave=true){
+        this.stopHeartbeat();if(this.reconnectTimer!==null)global.clearTimeout?.(this.reconnectTimer);this.reconnectTimer=null;
+        const socket=this.socket,joinRef=this.joinRef;this.socket=null;this.joined=false;this.joinRef=null;this.serverBindings.clear();
+        if(close&&socket){try{if(sendLeave&&socket.readyState===1)socket.send(JSON.stringify({topic:this.topic,event:'phx_leave',payload:{},ref:this.nextRef(),join_ref:joinRef}));socket.close?.()}catch{}}
+      }
       updateAuth(token){if(!token||!this.joined)return false;return this.send('access_token',{access_token:token})}
       subscribe(callback){this.statusCallback=typeof callback==='function'?callback:null;this.manualClose=false;this.connect();return this}
-      unsubscribe(){this.manualClose=true;this.cleanupSocket(true);channels.delete(this);this.status('CLOSED');return Promise.resolve('ok')}
+      unsubscribe(){this.manualClose=true;this.cleanupSocket(true,true);channels.delete(this);this.status('CLOSED');return Promise.resolve('ok')}
     }
 
     function channel(name){const next=new NativeRealtimeChannel(name);channels.add(next);return next}
