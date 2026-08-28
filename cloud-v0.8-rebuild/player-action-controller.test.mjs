@@ -1,0 +1,12 @@
+import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';
+let seq=0;const context={console,globalThis:null,window:null,Date,Math,crypto:{randomUUID:()=>`evt-${++seq}`}};context.globalThis=context;context.window=context;vm.createContext(context);vm.runInContext(fs.readFileSync(new URL('./player-action-controller.js',import.meta.url),'utf8'),context);
+const calls=[],refresh=[];const client={async rpc(name,params){calls.push([name,params]);return {data:{ok:true,event_id:'e1'},error:null}}},runtime={activeMatchId:'m1',async refresh(reason){refresh.push(reason)}};const C=context.ClubMatchV08PlayerActions.createPlayerActionController({client,runtime});
+C.setSnapshot({match:{id:'m1'},players:[{player_id:'p13',display_name:'Wai Sam',shirt_number:13,selected:true,is_on_field:true},{player_id:'p8',display_name:'Ben',shirt_number:8,selected:true,is_on_field:true},{player_id:'p9',selected:true,is_on_field:false}],events:[]});
+await C.record('p13','ball_loss','onder druk');assert.equal(calls[0][0],'record_ball_loss_v08');assert.equal(calls[0][1].p_player_id,'p13');assert.equal(calls[0][1].p_cause,'unknown');assert.equal(calls[0][1].p_note,'onder druk');assert.deepEqual(refresh,['record_ball_loss_v08']);
+await assert.rejects(()=>C.record('p9','bad_pass'),/veldspeler/);assert.equal(calls.length,1);
+await C.record('p9','injury','enkel');assert.equal(calls[1][0],'record_player_action_v2');assert.equal(calls[1][1].p_action,'injury');
+await assert.rejects(()=>C.record('p13','onbekend'),/Onbekende speleractie/);assert.equal(calls.length,2);
+C.setSnapshot({match:{id:'m1'},players:[{player_id:'p13',display_name:'Wai Sam',shirt_number:13,selected:true,is_on_field:true},{player_id:'p8',display_name:'Ben',shirt_number:8,selected:true,is_on_field:true}],events:[{id:'ps1',event_type:'player_action',subject_player_id:'p13',match_minute:1,match_second:2,payload:{action:'possession_start'}}]});
+assert.equal(C.currentPossession().playerId,'p13');await C.receiveBall('p8');assert.equal(calls.at(-1)[0],'record_ball_flow_v08');assert.equal(calls.at(-1)[1].p_from_player_id,'p13');assert.equal(calls.at(-1)[1].p_to_player_id,'p8');
+await C.loseBall('p8','bad_pass','te hard');assert.equal(calls.at(-1)[0],'record_ball_loss_v08');assert.equal(calls.at(-1)[1].p_cause,'bad_pass');
+console.log('PASS player-action-controller: structured actions + atomic ball-flow/loss + confirmed refresh');

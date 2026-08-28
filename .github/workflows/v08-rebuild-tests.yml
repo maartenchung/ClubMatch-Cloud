@@ -1,0 +1,155 @@
+name: ClubMatch v0.8 rebuild tests
+
+on:
+  push:
+    branches:
+      - clubmatch-v0.8-rebuild
+    paths:
+      - 'cloud-v0.8-rebuild/**'
+      - '.github/workflows/v08-rebuild-tests.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'cloud-v0.8-rebuild/**'
+
+permissions:
+  contents: read
+
+jobs:
+  node-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: cloud-v0.8-rebuild
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Browser shell syntax
+        run: |
+          node --check app.js
+          node --check cloud-client.js
+          node --check pitch-layout.js
+          node --check event-describer.js
+          node --check action-field-event-describer.js
+          node --check action-field-controller.js
+          node --check action-field-ui.js
+          node --check action-field-standalone.js
+          node --check live-state.js
+          node --check snapshot-adapter.js
+          node --check view-model.js
+          node --check mutation-controller.js
+          node --check clock-projector.js
+          node --check runtime.js
+          node --check ui-frame.js
+          node --check dom-renderer.js
+          node --check action-policy.js
+          node --check lifecycle-sync.js
+          node --check match-selection.js
+          node --check formation-layout.js
+          node --check preparation-controller.js
+          node --check preparation-ui.js
+          node --check correction-ui.js
+          node --check basis-lineup-ui.js
+          node --check live-pitch-controller.js
+          node --check match-phase-controller.js
+          node --check match-phase-ui.js
+          node --check live-controls-ui.js
+          node --check player-action-controller.js
+          node --check player-action-ui.js
+          node --check voice-command.js
+          node --check voice-controller.js
+          node --check voice-ui.js
+          node --check dashboard-controller.js
+          node --check dashboard-ui.js
+          node --check match-library-ui.js
+          node --check management-controller.js
+          node --check management-ui.js
+          node --check management-visibility.js
+          node --check training-controller.js
+          node --check training-ui.js
+          node --check stored-match-delete-ui.js
+          node --check security-controller.js
+          node --check security-ui.js
+          node --check ux-theme.js
+      - name: Version-pinned browser assets
+        run: node asset-versioning.test.mjs
+      - name: GitHub Pages password recovery redirect
+        run: grep -F "const RESET_REDIRECT='https://maartenchung.github.io/ClubMatch-Cloud/cloud-v0.8-rebuild/';" app.js
+      - name: Native Cloud transport, recovery and MFA
+        run: node cloud-client.test.mjs
+      - name: Password recovery and MFA security controller
+        run: node security-controller.test.mjs
+      - name: Password recovery live validation UI
+        run: node security-ui.test.mjs
+      - name: Action availability policy
+        run: node action-policy.test.mjs
+      - name: Match pause and halftime clocks
+        run: node clock-projector.test.mjs
+      - name: Mobile and desktop lifecycle resync
+        run: node lifecycle-sync.test.mjs
+      - name: Active match refresh restore
+        run: node match-selection.test.mjs
+      - name: Formation presets and starter assignment
+        run: node formation-layout.test.mjs
+      - name: Match preparation and start gate
+        run: node preparation-controller.test.mjs
+      - name: Append-only event correction projection
+        run: node correction-ui.test.mjs
+      - name: Direct correction UI integration
+        run: node correction-integration.test.mjs
+      - name: Dutch live event descriptions and monitoring changes
+        run: node event-describer.test.mjs
+      - name: Goal and penalty score event timeline
+        run: node event-score.test.mjs
+      - name: Live clock controls placement and finish confirmation
+        run: node live-controls-integration.test.mjs
+      - name: Confirmed quick player action controller
+        run: node player-action-controller.test.mjs
+      - name: Quick player action app integration
+        run: node player-action-integration.test.mjs
+      - name: Live UX possession phase and permissions
+        run: node live-ux-roadmap.test.mjs
+      - name: Action field gesture controller
+        run: node action-field-controller.test.mjs
+      - name: Action field UI timeline and Cloud integration
+        run: node action-field-integration.test.mjs
+      - name: Dutch voice commands by name shirt number and player action
+        run: node voice-command.test.mjs
+      - name: Voice proposal and explicit confirmation gate
+        run: node voice-controller.test.mjs
+      - name: Restart-safe browser speech sessions
+        run: node voice-ui-restart.test.mjs
+      - name: Confirmed-snapshot voice app integration
+        run: node voice-integration.test.mjs
+      - name: Dashboard match selection delete and 1-100 rating
+        run: node dashboard-controller.test.mjs
+      - name: Saved preparations and match history
+        run: node match-library-ui.test.mjs
+      - name: Training attendance and one-click assessment save
+        run: node training-controller.test.mjs
+      - name: Reopen and resume saved trainings
+        run: node training-reopen.test.mjs
+      - name: Isolated Trainingen workspace
+        run: node training-workspace.test.mjs
+      - name: Team season player and club management controller
+        run: node management-controller.test.mjs
+      - name: Roadmap parity browser integration
+        run: node roadmap-parity-integration.test.mjs
+      - name: Mutation controller and lifecycle gates
+        run: node mutation-controller.test.mjs
+      - name: Snapshot adapter
+        run: node snapshot-adapter.test.mjs
+      - name: Shared live view model
+        run: node view-model.test.mjs
+      - name: Confirmed-state runtime
+        run: node runtime.test.mjs
+      - name: Match regression gates 1-17
+        run: node regression-gates.test.mjs
+      - name: Single-source UI frame
+        run: node ui-frame.test.mjs

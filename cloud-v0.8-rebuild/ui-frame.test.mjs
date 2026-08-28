@@ -1,0 +1,14 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+const context={console,globalThis:null,window:null};context.globalThis=context;context.window=context;context.ClubMatchV08PitchLayout={slotLabel:p=>p};vm.createContext(context);
+for(const file of ['live-state.js','event-describer.js','view-model.js','ui-frame.js'])vm.runInContext(fs.readFileSync(new URL(`./${file}`,import.meta.url),'utf8'),context);
+const ids=Array.from({length:13},(_,i)=>`p${i+1}`),positions=['GK','RB','RCB','LCB','LB','DM','RCM','LCM','RW','ST','LW'];
+const liveEvents=[{id:'s1',type:'SUBSTITUTION',matchSecond:600,outId:'p11',inId:'p12'},{id:'s2',type:'SUBSTITUTION',matchSecond:720,outId:'p10',inId:'p13'}];
+const liveState=context.ClubMatchV08.deriveLiveMatchState({effectiveMatchSecond:800,selectedIds:ids,starterIds:ids.slice(0,11),startingPositionsById:Object.fromEntries(ids.slice(0,11).map((id,i)=>[id,positions[i]])),events:liveEvents});
+const playersById=Object.fromEntries(ids.map((id,i)=>[id,{name:`Speler ${i+1}`,shirt_number:i+1}]));
+const rawEvents=[{id:'s1',event_type:'substitution',matchSecond:600,subject_player_id:'p11',related_player_id:'p12',substitution:{old_position:'LW',new_position:'LW'}},{id:'v1',event_type:'goal_voided',matchSecond:700,payload:{reason:'Hands'}}];
+const model=context.ClubMatchV08ViewModel.createLiveViewModel({liveState,playersById,score:{for:2,against:1},match:{status:'live',formation_code:'4-3-3'},state:{period:'second_half',clock_status:'paused'},pause:{active:true,seconds:25},events:rawEvents});
+const frame=context.ClubMatchV08UiFrame.createUiFrame(model),validation=context.ClubMatchV08UiFrame.validateUiFrame(frame);assert.equal(validation.ok,true,validation.errors.join(' · '));
+assert.equal(frame.scoreboard.display,'2–1');assert.equal(frame.scoreboard.clock,'13:20');assert.equal(frame.pauseActive,true);assert.equal(frame.pauseClock,'0:25');assert.equal(frame.scoreboard.pauseClock,'0:25');assert.equal(frame.dashboard.scoreboard,frame.scoreboard);assert.equal(frame.field.length,11);assert.equal(frame.bench.length,2);assert.equal(frame.pitch.length,11);assert.equal(frame.timeline[0].label,'Wissel');assert.match(frame.timeline[0].description,/BANK/);assert.equal(frame.timeline[1].description,'Doelpunt ongeldig · stand 0–0 · Reden: Hands');assert.match(frame.monitor.find(p=>p.id==='p11').lastChange,/BANK/);assert.equal(frame.playerById.p13.changeState,'JUST_IN');assert.equal(frame.playerById.p10.changeState,'JUST_OUT');assert.equal([...frame.field,...frame.bench].some(p=>p.tone==='green'),false);assert.equal(Object.isFrozen(frame),true);
+console.log('PASS ui-frame: pause clock + Dutch score-aware events + live monitoring share one projection');

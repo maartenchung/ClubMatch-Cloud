@@ -1,0 +1,16 @@
+import fs from 'node:fs';import assert from 'node:assert/strict';
+const src=fs.readFileSync(new URL('./match-library-ui.js',import.meta.url),'utf8');
+assert.match(src,/get_my_match_library_v08/,'match library RPC ontbreekt');
+assert.match(src,/Opgeslagen voorbereidingen/,'opgeslagen voorbereidingen ontbreken');
+assert.match(src,/Wedstrijdhistorie/,'wedstrijdhistorie ontbreekt');
+assert.match(src,/Voorbereiding openen/,'voorbereiding opnieuw openen ontbreekt');
+assert.match(src,/delete_match_v08/,'definitief verwijderen ontbreekt');
+assert.match(src,/Wedstrijd afsluiten.*bewaren/s,'afsluiten versus verwijderen moet duidelijk zijn');
+assert.match(src,/Oefenwedstrijd|competition_name/,'wedstrijdtype moet zichtbaar zijn');
+assert.match(src,/get_match_snapshot/,'wedstrijddetail moet confirmed snapshot laden');
+assert.match(src,/Wedstrijddetail/,'wedstrijddetail UI ontbreekt');
+assert.match(src,/Basisopstelling/,'historische basisopstelling ontbreekt');
+assert.match(src,/Fases, gebeurtenissen & correcties/,'event- en correctiedetail ontbreekt');
+assert.match(src,/CSV exporteren/,'CSV exportactie ontbreekt');
+assert.match(src,/text\/csv/,'CSV browserexport ontbreekt');
+console.log('PASS match-library-ui: saved preparations + history + detail/events/lineup + CSV + explicit delete separation');
