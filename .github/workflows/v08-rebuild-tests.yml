@@ -124,7 +124,6 @@ jobs:
           node --check security-controller.js
           node --check security-ui.js
           node --check ux-theme.js
-          node --check browser-cold-start-smoke.mjs
       - name: Version-pinned browser assets
         run: node asset-versioning.test.mjs
       - name: Live UX fixes contract
