@@ -55,7 +55,7 @@ const GOAL_TYPES=Object.freeze([
   ['own_goal','Eigen doelpunt'],['other','Overig']
 ]);
 
-function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]))}
 function getStored(key,fallback){try{return global.localStorage?.getItem(key)||fallback}catch{return fallback}}
 function setStored(key,value){try{global.localStorage?.setItem(key,value)}catch{}}
 function getMode(){return getStored(MODE_KEY,'coach')}
@@ -70,7 +70,7 @@ function createPlayerActionUi(options={}){
   const run=options.run||((_,fn)=>fn());
   if(!doc||!controller)throw new Error('Document en speleractie-controller zijn verplicht');
 
-  let sheet=null,currentPlayerId=null,posBar=null,timer=null;
+  let sheet=null,currentPlayerId=null,posBar=null,timer=null,lastStructureKey='';
   let mode=getMode(),quickOrder=getQuickOrder(),quickSide='for',quickPlayerId='';
 
   function ensureStyles(){
@@ -107,7 +107,16 @@ function createPlayerActionUi(options={}){
   function playerName(p){return p?`#${p.shirt_number??'—'} ${p.display_name||p.full_name||p.player_id}`:'Speler'}
   function fieldPlayers(){return (controller.snapshot?.players||[]).filter(p=>p.selected&&p.is_on_field)}
   function currentClockSecond(){const raw=doc.getElementById('v08Clock')?.textContent||'0:00',parts=raw.split(':').map(Number);return Math.max(0,(parts[0]||0)*60+(parts[1]||0))}
-  function ensurePossessionBar(){if(posBar?.isConnected)return posBar;ensureStyles();const pitch=doc.getElementById('v08Pitch'),card=pitch?.closest('.card');if(!card)return null;posBar=doc.createElement('div');posBar.id='v08PossessionBar';posBar.className='posBar';card.appendChild(posBar);renderPossessionBar();if(!timer)timer=setInterval(renderPossessionBar,1000);return posBar}
+  function fmt(seconds){const s=Math.max(0,Math.floor(Number(seconds)||0));return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`}
+  function updatePossessionClocks(active=controller.currentPossession?.(),team=controller.currentTeamPossession?.(),now=currentClockSecond()){
+    if(!posBar?.isConnected)return;
+    const playerElapsed=active?Math.max(0,now-Number(active.startedSecond||0)):0,teamElapsed=team?Math.max(0,now-Number(team.startedSecond||0)):0;
+    const own=posBar.querySelector('#v08TeamForClock'),against=posBar.querySelector('#v08TeamAgainstClock'),playerClock=posBar.querySelector('#v08PlayerPossessionClock');
+    if(own)own.textContent=team?.side==='for'?` · ${fmt(teamElapsed)}`:'';
+    if(against)against.textContent=team?.side==='against'?` · ${fmt(teamElapsed)}`:'';
+    if(playerClock)playerClock.textContent=active?fmt(playerElapsed):'';
+  }
+  function ensurePossessionBar(){if(posBar?.isConnected)return posBar;ensureStyles();const pitch=doc.getElementById('v08Pitch'),card=pitch?.closest('.card');if(!card)return null;posBar=doc.createElement('div');posBar.id='v08PossessionBar';posBar.className='posBar';card.appendChild(posBar);lastStructureKey='';renderPossessionBar(true);if(!timer)timer=setInterval(updatePossessionClocks,1000);return posBar}
 
   function actionFieldLabels(){return global.ClubMatchV08ActionField?.ACTION_LABELS||FIELD_LABEL_FALLBACK}
   function quickCatalog(){const labels=actionFieldLabels();return [{id:'goal',label:'Goal',group:'Aanval',special:true},...FIELD_QUICK.map(id=>({id,label:labels[id]||FIELD_LABEL_FALLBACK[id]||id,group:QUICK_GROUP[id]||'Overig'}))]}
@@ -122,7 +131,7 @@ function createPlayerActionUi(options={}){
   function quickPlayerOptions(){const active=controller.currentPossession?.(),players=fieldPlayers();if(quickSide==='for'&&!quickPlayerId&&active?.playerId&&players.some(p=>p.player_id===active.playerId))quickPlayerId=active.playerId;if(quickPlayerId&&!players.some(p=>p.player_id===quickPlayerId))quickPlayerId='';return `<option value="">— teamactie / geen speler —</option>${players.map(p=>`<option value="${esc(p.player_id)}"${quickPlayerId===p.player_id?' selected':''}>#${esc(p.shirt_number??'—')} ${esc(p.display_name||p.full_name||'')}</option>`).join('')}`}
   function analystHtml(active){if(mode!=='analyst')return '';const players=fieldPlayers();return `<div class="paHint"><b>Analistmodus:</b> tik de volgende speler die de bal krijgt. A → B registreert automatisch geslaagde pass A + ontvangen pass B + spelerbezit B + ons teambezit.</div><div class="flowGrid">${players.map(p=>`<button type="button" class="flowPlayer ${active?.playerId===p.player_id?'active':''}" data-flow-player="${esc(p.player_id)}" data-v08-action>#${esc(p.shirt_number??'—')} ${esc(p.display_name||p.full_name||'')}</button>`).join('')}</div>${active?`<div class="lossGrid">${LOSS_LABELS.map(([id,label])=>`<button type="button" class="lossBtn" data-loss-cause="${id}" data-v08-action>${esc(label)}</button>`).join('')}</div>`:''}`}
 
-  async function switchMode(){if(mode==='analyst'){const active=controller.currentPossession?.();if(active)await controller.stopPossession();mode='coach'}else mode='analyst';setMode(mode);renderPossessionBar()}
+  async function switchMode(){if(mode==='analyst'){const active=controller.currentPossession?.();if(active)await controller.stopPossession();mode='coach'}else mode='analyst';setMode(mode);renderPossessionBar(true)}
 
   async function recordQuick(action){
     if(action==='goal')return openQuickGoal();
@@ -134,7 +143,7 @@ function createPlayerActionUi(options={}){
       if(typeof controller.recordQuickAction!=='function')throw new Error('Snelle actie-controller is nog niet beschikbaar');
       await controller.recordQuickAction({side:quickSide,action,playerId,note:'Snelle registratie'});
     }
-    renderPossessionBar();
+    renderPossessionBar(true);
   }
 
   function openQuickGoal(){
@@ -150,24 +159,27 @@ function createPlayerActionUi(options={}){
   }
 
   function bindQuickControls(){
-    posBar.querySelectorAll('[data-quick-order]').forEach(btn=>btn.onclick=()=>{quickOrder=btn.dataset.quickOrder==='alpha'?'alpha':'category';setQuickOrder(quickOrder);renderPossessionBar()});
-    posBar.querySelectorAll('[data-quick-side]').forEach(btn=>btn.onclick=()=>{quickSide=btn.dataset.quickSide==='against'?'against':'for';if(quickSide==='against')quickPlayerId='';renderPossessionBar()});
+    posBar.querySelectorAll('[data-quick-order]').forEach(btn=>btn.onclick=()=>{quickOrder=btn.dataset.quickOrder==='alpha'?'alpha':'category';setQuickOrder(quickOrder);renderPossessionBar(true)});
+    posBar.querySelectorAll('[data-quick-side]').forEach(btn=>btn.onclick=()=>{quickSide=btn.dataset.quickSide==='against'?'against':'for';if(quickSide==='against')quickPlayerId='';renderPossessionBar(true)});
     const select=posBar.querySelector('#v08QuickPlayer');if(select)select.onchange=()=>{quickPlayerId=select.value||''};
     posBar.querySelectorAll('[data-quick-action]').forEach(btn=>btn.onclick=()=>run(`Snelle actie · ${btn.textContent.trim()}`,()=>recordQuick(btn.dataset.quickAction)));
   }
 
-  function renderPossessionBar(){
+  function renderPossessionBar(force=false){
     if(!posBar?.isConnected)return;
-    const active=controller.currentPossession?.(),team=controller.currentTeamPossession?.(),now=currentClockSecond();
-    const playerElapsed=active?Math.max(0,now-Number(active.startedSecond||0)):0,teamElapsed=team?Math.max(0,now-Number(team.startedSecond||0)):0,anything=!!active||!!team;
-    const canQuick=controller.snapshot?.match?.status==='live'&&controller.snapshot?.state?.clock_status==='running';
-    posBar.innerHTML=`<div class="posHead"><div><b>⚡ Snelle registratie</b><div class="muted">Dezelfde actietypen als Actieveld, maar zonder locatie. Kies categorieën of A–Z; jouw voorkeur wordt onthouden.</div></div><button type="button" id="v08AnalystMode" class="modeBtn ${mode==='analyst'?'on':''}" data-v08-action>${mode==='analyst'?'Analistmodus aan':'Analistmodus'}</button></div><div class="teamFlow"><button type="button" class="teamFor ${team?.side==='for'?'active':''}" data-team-possession="for" data-v08-action>🟢 Ons bezit${team?.side==='for'?` · ${Math.floor(teamElapsed/60)}:${String(teamElapsed%60).padStart(2,'0')}`:''}</button><button type="button" class="teamAgainst ${team?.side==='against'?'active':''}" data-team-possession="against" data-v08-action>🔴 Tegenstander${team?.side==='against'?` · ${Math.floor(teamElapsed/60)}:${String(teamElapsed%60).padStart(2,'0')}`:''}</button><button type="button" class="secondary stopAll ${anything?'active':''}" id="v08StopAllPossession" data-v08-action ${anything?'':'disabled'}>■ Alles bezit stoppen</button></div><div class="posHead"><div><b>Spelerbezit</b><div class="muted">${active?esc(`#${active.shirtNumber??'—'} ${active.name}`):'Geen actieve spelerbezitter'}</div></div>${active?`<span class="posClock">${Math.floor(playerElapsed/60)}:${String(playerElapsed%60).padStart(2,'0')}</span>`:''}</div>${analystHtml(active)}<div class="quickReg"><div class="quickRegHead"><div><b>Acties</b><div class="muted">Goal opent de doelpuntdetails; overige acties worden direct bevestigd in Cloud.</div></div><div class="quickOrder"><button type="button" class="quickModeBtn ${quickOrder==='category'?'on':''}" data-quick-order="category">Categorieën</button><button type="button" class="quickModeBtn ${quickOrder==='alpha'?'on':''}" data-quick-order="alpha">A–Z</button></div></div><div class="quickScope"><button type="button" class="${quickSide==='for'?'active':'secondary'}" data-quick-side="for">Ons team</button><button type="button" class="${quickSide==='against'?'active':'secondary'}" data-quick-side="against">Tegenstander</button><select id="v08QuickPlayer" ${quickSide==='against'?'disabled':''}>${quickPlayerOptions()}</select></div><div ${canQuick?'':'style="opacity:.55;pointer-events:none"'}>${quickActionsHtml()}</div></div>`;
+    const active=controller.currentPossession?.(),team=controller.currentTeamPossession?.(),now=currentClockSecond(),quickOptions=quickPlayerOptions(),players=fieldPlayers();
+    const anything=!!active||!!team,canQuick=controller.snapshot?.match?.status==='live'&&controller.snapshot?.state?.clock_status==='running';
+    const playerSig=players.map(p=>`${p.player_id}:${p.shirt_number??''}:${p.display_name||p.full_name||''}`).join('|');
+    const structureKey=[mode,quickOrder,quickSide,quickPlayerId,active?.playerId||'',team?.side||'',canQuick?'1':'0',playerSig].join('~');
+    if(!force&&structureKey===lastStructureKey){updatePossessionClocks(active,team,now);return}
+    lastStructureKey=structureKey;
+    posBar.innerHTML=`<div class="posHead"><div><b>⚡ Snelle registratie</b><div class="muted">Dezelfde actietypen als Actieveld, maar zonder locatie. Kies categorieën of A–Z; jouw voorkeur wordt onthouden.</div></div><button type="button" id="v08AnalystMode" class="modeBtn ${mode==='analyst'?'on':''}" data-v08-action>${mode==='analyst'?'Analistmodus aan':'Analistmodus'}</button></div><div class="teamFlow"><button type="button" class="teamFor ${team?.side==='for'?'active':''}" data-team-possession="for" data-v08-action>🟢 Ons bezit<span id="v08TeamForClock"></span></button><button type="button" class="teamAgainst ${team?.side==='against'?'active':''}" data-team-possession="against" data-v08-action>🔴 Tegenstander<span id="v08TeamAgainstClock"></span></button><button type="button" class="secondary stopAll ${anything?'active':''}" id="v08StopAllPossession" data-v08-action ${anything?'':'disabled'}>■ Alles bezit stoppen</button></div><div class="posHead"><div><b>Spelerbezit</b><div class="muted">${active?esc(`#${active.shirtNumber??'—'} ${active.name}`):'Geen actieve spelerbezitter'}</div></div>${active?'<span class="posClock" id="v08PlayerPossessionClock"></span>':''}</div>${analystHtml(active)}<div class="quickReg"><div class="quickRegHead"><div><b>Acties</b><div class="muted">Goal opent de doelpuntdetails; overige acties worden direct bevestigd in Cloud.</div></div><div class="quickOrder"><button type="button" class="quickModeBtn ${quickOrder==='category'?'on':''}" data-quick-order="category">Categorieën</button><button type="button" class="quickModeBtn ${quickOrder==='alpha'?'on':''}" data-quick-order="alpha">A–Z</button></div></div><div class="quickScope"><button type="button" class="${quickSide==='for'?'active':'secondary'}" data-quick-side="for">Ons team</button><button type="button" class="${quickSide==='against'?'active':'secondary'}" data-quick-side="against">Tegenstander</button><select id="v08QuickPlayer" ${quickSide==='against'?'disabled':''}>${quickOptions}</select></div><div ${canQuick?'':'style="opacity:.55;pointer-events:none"'}>${quickActionsHtml()}</div></div>`;
     posBar.querySelector('#v08AnalystMode').onclick=()=>run(mode==='analyst'?'Analistmodus afsluiten':'Analistmodus starten',switchMode);
-    posBar.querySelectorAll('[data-team-possession]').forEach(btn=>btn.onclick=()=>run('Team-balbezit',async()=>{await controller.startTeamPossession(btn.dataset.teamPossession);renderPossessionBar()}));
-    const stop=posBar.querySelector('#v08StopAllPossession');if(stop)stop.onclick=()=>run('Alle balbezit stoppen',async()=>{await controller.stopAllPossession();renderPossessionBar()});
-    posBar.querySelectorAll('[data-flow-player]').forEach(btn=>btn.onclick=()=>run('Analist balstroom',async()=>{if(typeof controller.analystReceiveBall==='function')await controller.analystReceiveBall(btn.dataset.flowPlayer);else await controller.receiveBall(btn.dataset.flowPlayer);renderPossessionBar()}));
-    posBar.querySelectorAll('[data-loss-cause]').forEach(btn=>btn.onclick=()=>run('Analist balverlies',async()=>{const a=controller.currentPossession?.();if(!a)throw new Error('Geen actieve balbezitter');if(typeof controller.analystLoseBall==='function')await controller.analystLoseBall(a.playerId,btn.dataset.lossCause);else await controller.loseBall(a.playerId,btn.dataset.lossCause);renderPossessionBar()}));
-    bindQuickControls();
+    posBar.querySelectorAll('[data-team-possession]').forEach(btn=>btn.onclick=()=>run('Team-balbezit',async()=>{await controller.startTeamPossession(btn.dataset.teamPossession);renderPossessionBar(true)}));
+    const stop=posBar.querySelector('#v08StopAllPossession');if(stop)stop.onclick=()=>run('Alle balbezit stoppen',async()=>{await controller.stopAllPossession();renderPossessionBar(true)});
+    posBar.querySelectorAll('[data-flow-player]').forEach(btn=>btn.onclick=()=>run('Analist balstroom',async()=>{if(typeof controller.analystReceiveBall==='function')await controller.analystReceiveBall(btn.dataset.flowPlayer);else await controller.receiveBall(btn.dataset.flowPlayer);renderPossessionBar(true)}));
+    posBar.querySelectorAll('[data-loss-cause]').forEach(btn=>btn.onclick=()=>run('Analist balverlies',async()=>{const a=controller.currentPossession?.();if(!a)throw new Error('Geen actieve balbezitter');if(typeof controller.analystLoseBall==='function')await controller.analystLoseBall(a.playerId,btn.dataset.lossCause);else await controller.loseBall(a.playerId,btn.dataset.lossCause);renderPossessionBar(true)}));
+    bindQuickControls();updatePossessionClocks(active,team,now);
   }
 
   function close(){currentPlayerId=null;if(sheet){sheet.remove();sheet=null}}
@@ -179,15 +191,15 @@ function createPlayerActionUi(options={}){
     currentPlayerId=playerId;const p=player();if(!p)return;close();currentPlayerId=playerId;ensureStyles();sheet=doc.createElement('div');sheet.className='paOverlay';const groups=[...new Set(ACTIONS.map(a=>a.group))],active=controller.currentPossession?.();
     sheet.innerHTML=`<div class="paSheet" role="dialog" aria-modal="true"><div class="paHead"><div><h2 style="margin:0">⚡ Snelle speleractie</h2><div class="muted">${esc(playerName(p))} · ${p.is_on_field?'VELD':'BANK'} · ${mode==='analyst'?'analist':'coach'}</div></div><button type="button" class="paClose">Sluiten</button></div>${p.is_on_field&&runtime?.recordGoal?`<div class="paGroup paGoal"><b>⚽ Doelpunt gemaakt</b><div class="paGoalGrid"><label>Type<select id="paGoalType">${goalTypeOptions()}</select></label><label>Assist<select id="paGoalAssist">${assistOptions(p.player_id)}</select></label><button type="button" id="paGoalBtn" class="paGoalBtn" data-v08-action>Doelpunt opslaan</button></div></div>`:''}${p.is_on_field?`<div class="paGroup"><b>Spelerbezit</b><div class="paButtons"><button type="button" class="paAction paPossession" data-possession-start>${active?.playerId===p.player_id?'✓ Bezit loopt':'▶ Bezit starten'}</button>${active?'<button type="button" class="paAction" data-possession-stop>Spelerbezit stoppen</button>':''}</div></div>`:''}${groups.map(group=>`<div class="paGroup"><b>${esc(group)}</b><div class="paButtons">${ACTIONS.filter(a=>a.group===group).map(a=>`<button type="button" class="paAction" data-pa-action="${a.id}"${!p.is_on_field&&a.id!=='injury'?' disabled':''}>${esc(a.label)}</button>`).join('')}</div></div>`).join('')}<label style="display:block;margin-top:10px">Notitie (optioneel)<input id="paNote" placeholder="Bijv. context of blessure"></label><div class="paHint">${mode==='analyst'?'<b>Analistmodus:</b> ClubMatch voegt alleen logisch zekere afleidingen automatisch toe.':'<b>Coachmodus:</b> registreert alleen de gekozen actie.'}</div></div>`;
     doc.body.appendChild(sheet);sheet.querySelector('.paClose').onclick=close;sheet.addEventListener('click',e=>{if(e.target===sheet)close()});
-    sheet.querySelector('#paGoalBtn')?.addEventListener('click',()=>run('Doelpunt opslaan',async()=>{await runtime.recordGoal({side:'for',scorerId:currentPlayerId,assistId:sheet?.querySelector('#paGoalAssist')?.value||null,goalType:sheet?.querySelector('#paGoalType')?.value||null,note:sheet?.querySelector('#paNote')?.value||null});close();renderPossessionBar()}));
-    sheet.querySelector('[data-possession-start]')?.addEventListener('click',()=>run('Spelerbezit starten',async()=>{await controller.startPossession(currentPlayerId);close();renderPossessionBar()}));
-    sheet.querySelector('[data-possession-stop]')?.addEventListener('click',()=>run('Spelerbezit stoppen',async()=>{await controller.stopPossession();close();renderPossessionBar()}));
-    sheet.querySelectorAll('[data-pa-action]').forEach(btn=>btn.addEventListener('click',()=>run('Speleractie opslaan',async()=>{const note=sheet?.querySelector('#paNote')?.value||'';await recordSheetAction(btn.dataset.paAction,note);close();renderPossessionBar()})));
+    sheet.querySelector('#paGoalBtn')?.addEventListener('click',()=>run('Doelpunt opslaan',async()=>{await runtime.recordGoal({side:'for',scorerId:currentPlayerId,assistId:sheet?.querySelector('#paGoalAssist')?.value||null,goalType:sheet?.querySelector('#paGoalType')?.value||null,note:sheet?.querySelector('#paNote')?.value||null});close();renderPossessionBar(true)}));
+    sheet.querySelector('[data-possession-start]')?.addEventListener('click',()=>run('Spelerbezit starten',async()=>{await controller.startPossession(currentPlayerId);close();renderPossessionBar(true)}));
+    sheet.querySelector('[data-possession-stop]')?.addEventListener('click',()=>run('Spelerbezit stoppen',async()=>{await controller.stopPossession();close();renderPossessionBar(true)}));
+    sheet.querySelectorAll('[data-pa-action]').forEach(btn=>btn.addEventListener('click',()=>run('Speleractie opslaan',async()=>{const note=sheet?.querySelector('#paNote')?.value||'';await recordSheetAction(btn.dataset.paAction,note);close();renderPossessionBar(true)})));
     return sheet;
   }
 
   function install(){ensureStyles();doc.addEventListener('click',event=>{const button=event.target.closest?.('[data-player-action-open]');if(!button)return;event.preventDefault();event.stopPropagation();const id=button.dataset.playerId||button.closest?.('[data-player-id]')?.dataset.playerId;if(id)open(id)});setTimeout(ensurePossessionBar,0);return true}
-  function refresh(){ensurePossessionBar();renderPossessionBar()}
+  function refresh(){ensurePossessionBar();renderPossessionBar(true)}
   return Object.freeze({install,open,close,refresh,get visible(){return !!sheet},get mode(){return mode},get quickOrder(){return quickOrder}})
 }
 

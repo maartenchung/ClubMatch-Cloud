@@ -1,4 +1,4 @@
-/* ClubMatch Cloud v0.8 - device/browser bootstrap diagnostics + validated session gate */
+/* ClubMatch Cloud v0.8 - event-driven device/browser bootstrap diagnostics + validated session gate */
 (function(global){
 'use strict';
 const doc=global.document;
@@ -6,9 +6,9 @@ const URL='https://fnbqyogbamufytcabfzm.supabase.co';
 const KEY='sb_publishable_skGPpngOQ_1OpEbreV2kXA__2OL_Mbp';
 const SESSION_KEY='clubmatch-v08-session';
 const MATCH_KEY='clubmatch-v08-active-match';
-const BUILD='20260829.0026';
+const BUILD=global.__ClubMatchShellBoot?.build||'20260829.0125';
 const STARTED=Date.now();
-let lastChallenge=false,lastStage='',lastError='',watchdog=null,observer=null,client=null,sessionProbe='unknown',sessionEmail='';
+let lastChallenge=false,lastStage='',lastError='',watchdog=null,client=null,probePromise=null,sessionProbe='unknown',sessionEmail='';
 function setFlag(el,name,on){if(!el?.classList)return false;const current=el.classList.contains(name);if(current===!!on)return false;el.classList.toggle(name,!!on);return true}
 function setHidden(el,hidden){return setFlag(el,'hidden',hidden)}
 function setText(el,value){const next=String(value??'');if(!el||el.textContent===next)return false;el.textContent=next;return true}
@@ -16,6 +16,7 @@ function topStatus(message,tone='warn'){
   const el=doc?.getElementById?.('v08Status');if(!el)return;
   setText(el,message);setFlag(el,'ok',tone==='ok');setFlag(el,'bad',tone==='bad');
 }
+function clearSessionCheckStatus(){const el=doc?.getElementById?.('v08Status'),text=String(el?.textContent||'');if(!/Opgeslagen sessie controleren/i.test(text))return;if(appVisible())topStatus('ClubMatch Cloud v0.8 gereed.','ok');else topStatus('Sessie geldig · ClubMatch laden…')}
 function read(key){try{return global.localStorage?.getItem?.(key)||null}catch{return null}}
 function authPanel(){return doc?.getElementById?.('authPanel')||null}
 function recoveryVisible(){const panel=doc?.getElementById?.('securityRecoveryPanel');return !!panel&&!panel.classList.contains('hidden')}
@@ -26,29 +27,29 @@ function appVisible(){const app=doc?.getElementById?.('appPanel');return !!app&&
 function sessionVisible(){return !!String(doc?.getElementById?.('sessionEmail')?.textContent||'').trim()}
 function sharedClient(){if(client)return client;const api=global.ClubMatchV08CloudClient;if(!api?.createClient)return null;try{client=api.createClient(URL,KEY)}catch(error){lastError=`Cloud-client: ${error.message||error}`;return null}return client}
 function protectValidSessionUi(){
-  const stored=!!read(SESSION_KEY),panel=authPanel();
-  if(!panel)return;
+  const stored=!!read(SESSION_KEY),panel=authPanel();if(!panel)return;
   if(sessionProbe==='valid'&&stored&&!challengeVisible()&&!recoveryVisible())setHidden(panel,true);
   else if(sessionProbe==='none'||!stored)setHidden(panel,false);
 }
-async function probeSession({forceStatus=false}={}){
-  const stored=!!read(SESSION_KEY),panel=authPanel();
-  if(!stored){sessionProbe='none';sessionEmail='';protectValidSessionUi();render(true);return null}
-  setHidden(panel,true);
-  if(forceStatus||sessionProbe==='unknown')topStatus('Opgeslagen sessie controleren…');
-  const c=sharedClient();if(!c?.auth?.getSession){sessionProbe='error';lastError='Sessiecontrole: Cloud Auth-client niet beschikbaar';render(true);return null}
-  try{
-    const {data,error}=await c.auth.getSession();if(error)throw error;
-    const session=data?.session||null;
-    if(session){
-      sessionProbe='valid';sessionEmail=session?.user?.email||session?.user?.id||'';lastError='';
-      const identity=doc?.getElementById?.('sessionEmail');if(identity&&!String(identity.textContent||'').trim()&&sessionEmail)setText(identity,sessionEmail);
-      protectValidSessionUi();render(true);return session;
-    }
-    sessionProbe='none';sessionEmail='';protectValidSessionUi();topStatus('Geen geldige sessie · log opnieuw in');render(true);return null;
-  }catch(error){
-    sessionProbe='error';lastError=`Sessiecontrole: ${error.message||error}`;setHidden(panel,true);render(true);return null;
-  }
+function probeSession({forceStatus=false}={}){
+  if(probePromise)return probePromise;
+  probePromise=(async()=>{
+    const stored=!!read(SESSION_KEY),panel=authPanel();
+    if(!stored){sessionProbe='none';sessionEmail='';protectValidSessionUi();render(true);return null}
+    setHidden(panel,true);
+    if(forceStatus||sessionProbe==='unknown')topStatus('Opgeslagen sessie controleren…');
+    const c=sharedClient();if(!c?.auth?.getSession){sessionProbe='error';lastError='Sessiecontrole: Cloud Auth-client niet beschikbaar';render(true);return null}
+    try{
+      const {data,error}=await c.auth.getSession();if(error)throw error;const session=data?.session||null;
+      if(session){
+        sessionProbe='valid';sessionEmail=session?.user?.email||session?.user?.id||'';lastError='';
+        const identity=doc?.getElementById?.('sessionEmail');if(identity&&!String(identity.textContent||'').trim()&&sessionEmail)setText(identity,sessionEmail);
+        protectValidSessionUi();clearSessionCheckStatus();render(false);return session;
+      }
+      sessionProbe='none';sessionEmail='';protectValidSessionUi();topStatus('Geen geldige sessie · log opnieuw in');render(true);return null;
+    }catch(error){sessionProbe='error';lastError=`Sessiecontrole: ${error.message||error}`;setHidden(panel,true);render(true);return null}
+  })().finally(()=>{probePromise=null});
+  return probePromise;
 }
 function stage(){
   const stored=!!read(SESSION_KEY),remembered=!!read(MATCH_KEY);
@@ -70,26 +71,24 @@ function ensureCard(){
   card.querySelector('#v08BootRetry').onclick=()=>retry();card.querySelector('#v08BootReload').onclick=()=>cacheFreeReload();return card;
 }
 function cacheFreeReload(){const url=new URL(global.location.href);url.searchParams.set('cm_build',BUILD);url.searchParams.set('_cm',String(Date.now()));global.location.replace(url.href)}
-async function retry(){
-  const s=stage();if(['session','session-error','app-release'].includes(s.key)){await probeSession({forceStatus:true});return}
-  const button=doc?.getElementById?.('refreshMatchesBtn');if((s.key==='matches'||s.key==='snapshot'||appVisible())&&button&&typeof button.click==='function'){button.click();return}
-  cacheFreeReload()
-}
+async function retry(){const s=stage();if(['session','session-error','app-release'].includes(s.key)){await probeSession({forceStatus:true});return}const button=doc?.getElementById?.('refreshMatchesBtn');if((s.key==='matches'||s.key==='snapshot'||appVisible())&&button&&typeof button.click==='function'){button.click();return}cacheFreeReload()}
 function render(force=false){
   protectValidSessionUi();const s=stage(),elapsed=Date.now()-STARTED,card=ensureCard();if(!card)return s;const shouldShow=!s.done&&(elapsed>=3500||!!lastError||s.key==='security');
-  if(shouldShow){setHidden(card,false);setFlag(card,'bad',!!lastError);const stageEl=doc.getElementById('v08BootStage'),meta=doc.getElementById('v08BootMeta');if(stageEl)setText(stageEl,lastError?`Opstartprobleem: ${lastError}`:s.label);if(meta)setText(meta,`Stage: ${s.key} · build ${BUILD} · ${Math.round(elapsed/100)/10}s${s.remembered?' · actieve wedstrijd onthouden':''}`);if(force||lastStage!==s.key)topStatus(`Opstartcontrole · ${s.label}`,lastError?'bad':'warn')}else{setHidden(card,true);setFlag(card,'bad',false)}
+  if(shouldShow){setHidden(card,false);setFlag(card,'bad',!!lastError);const stageEl=doc.getElementById('v08BootStage'),meta=doc.getElementById('v08BootMeta');if(stageEl)setText(stageEl,lastError?`Opstartprobleem: ${lastError}`:s.label);if(meta)setText(meta,`Stage: ${s.key} · build ${BUILD} · ${Math.round(elapsed/100)/10}s${s.remembered?' · actieve wedstrijd onthouden':''}`);if(force||lastStage!==s.key)topStatus(`Opstartcontrole · ${s.label}`,lastError?'bad':'warn')}else{setHidden(card,true);setFlag(card,'bad',false);if(s.done&&sessionProbe==='valid')clearSessionCheckStatus()}
   lastStage=s.key;return s;
 }
-function inspect(){
-  if(sessionProbe==='valid'&&!read(SESSION_KEY)){sessionProbe='none';sessionEmail=''}
-  protectValidSessionUi();const panel=doc?.getElementById?.('securityMfaChallenge'),visible=challengeVisible();if(visible){topStatus('Beveiligingscontrole geopend op dit apparaat. ClubMatch gebruikt alleen de echte sessiestatus; er wordt niet aangenomen dat 2FA is ingesteld.');if(!lastChallenge){try{panel.scrollIntoView({behavior:'smooth',block:'start'})}catch{}}lastChallenge=true}else lastChallenge=false;return render()
-}
+function inspect(){if(sessionProbe==='valid'&&!read(SESSION_KEY)){sessionProbe='none';sessionEmail=''}protectValidSessionUi();const panel=doc?.getElementById?.('securityMfaChallenge'),visible=challengeVisible();if(visible){topStatus('Beveiligingscontrole geopend op dit apparaat. ClubMatch gebruikt alleen de echte sessiestatus; er wordt niet aangenomen dat 2FA is ingesteld.');if(!lastChallenge){try{panel.scrollIntoView({behavior:'smooth',block:'start'})}catch{}}lastChallenge=true}else lastChallenge=false;return render()}
 function captureError(value){lastError=String(value?.message||value?.reason?.message||value?.reason||value||'Onbekende fout').slice(0,240);render(true)}
 function boot(){
-  if(!doc?.body)return;ensureCard();if(read(SESSION_KEY))setHidden(authPanel(),true);inspect();probeSession();watchdog=global.setInterval?.(()=>{const s=render();if(s.done&&Date.now()-STARTED>10000){global.clearInterval?.(watchdog);watchdog=null}},500)||null;
-  if(global.MutationObserver){observer=new global.MutationObserver(()=>render());observer.observe(doc.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']})}
-  global.addEventListener?.('error',captureError);global.addEventListener?.('unhandledrejection',captureError);global.addEventListener?.('pageshow',()=>{inspect();probeSession()});global.addEventListener?.('online',()=>probeSession({forceStatus:true}));global.addEventListener?.('storage',event=>{if(event?.key===SESSION_KEY){sessionProbe='unknown';probeSession()}});doc.addEventListener?.('visibilitychange',()=>{if(!doc.hidden){inspect();probeSession()}});
+  if(!doc?.body)return;ensureCard();if(read(SESSION_KEY))setHidden(authPanel(),true);inspect();probeSession();
+  watchdog=global.setInterval?.(()=>{const s=render();if(s.done||Date.now()-STARTED>15000){global.clearInterval?.(watchdog);watchdog=null}},500)||null;
+  ['clubmatch:v08-runtime-ready','clubmatch:v08-confirmed','clubmatch:v08-stopped','clubmatch:v08-fast-resume'].forEach(name=>global.addEventListener?.(name,()=>render()));
+  global.addEventListener?.('error',captureError);global.addEventListener?.('unhandledrejection',captureError);
+  global.addEventListener?.('pageshow',()=>{inspect();if(sessionProbe==='unknown'||sessionProbe==='error')probeSession()});
+  global.addEventListener?.('online',()=>probeSession({forceStatus:true}));
+  global.addEventListener?.('storage',event=>{if(event?.key!==SESSION_KEY)return;if(!event.newValue){sessionProbe='none';sessionEmail='';render(true);return}sessionProbe='unknown';probeSession()});
+  doc.addEventListener?.('visibilitychange',()=>{if(!doc.hidden)inspect()});
 }
 if(doc?.readyState==='loading')doc.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-global.ClubMatchV08DeviceSecurityUx=Object.freeze({inspect,challengeVisible,stage,render,retry,cacheFreeReload,probeSession,setHidden,get sessionProbe(){return sessionProbe},get lastError(){return lastError}});
+global.ClubMatchV08DeviceSecurityUx=Object.freeze({inspect,challengeVisible,stage,render,retry,cacheFreeReload,probeSession,setHidden,get sessionProbe(){return sessionProbe},get probeInFlight(){return !!probePromise},get lastError(){return lastError}});
 })(typeof window!=='undefined'?window:globalThis);
