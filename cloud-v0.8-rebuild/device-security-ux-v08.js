@@ -6,13 +6,15 @@ const URL='https://fnbqyogbamufytcabfzm.supabase.co';
 const KEY='sb_publishable_skGPpngOQ_1OpEbreV2kXA__2OL_Mbp';
 const SESSION_KEY='clubmatch-v08-session';
 const MATCH_KEY='clubmatch-v08-active-match';
-const BUILD='20260829.0018';
+const BUILD='20260829.0026';
 const STARTED=Date.now();
 let lastChallenge=false,lastStage='',lastError='',watchdog=null,observer=null,client=null,sessionProbe='unknown',sessionEmail='';
+function setFlag(el,name,on){if(!el?.classList)return false;const current=el.classList.contains(name);if(current===!!on)return false;el.classList.toggle(name,!!on);return true}
+function setHidden(el,hidden){return setFlag(el,'hidden',hidden)}
+function setText(el,value){const next=String(value??'');if(!el||el.textContent===next)return false;el.textContent=next;return true}
 function topStatus(message,tone='warn'){
   const el=doc?.getElementById?.('v08Status');if(!el)return;
-  el.textContent=String(message||'');el.classList.remove('bad','ok');
-  if(tone==='ok')el.classList.add('ok');else if(tone==='bad')el.classList.add('bad');
+  setText(el,message);setFlag(el,'ok',tone==='ok');setFlag(el,'bad',tone==='bad');
 }
 function read(key){try{return global.localStorage?.getItem?.(key)||null}catch{return null}}
 function authPanel(){return doc?.getElementById?.('authPanel')||null}
@@ -26,13 +28,13 @@ function sharedClient(){if(client)return client;const api=global.ClubMatchV08Clo
 function protectValidSessionUi(){
   const stored=!!read(SESSION_KEY),panel=authPanel();
   if(!panel)return;
-  if(sessionProbe==='valid'&&stored&&!challengeVisible()&&!recoveryVisible())panel.classList.add('hidden');
-  else if(sessionProbe==='none'||!stored)panel.classList.remove('hidden');
+  if(sessionProbe==='valid'&&stored&&!challengeVisible()&&!recoveryVisible())setHidden(panel,true);
+  else if(sessionProbe==='none'||!stored)setHidden(panel,false);
 }
 async function probeSession({forceStatus=false}={}){
   const stored=!!read(SESSION_KEY),panel=authPanel();
   if(!stored){sessionProbe='none';sessionEmail='';protectValidSessionUi();render(true);return null}
-  panel?.classList.add('hidden');
+  setHidden(panel,true);
   if(forceStatus||sessionProbe==='unknown')topStatus('Opgeslagen sessie controleren…');
   const c=sharedClient();if(!c?.auth?.getSession){sessionProbe='error';lastError='Sessiecontrole: Cloud Auth-client niet beschikbaar';render(true);return null}
   try{
@@ -40,12 +42,12 @@ async function probeSession({forceStatus=false}={}){
     const session=data?.session||null;
     if(session){
       sessionProbe='valid';sessionEmail=session?.user?.email||session?.user?.id||'';lastError='';
-      const identity=doc?.getElementById?.('sessionEmail');if(identity&&!String(identity.textContent||'').trim()&&sessionEmail)identity.textContent=sessionEmail;
+      const identity=doc?.getElementById?.('sessionEmail');if(identity&&!String(identity.textContent||'').trim()&&sessionEmail)setText(identity,sessionEmail);
       protectValidSessionUi();render(true);return session;
     }
     sessionProbe='none';sessionEmail='';protectValidSessionUi();topStatus('Geen geldige sessie · log opnieuw in');render(true);return null;
   }catch(error){
-    sessionProbe='error';lastError=`Sessiecontrole: ${error.message||error}`;panel?.classList.add('hidden');render(true);return null;
+    sessionProbe='error';lastError=`Sessiecontrole: ${error.message||error}`;setHidden(panel,true);render(true);return null;
   }
 }
 function stage(){
@@ -75,7 +77,7 @@ async function retry(){
 }
 function render(force=false){
   protectValidSessionUi();const s=stage(),elapsed=Date.now()-STARTED,card=ensureCard();if(!card)return s;const shouldShow=!s.done&&(elapsed>=3500||!!lastError||s.key==='security');
-  if(shouldShow){card.classList.remove('hidden');card.classList.toggle('bad',!!lastError);const stageEl=doc.getElementById('v08BootStage'),meta=doc.getElementById('v08BootMeta');if(stageEl)stageEl.textContent=lastError?`Opstartprobleem: ${lastError}`:s.label;if(meta)meta.textContent=`Stage: ${s.key} · build ${BUILD} · ${Math.round(elapsed/100)/10}s${s.remembered?' · actieve wedstrijd onthouden':''}`;if(force||lastStage!==s.key)topStatus(`Opstartcontrole · ${s.label}`,lastError?'bad':'warn')}else card.classList.add('hidden');
+  if(shouldShow){setHidden(card,false);setFlag(card,'bad',!!lastError);const stageEl=doc.getElementById('v08BootStage'),meta=doc.getElementById('v08BootMeta');if(stageEl)setText(stageEl,lastError?`Opstartprobleem: ${lastError}`:s.label);if(meta)setText(meta,`Stage: ${s.key} · build ${BUILD} · ${Math.round(elapsed/100)/10}s${s.remembered?' · actieve wedstrijd onthouden':''}`);if(force||lastStage!==s.key)topStatus(`Opstartcontrole · ${s.label}`,lastError?'bad':'warn')}else{setHidden(card,true);setFlag(card,'bad',false)}
   lastStage=s.key;return s;
 }
 function inspect(){
@@ -84,10 +86,10 @@ function inspect(){
 }
 function captureError(value){lastError=String(value?.message||value?.reason?.message||value?.reason||value||'Onbekende fout').slice(0,240);render(true)}
 function boot(){
-  if(!doc?.body)return;ensureCard();if(read(SESSION_KEY))authPanel()?.classList.add('hidden');inspect();probeSession();watchdog=global.setInterval?.(()=>{const s=render();if(s.done&&Date.now()-STARTED>10000){global.clearInterval?.(watchdog);watchdog=null}},500)||null;
+  if(!doc?.body)return;ensureCard();if(read(SESSION_KEY))setHidden(authPanel(),true);inspect();probeSession();watchdog=global.setInterval?.(()=>{const s=render();if(s.done&&Date.now()-STARTED>10000){global.clearInterval?.(watchdog);watchdog=null}},500)||null;
   if(global.MutationObserver){observer=new global.MutationObserver(()=>render());observer.observe(doc.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']})}
   global.addEventListener?.('error',captureError);global.addEventListener?.('unhandledrejection',captureError);global.addEventListener?.('pageshow',()=>{inspect();probeSession()});global.addEventListener?.('online',()=>probeSession({forceStatus:true}));global.addEventListener?.('storage',event=>{if(event?.key===SESSION_KEY){sessionProbe='unknown';probeSession()}});doc.addEventListener?.('visibilitychange',()=>{if(!doc.hidden){inspect();probeSession()}});
 }
 if(doc?.readyState==='loading')doc.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-global.ClubMatchV08DeviceSecurityUx=Object.freeze({inspect,challengeVisible,stage,render,retry,cacheFreeReload,probeSession,get sessionProbe(){return sessionProbe},get lastError(){return lastError}});
+global.ClubMatchV08DeviceSecurityUx=Object.freeze({inspect,challengeVisible,stage,render,retry,cacheFreeReload,probeSession,setHidden,get sessionProbe(){return sessionProbe},get lastError(){return lastError}});
 })(typeof window!=='undefined'?window:globalThis);
