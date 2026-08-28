@@ -6,7 +6,7 @@ const URL='https://fnbqyogbamufytcabfzm.supabase.co';
 const KEY='sb_publishable_skGPpngOQ_1OpEbreV2kXA__2OL_Mbp';
 const SESSION_KEY='clubmatch-v08-session';
 const MATCH_KEY='clubmatch-v08-active-match';
-const BUILD='20260829.0018';
+const BUILD='20260829.0026';
 const STARTED=Date.now();
 let lastChallenge=false,lastStage='',lastError='',watchdog=null,observer=null,client=null,sessionProbe='unknown',sessionEmail='';
 function topStatus(message,tone='warn'){
