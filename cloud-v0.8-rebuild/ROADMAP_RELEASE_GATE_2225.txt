@@ -1,0 +1,1 @@
+Build 20260828.2225 final branch gate: workflow run 33208615447 completed success with all 45 functional/architectural steps green. Frozen v0.7.6 root remains outside the v0.8 release diff.

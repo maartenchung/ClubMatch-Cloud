@@ -1,0 +1,10 @@
+import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';
+const source=fs.readFileSync(new URL('./smart-registration-v08.js',import.meta.url),'utf8');
+const context={console,globalThis:null,window:null,Promise,setTimeout,clearTimeout};context.globalThis=context;context.window=context;vm.createContext(context);vm.runInContext(source,context);
+const smart=context.ClubMatchV08SmartRegistration;assert.ok(smart,'Smart registration API ontbreekt');
+assert.deepEqual(Array.from(smart.LOSS_ACTIONS,x=>x.cause),['bad_pass','interception','duel_lost','poor_control','dribble','other']);
+const snapshot={state:{effective_elapsed_seconds:612},events:[{id:'p1',event_type:'player_action',subject_player_id:'kayden',related_player_id:'x',match_minute:9,match_second:20,payload:{action:'pass_received'}},{id:'p2',event_type:'player_action',subject_player_id:'matz',related_player_id:'kayden',match_minute:10,match_second:5,payload:{action:'pass_received'}}]};
+const candidate=smart.assistCandidate(snapshot,'matz');assert.equal(candidate.playerId,'kayden','Matz goal moet recente aangever Kayden kunnen herkennen');assert.equal(candidate.age,7);
+assert.equal(smart.assistCandidate({...snapshot,state:{effective_elapsed_seconds:700}},'matz'),null,'oude pass mag niet automatisch als assist worden gekoppeld');
+assert.match(source,/data-smart-player/);assert.match(source,/analystReceiveBall/);assert.match(source,/record_analyst_goal_v08/);assert.match(source,/p_context:context/);assert.match(source,/Goal koppelt een recente aangever automatisch als assist/);assert.match(source,/#v08ActionField,.lossGrid,.v08AnalystQuick,#v08QuickPlayer\{display:none!important\}/);
+console.log('PASS smart-registration: active player owns actions + loss causes categorized + Kayden→Matz assist inference');

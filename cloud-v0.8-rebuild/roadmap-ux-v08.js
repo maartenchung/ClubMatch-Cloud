@@ -1,12 +1,39 @@
-/* ClubMatch Cloud v0.8 - roadmap UX: safe refresh prefetch + spatial-only action field */
+/* ClubMatch Cloud v0.8 - safe refresh warmup; Action Field UI retired */
 (function(global){
 'use strict';
 const doc=global.document;
 const URL='https://fnbqyogbamufytcabfzm.supabase.co',KEY='sb_publishable_skGPpngOQ_1OpEbreV2kXA__2OL_Mbp';
 let warmStartup=()=>Promise.resolve();
-function installFastResume(){const api=global.ClubMatchV08CloudClient;if(!api?.createClient)return;const client=api.createClient(URL,KEY);if(client.__v08FastResume){warmStartup=client.__v08FastResumeWarm||warmStartup;return}const originalRpc=client.rpc.bind(client),prefetch=new Map();const key=(name,params)=>`${name}:${JSON.stringify(params||{})}`;function start(name,params={}){const k=key(name,params);if(!prefetch.has(k)){const p=Promise.resolve().then(()=>originalRpc(name,params)).finally(()=>setTimeout(()=>prefetch.delete(k),1500));prefetch.set(k,p)}return prefetch.get(k)}client.rpc=function(name,params){const k=key(name,params);return prefetch.has(k)?prefetch.get(k):originalRpc(name,params)};warmStartup=async()=>{try{const session=(await client.auth.getSession()).data?.session;if(!session)return;await Promise.allSettled([start('get_my_team_seasons'),start('get_my_open_matches')])}catch(error){console.debug('ClubMatch fast-resume prefetch overgeslagen',error)}};Object.defineProperty(client,'__v08FastResume',{value:true});Object.defineProperty(client,'__v08FastResumeWarm',{value:warmStartup})}
-function simplifyActionField(){const panel=doc?.getElementById('v08ActionField');if(!panel)return;const safe=panel.querySelector('.afSafe');if(safe)safe.innerHTML='<b>Actieveld = waar en hoe.</b> Kies actietype en speler in Snelle registratie. Gebruik dit veld alleen voor locatie en balroute; zo zijn er geen dubbele actieknoppen.';const hint=panel.querySelector('.afHint');if(hint)hint.textContent='Sleep/veeg de bal voor de route of tik een speler voor ruimtelijke context. Snelle registratie blijft de enige plek voor algemene actietypen.';const toolbar=panel.querySelector('.afToolbar');if(toolbar){const possession=toolbar.querySelector('.afPossession')?.parentElement;if(possession)possession.classList.add('hidden')}const quick=panel.querySelector('.afQuick');if(quick)quick.classList.add('hidden');[...panel.querySelectorAll('h3')].filter(h=>/snelle actie|actie met locatie/i.test(h.textContent||'')).forEach(h=>h.classList.add('hidden'))}
-function boot(){installFastResume();warmStartup();simplifyActionField();new MutationObserver(simplifyActionField).observe(doc.body,{childList:true,subtree:true})}
-installFastResume();
+
+function installSafeWarmStartup(){
+  const api=global.ClubMatchV08CloudClient;
+  if(!api?.createClient)return;
+  const client=api.createClient(URL,KEY);
+  warmStartup=async()=>{
+    try{
+      const session=(await client.auth.getSession()).data?.session;
+      if(!session)return;
+      await Promise.allSettled([
+        client.rpc('get_my_team_seasons'),
+        client.rpc('get_my_open_matches')
+      ]);
+    }catch(error){
+      console.debug('ClubMatch veilige startup-warmup overgeslagen',error);
+    }
+  };
+}
+
+function retireActionField(){
+  doc?.getElementById?.('v08ActionField')?.remove?.();
+}
+
+function boot(){
+  installSafeWarmStartup();
+  warmStartup();
+  retireActionField();
+  if(doc?.body)new MutationObserver(retireActionField).observe(doc.body,{childList:true,subtree:true});
+}
+
+installSafeWarmStartup();
 if(doc?.readyState==='loading')doc.addEventListener('DOMContentLoaded',boot);else boot();
 })(typeof window!=='undefined'?window:globalThis);
