@@ -66,6 +66,7 @@ jobs:
           node --check match-library-ui.js
           node --check management-controller.js
           node --check management-ui.js
+          node --check management-visibility.js
           node --check training-controller.js
           node --check training-ui.js
           node --check stored-match-delete-ui.js
@@ -108,6 +109,8 @@ jobs:
         run: node player-action-controller.test.mjs
       - name: Quick player action app integration
         run: node player-action-integration.test.mjs
+      - name: Live UX possession phase and permissions
+        run: node live-ux-roadmap.test.mjs
       - name: Dutch voice commands by name shirt number and player action
         run: node voice-command.test.mjs
       - name: Voice proposal and explicit confirmation gate
