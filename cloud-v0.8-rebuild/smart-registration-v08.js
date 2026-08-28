@@ -42,7 +42,9 @@ function localStatus(bar,message,type=''){
   if(!bar)return;
   let el=bar.querySelector(':scope > .smartRegStatus');
   if(!el){el=doc.createElement('div');el.className='smartRegStatus';bar.appendChild(el)}
-  el.className=`smartRegStatus ${type}`;el.textContent=message;
+  const nextClass=`smartRegStatus ${type}`.trim();
+  if(el.className!==nextClass)el.className=nextClass;
+  if(el.textContent!==message)el.textContent=message;
 }
 async function run(bar,label,fn){
   if(bar?.dataset.smartBusy==='1')return;
@@ -141,12 +143,11 @@ function ensureCoachChooser(bar){
 function syncActor(bar){
   const select=bar.querySelector('#v08QuickPlayer'),scope=bar.querySelector('.quickScope');
   if(scope)scope.classList.add('smartUnified');
-  if(!select)return;
-  if(isAgainst(bar))return;
+  if(!select||isAgainst(bar))return;
   const current=activePlayer();
   if(current?.playerId&&select.value!==current.playerId){
     select.value=current.playerId;
-    try{select.dispatchEvent(new Event('change',{bubbles:true}))}catch{select.onchange?.()}
+    try{select.dispatchEvent(new global.Event('change',{bubbles:true}))}catch{select.onchange?.()}
   }
 }
 
@@ -183,11 +184,13 @@ function updateActionContext(bar){
   const current=activePlayer(),against=isAgainst(bar);
   if(header){
     const title=header.querySelector('b'),hint=header.querySelector('.muted');
-    if(title)title.textContent=against?'Acties tegenstander':current?`Acties voor ${playerLabel(current.playerId)}`:'Acties · kies eerst een speler';
-    if(hint)hint.textContent=against?'Tegenstanderacties worden als teamactie geregistreerd.':current?(isAnalyst(bar)?'Nieuwe speler kiezen verplaatst het bezit; Goal koppelt een recente aangever automatisch als assist.':'Alle acties hieronder horen bij de actieve speler.'):'Tik hierboven bij Spelerbezit eerst een veldspeler.';
+    const nextTitle=against?'Acties tegenstander':current?`Acties voor ${playerLabel(current.playerId)}`:'Acties · kies eerst een speler';
+    const nextHint=against?'Tegenstanderacties worden als teamactie geregistreerd.':current?(isAnalyst(bar)?'Nieuwe speler kiezen verplaatst het bezit; Goal koppelt een recente aangever automatisch als assist.':'Alle acties hieronder horen bij de actieve speler.'):'Tik hierboven bij Spelerbezit eerst een veldspeler.';
+    if(title&&title.textContent!==nextTitle)title.textContent=nextTitle;
+    if(hint&&hint.textContent!==nextHint)hint.textContent=nextHint;
   }
   const ownDisabled=!against&&!current;
-  bar.querySelectorAll('[data-quick-action],[data-smart-loss]').forEach(btn=>{if(ownDisabled)btn.disabled=true});
+  bar.querySelectorAll('[data-quick-action],[data-smart-loss]').forEach(btn=>{btn.disabled=ownDisabled});
 }
 
 function retireDuplicates(bar){
