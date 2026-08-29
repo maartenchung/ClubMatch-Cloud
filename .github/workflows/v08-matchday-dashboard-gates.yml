@@ -1,0 +1,55 @@
+name: ClubMatch v0.8 Matchday Dashboard gates
+
+on:
+  push:
+    branches:
+      - clubmatch-v0.8-rebuild
+    paths:
+      - 'cloud-v0.8-rebuild/matchday-critical-v08.js'
+      - 'cloud-v0.8-rebuild/dashboard-experience-v08.js'
+      - 'cloud-v0.8-rebuild/roadmap-ux-v08.js'
+      - '.github/workflows/v08-matchday-dashboard-gates.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  matchday-dashboard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    defaults:
+      run:
+        working-directory: cloud-v0.8-rebuild
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check new browser modules
+        run: |
+          node --check matchday-critical-v08.js
+          node --check dashboard-experience-v08.js
+          node --check roadmap-ux-v08.js
+      - name: Tablet action field contract
+        run: |
+          grep -F "forceLiveActionField" matchday-critical-v08.js
+          grep -F "panel.classList.remove('hidden')" matchday-critical-v08.js
+          grep -F "@media(max-width:900px)" matchday-critical-v08.js
+          grep -F "#v08LiveActionFieldHost{grid-column:1/-1" matchday-critical-v08.js
+      - name: Matchday controls contract
+        run: |
+          grep -F "data-matchday-action=\"keeper_save\"" matchday-critical-v08.js
+          grep -F "analystRecord(gk.player_id,'save'" matchday-critical-v08.js
+          grep -F "analystRecord(gk.player_id,'ball_recovery'" matchday-critical-v08.js
+          grep -F "data.injuryStep" matchday-critical-v08.js || grep -F "dataset.injuryStep" matchday-critical-v08.js
+      - name: Dashboard enhancements contract
+        run: |
+          grep -F "Actieverdeling & performance-input" dashboard-experience-v08.js
+          grep -F "data-dash-favorite" dashboard-experience-v08.js
+          grep -F "dashSortable" dashboard-experience-v08.js
+          grep -F "ClubMatch-dashboard.xls" dashboard-experience-v08.js
+          grep -F "PDF · team + alle spelers" dashboard-experience-v08.js
+      - name: Enhancement loader contract
+        run: |
+          grep -F "matchday-critical-v08.js?v=20260829.0340" roadmap-ux-v08.js
+          grep -F "dashboard-experience-v08.js?v=20260829.0340" roadmap-ux-v08.js
