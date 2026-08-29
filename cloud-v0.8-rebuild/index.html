@@ -13,129 +13,94 @@
 <div class="wrap">
   <section class="card">
     <div class="brand">Ontwikkeld door Chungs</div>
-    <h1>ClubMatch Cloud <span class="badge">v0.8 ONTWIKKELING · build 20260829.0220</span></h1>
+    <h1>ClubMatch Cloud <span class="badge">v0.8 ONTWIKKELING · build 20260829.0245</span></h1>
     <div class="muted">v0.7.6 blijft bevroren. Deze versie leest en schrijft uitsluitend via de bevestigde v0.8 Cloud-status.</div>
     <div id="v08Status" class="status">Browser starten…</div>
   </section>
   <script>
   (function(global){
     'use strict';
-    const BUILD='20260829.0220',status=document.getElementById('v08Status'),startedAt=Date.now();
+    const BUILD='20260829.0245',status=document.getElementById('v08Status'),startedAt=Date.now();
     global.__ClubMatchShellBoot={build:BUILD,startedAt,resourceErrors:[]};
     if(status)status.textContent='Browser gestart · ClubMatch modules parallel laden…';
-    global.addEventListener('error',event=>{
-      const target=event?.target;
-      if(target?.tagName==='SCRIPT'){
-        const src=target.getAttribute('src')||'onbekend script';
-        global.__ClubMatchShellBoot.resourceErrors.push(src);
-        if(status){status.textContent=`Module kon niet laden: ${src}`;status.classList.add('bad')}
-      }
-    },true);
-    global.setTimeout(()=>{
-      if(!status||/gereed|start mislukt|module kon niet laden/i.test(status.textContent||''))return;
-      const loaded=performance?.getEntriesByType?.('resource')?.filter?.(entry=>/\.js(?:\?|$)/.test(entry.name))?.length||0;
-      const total=[...document.scripts].filter(script=>script.src).length;
-      if(total&&loaded<total)status.textContent=`Opstart duurt langer · ${loaded}/${total} browsermodules ontvangen…`;
-    },8000);
+    global.addEventListener('error',event=>{const target=event?.target;if(target?.tagName==='SCRIPT'){const src=target.getAttribute('src')||'onbekend script';global.__ClubMatchShellBoot.resourceErrors.push(src);if(status){status.textContent=`Module kon niet laden: ${src}`;status.classList.add('bad')}}},true);
+    global.setTimeout(()=>{if(!status||/gereed|start mislukt|module kon niet laden/i.test(status.textContent||''))return;const loaded=performance?.getEntriesByType?.('resource')?.filter?.(entry=>/\.js(?:\?|$)/.test(entry.name))?.length||0,total=[...document.scripts].filter(script=>script.src).length;if(total&&loaded<total)status.textContent=`Opstart duurt langer · ${loaded}/${total} browsermodules ontvangen…`},8000);
   })(window);
   </script>
-  <section id="authPanel" class="card hidden">
-    <h2>Inloggen</h2>
-    <div class="grid2"><label>E-mail<input id="email" type="email" autocomplete="username"></label><label>Wachtwoord<input id="password" type="password" autocomplete="current-password"></label></div>
-    <div class="controls"><button id="loginBtn" data-v08-action>Inloggen</button></div>
-  </section>
+  <section id="authPanel" class="card hidden"><h2>Inloggen</h2><div class="grid2"><label>E-mail<input id="email" type="email" autocomplete="username"></label><label>Wachtwoord<input id="password" type="password" autocomplete="current-password"></label></div><div class="controls"><button id="loginBtn" data-v08-action>Inloggen</button></div></section>
   <main id="appPanel" class="hidden">
-    <section class="card" data-workspace-persistent>
-      <div class="sectionTitle"><div><b id="sessionEmail"></b><div class="muted">Ingelogde Cloud-sessie</div></div><div class="controls"><button id="refreshMatchesBtn" class="secondary" data-v08-action>↻ Wedstrijden</button><button id="logoutBtn" class="secondary" data-v08-action>Uitloggen</button></div></div>
-      <h2 style="margin-top:12px">Open wedstrijden & voorbereidingen</h2><div id="openMatches"></div>
-    </section>
-    <section class="card" id="v08ScoreCard">
-      <div class="sectionTitle"><div><h2 id="activeMatchTitle">Geen wedstrijd geselecteerd</h2><div id="activeMatchMeta" class="muted"></div></div><div class="controls"><button id="refreshLiveBtn" class="secondary" data-v08-action>↻ Live-status</button></div></div>
-      <div class="scoreline"><div id="v08HomeLabel" class="scoreTeam">TEAM</div><div><div id="v08Score" class="score">0–0</div><div id="v08Clock" class="clock">0:00</div></div><div id="v08OpponentLabel" class="scoreTeam">TEGENSTANDER</div></div>
-      <div id="v08Integrity">Nog geen bevestigde wedstrijdstatus.</div>
-    </section>
-    <section class="card">
-      <h2>Live wedstrijdacties</h2>
-      <div class="actionGrid">
-        <div class="actionBox"><h3>Wissel</h3><div class="grid2"><label>Uit<select id="subOut"></select></label><label>In<select id="subIn"></select></label></div><div class="controls"><button id="subBtn" data-v08-action>Wissel bevestigen</button></div></div>
-        <div class="actionBox"><h3>Positie aanpassen</h3><div class="muted">Voor één speler naar een vrije/nieuwe positie. Als twee bezette posities moeten wisselen, gebruik Posities ruilen.</div><div class="grid2"><label>Speler<select id="posPlayer"></select></label><label>Nieuwe positie<input id="posNew" placeholder="Bijv. RW"></label></div><div class="controls"><button id="posBtn" data-v08-action>Positie aanpassen</button></div></div>
-        <div class="actionBox"><h3>Posities ruilen</h3><div class="muted">Snelste keuze als twee veldspelers hun bezette posities met elkaar wisselen.</div><div class="grid2"><label>Speler A<select id="swapA"></select></label><label>Speler B<select id="swapB"></select></label></div><div class="controls"><button id="swapBtn" data-v08-action>Posities ruilen</button></div></div>
-        <div class="actionBox"><h3>Doelpunt</h3><div class="grid2"><label>Maker<select id="goalScorer"></select></label><label>Assist<select id="goalAssist"></select></label><label>Type<select id="goalType"><option value="">— type —</option><option value="open_play">Open spel</option><option value="counter">Counter</option><option value="set_piece">Standaardsituatie</option><option value="corner">Corner</option><option value="free_kick">Vrije trap</option><option value="penalty">Penalty</option><option value="own_goal">Eigen doelpunt</option><option value="other">Overig</option></select></label><label>Notitie<input id="goalNote" placeholder="Optioneel"></label></div><div class="controls"><button id="goalForBtn" data-v08-action>⚽ Doelpunt eigen team</button><button id="goalAgainstBtn" class="secondary" data-v08-action>Doelpunt tegenstander</button></div></div>
-        <div class="actionBox"><h3>Wedstrijdklok</h3><div class="controls"><button data-clock="pause" data-v08-action>Pauze</button><button data-clock="resume" data-v08-action>Hervatten</button><button data-clock="halftime" data-v08-action>Rust</button><button data-clock="second_half" data-v08-action>Tweede helft</button></div></div>
-        <div class="actionBox"><h3>Blessuretijd / einde</h3><div class="grid2"><label>Blessuretijd minuten<input id="injuryMinutes" type="number" min="0" max="60" value="0"></label><div class="controls"><button data-clock="injury_time" data-v08-action>+ Blessuretijd</button></div></div><div class="controls"><button data-clock="finish" class="danger" data-v08-action>■ Wedstrijd stoppen</button><button id="deleteMatchBtn" class="danger hidden" data-v08-action>🗑 Definitief verwijderen</button></div></div>
-      </div>
-    </section>
-    <div class="liveLayout">
-      <div>
-        <section class="card"><h2>Live veldopstelling</h2><div class="muted" style="margin-bottom:6px">Sleep een veldspeler naar een andere positie. Bezet slot = atomaire positieruil.</div><div id="v08Pitch" class="pitch"></div></section>
-        <section class="card"><h2>Live monitoring</h2><div class="v08MonitorRow"><b>Speler</b><b>Status</b><b>Positie</b><b>Huidige beurt</b><b>Totaal</b><b>Laatste wijziging</b></div><div id="v08Monitor"></div></section>
-        <section class="card"><h2>Gebeurtenissen</h2><div id="v08Timeline"></div></section>
-      </div>
-      <div>
-        <section class="card"><h2>Veldspelers</h2><div id="v08FieldTiles" class="v08Tiles"></div></section>
-        <section class="card"><h2>Bankspelers</h2><div id="v08BenchTiles" class="v08Tiles"></div></section>
-      </div>
-    </div>
+    <section class="card" data-workspace-persistent><div class="sectionTitle"><div><b id="sessionEmail"></b><div class="muted">Ingelogde Cloud-sessie</div></div><div class="controls"><button id="refreshMatchesBtn" class="secondary" data-v08-action>↻ Wedstrijden</button><button id="logoutBtn" class="secondary" data-v08-action>Uitloggen</button></div></div><h2 style="margin-top:12px">Open wedstrijden & voorbereidingen</h2><div id="openMatches"></div></section>
+    <section class="card" id="v08ScoreCard"><div class="sectionTitle"><div><h2 id="activeMatchTitle">Geen wedstrijd geselecteerd</h2><div id="activeMatchMeta" class="muted"></div></div><div class="controls"><button id="refreshLiveBtn" class="secondary" data-v08-action>↻ Live-status</button></div></div><div class="scoreline"><div id="v08HomeLabel" class="scoreTeam">TEAM</div><div><div id="v08Score" class="score">0–0</div><div id="v08Clock" class="clock">0:00</div></div><div id="v08OpponentLabel" class="scoreTeam">TEGENSTANDER</div></div><div id="v08Integrity">Nog geen bevestigde wedstrijdstatus.</div></section>
+    <section class="card"><h2>Live wedstrijdacties</h2><div class="actionGrid">
+      <div class="actionBox"><h3>Wissel</h3><div class="grid2"><label>Uit<select id="subOut"></select></label><label>In<select id="subIn"></select></label></div><div class="controls"><button id="subBtn" data-v08-action>Wissel bevestigen</button></div></div>
+      <div class="actionBox"><h3>Positie aanpassen</h3><div class="muted">Voor één speler naar een vrije/nieuwe positie. Als twee bezette posities moeten wisselen, gebruik Posities ruilen.</div><div class="grid2"><label>Speler<select id="posPlayer"></select></label><label>Nieuwe positie<input id="posNew" placeholder="Bijv. RW"></label></div><div class="controls"><button id="posBtn" data-v08-action>Positie aanpassen</button></div></div>
+      <div class="actionBox"><h3>Posities ruilen</h3><div class="muted">Snelste keuze als twee veldspelers hun bezette posities met elkaar wisselen.</div><div class="grid2"><label>Speler A<select id="swapA"></select></label><label>Speler B<select id="swapB"></select></label></div><div class="controls"><button id="swapBtn" data-v08-action>Posities ruilen</button></div></div>
+      <div class="actionBox"><h3>Doelpunt</h3><div class="grid2"><label>Maker<select id="goalScorer"></select></label><label>Assist<select id="goalAssist"></select></label><label>Type<select id="goalType"><option value="">— type —</option><option value="open_play">Open spel</option><option value="counter">Counter</option><option value="set_piece">Standaardsituatie</option><option value="corner">Corner</option><option value="free_kick">Vrije trap</option><option value="penalty">Penalty</option><option value="own_goal">Eigen doelpunt</option><option value="other">Overig</option></select></label><label>Notitie<input id="goalNote" placeholder="Optioneel"></label></div><div class="controls"><button id="goalForBtn" data-v08-action>⚽ Doelpunt eigen team</button><button id="goalAgainstBtn" class="secondary" data-v08-action>Doelpunt tegenstander</button></div></div>
+      <div class="actionBox"><h3>Wedstrijdklok</h3><div class="controls"><button data-clock="pause" data-v08-action>Pauze</button><button data-clock="resume" data-v08-action>Hervatten</button><button data-clock="halftime" data-v08-action>Rust</button><button data-clock="second_half" data-v08-action>Tweede helft</button></div></div>
+      <div class="actionBox"><h3>Blessuretijd / einde</h3><div class="grid2"><label>Blessuretijd minuten<input id="injuryMinutes" type="number" min="0" max="60" value="0"></label><div class="controls"><button data-clock="injury_time" data-v08-action>+ Blessuretijd</button></div></div><div class="controls"><button data-clock="finish" class="danger" data-v08-action>■ Wedstrijd stoppen</button><button id="deleteMatchBtn" class="danger hidden" data-v08-action>🗑 Definitief verwijderen</button></div></div>
+    </div></section>
+    <div class="liveLayout"><div><section class="card"><h2>Live veldopstelling</h2><div class="muted" style="margin-bottom:6px">Sleep een veldspeler naar een andere positie. Bezet slot = atomaire positieruil.</div><div id="v08Pitch" class="pitch"></div></section><section class="card"><h2>Live monitoring</h2><div class="v08MonitorRow"><b>Speler</b><b>Status</b><b>Positie</b><b>Huidige beurt</b><b>Totaal</b><b>Laatste wijziging</b></div><div id="v08Monitor"></div></section><section class="card"><h2>Gebeurtenissen</h2><div id="v08Timeline"></div></section></div><div><section class="card"><h2>Veldspelers</h2><div id="v08FieldTiles" class="v08Tiles"></div></section><section class="card"><h2>Bankspelers</h2><div id="v08BenchTiles" class="v08Tiles"></div></section></div></div>
   </main>
 </div>
-<script src="cloud-client.js?v=20260829.0220" defer></script>
-<script src="realtime-native.js?v=20260829.0220" defer></script>
-<script src="roadmap-ux-v08.js?v=20260829.0220" defer></script>
-<script src="pitch-layout.js?v=20260829.0220" defer></script>
-<script src="event-describer.js?v=20260829.0220" defer></script>
-<script src="action-field-event-describer.js?v=20260829.0220" defer></script>
-<script src="live-input-event-describer-v08.js?v=20260829.0220" defer></script>
-<script src="live-state.js?v=20260829.0220" defer></script>
-<script src="snapshot-adapter.js?v=20260829.0220" defer></script>
-<script src="view-model.js?v=20260829.0220" defer></script>
-<script src="mutation-controller.js?v=20260829.0220" defer></script>
-<script src="clock-projector.js?v=20260829.0220" defer></script>
-<script src="runtime.js?v=20260829.0220" defer></script>
-<script src="realtime-status-ui.js?v=20260829.0220" defer></script>
-<script src="ui-frame.js?v=20260829.0220" defer></script>
-<script src="dom-renderer.js?v=20260829.0220" defer></script>
-<script src="action-policy.js?v=20260829.0220" defer></script>
-<script src="lifecycle-sync.js?v=20260829.0220" defer></script>
-<script src="match-selection.js?v=20260829.0220" defer></script>
-<script src="formation-layout.js?v=20260829.0220" defer></script>
-<script src="preparation-controller.js?v=20260829.0220" defer></script>
-<script src="preparation-ui.js?v=20260829.0220" defer></script>
-<script src="correction-ui.js?v=20260829.0220" defer></script>
-<script src="basis-lineup-ui.js?v=20260829.0220" defer></script>
-<script src="live-pitch-controller.js?v=20260829.0220" defer></script>
-<script src="match-phase-controller.js?v=20260829.0220" defer></script>
-<script src="match-phase-ui.js?v=20260829.0220" defer></script>
-<script src="live-controls-ui.js?v=20260829.0220" defer></script>
-<script src="player-action-controller.js?v=20260829.0220" defer></script>
-<script src="player-action-ui.js?v=20260829.0220" defer></script>
-<script src="live-match-workspace-v08.js?v=20260829.0220" defer></script>
-<script src="goal-types-ux-v08.js?v=20260829.0220" defer></script>
-<script src="action-field-standalone.js?v=20260829.0220" defer></script>
-<script src="smart-registration-v08.js?v=20260829.0220" defer></script>
-<script src="event-feed-ui.js?v=20260829.0220" defer></script>
-<script src="live-notice-ui.js?v=20260829.0220" defer></script>
-<script src="v08-stabilization.js?v=20260829.0220" defer></script>
-<script src="analyst-live-input-v08.js?v=20260829.0220" defer></script>
-<script src="analyst-correction-v08.js?v=20260829.0220" defer></script>
-<script src="fast-resume-v08.js?v=20260829.0220" defer></script>
-<script src="voice-command.js?v=20260829.0220" defer></script>
-<script src="voice-controller.js?v=20260829.0220" defer></script>
-<script src="voice-ui.js?v=20260829.0220" defer></script>
-<script src="dashboard-controller.js?v=20260829.0220" defer></script>
-<script src="dashboard-ui.js?v=20260829.0220" defer></script>
-<script src="dashboard-player-tiles-v08.js?v=20260829.0220" defer></script>
-<script src="match-library-ui.js?v=20260829.0220" defer></script>
-<script src="workspace-manager.js?v=20260829.0220" defer></script>
-<script src="management-controller.js?v=20260829.0220" defer></script>
-<script src="management-ui.js?v=20260829.0220" defer></script>
-<script src="management-visibility.js?v=20260829.0220" defer></script>
-<script src="training-controller.js?v=20260829.0220" defer></script>
-<script src="training-ui.js?v=20260829.0220" defer></script>
-<script src="stored-match-delete-ui.js?v=20260829.0220" defer></script>
-<script src="security-controller.js?v=20260829.0220" defer></script>
-<script src="security-ui.js?v=20260829.0220" defer></script>
-<script src="device-security-ux-v08.js?v=20260829.0220" defer></script>
-<script src="ux-theme.js?v=20260829.0220" defer></script>
-<script src="app.js?v=20260829.0220" defer></script>
+<script src="cloud-client.js?v=20260829.0245" defer></script>
+<script src="realtime-native.js?v=20260829.0245" defer></script>
+<script src="roadmap-ux-v08.js?v=20260829.0245" defer></script>
+<script src="pitch-layout.js?v=20260829.0245" defer></script>
+<script src="event-describer.js?v=20260829.0245" defer></script>
+<script src="action-field-event-describer.js?v=20260829.0245" defer></script>
+<script src="live-input-event-describer-v08.js?v=20260829.0245" defer></script>
+<script src="live-state.js?v=20260829.0245" defer></script>
+<script src="snapshot-adapter.js?v=20260829.0245" defer></script>
+<script src="view-model.js?v=20260829.0245" defer></script>
+<script src="mutation-controller.js?v=20260829.0245" defer></script>
+<script src="clock-projector.js?v=20260829.0245" defer></script>
+<script src="runtime.js?v=20260829.0245" defer></script>
+<script src="realtime-status-ui.js?v=20260829.0245" defer></script>
+<script src="ui-frame.js?v=20260829.0245" defer></script>
+<script src="dom-renderer.js?v=20260829.0245" defer></script>
+<script src="action-policy.js?v=20260829.0245" defer></script>
+<script src="lifecycle-sync.js?v=20260829.0245" defer></script>
+<script src="match-selection.js?v=20260829.0245" defer></script>
+<script src="formation-layout.js?v=20260829.0245" defer></script>
+<script src="preparation-controller.js?v=20260829.0245" defer></script>
+<script src="preparation-ui.js?v=20260829.0245" defer></script>
+<script src="correction-ui.js?v=20260829.0245" defer></script>
+<script src="basis-lineup-ui.js?v=20260829.0245" defer></script>
+<script src="live-pitch-controller.js?v=20260829.0245" defer></script>
+<script src="match-phase-controller.js?v=20260829.0245" defer></script>
+<script src="match-phase-ui.js?v=20260829.0245" defer></script>
+<script src="live-controls-ui.js?v=20260829.0245" defer></script>
+<script src="player-action-controller.js?v=20260829.0245" defer></script>
+<script src="player-action-ui.js?v=20260829.0245" defer></script>
+<script src="live-match-workspace-v08.js?v=20260829.0245" defer></script>
+<script src="goal-types-ux-v08.js?v=20260829.0245" defer></script>
+<script src="action-field-standalone.js?v=20260829.0245" defer></script>
+<script src="smart-registration-v08.js?v=20260829.0245" defer></script>
+<script src="event-feed-ui.js?v=20260829.0245" defer></script>
+<script src="live-notice-ui.js?v=20260829.0245" defer></script>
+<script src="v08-stabilization.js?v=20260829.0245" defer></script>
+<script src="analyst-live-input-v08.js?v=20260829.0245" defer></script>
+<script src="live-analyst-polish-v08.js?v=20260829.0245" defer></script>
+<script src="analyst-correction-v08.js?v=20260829.0245" defer></script>
+<script src="fast-resume-v08.js?v=20260829.0245" defer></script>
+<script src="voice-command.js?v=20260829.0245" defer></script>
+<script src="voice-controller.js?v=20260829.0245" defer></script>
+<script src="voice-ui.js?v=20260829.0245" defer></script>
+<script src="dashboard-controller.js?v=20260829.0245" defer></script>
+<script src="dashboard-ui.js?v=20260829.0245" defer></script>
+<script src="dashboard-player-tiles-v08.js?v=20260829.0245" defer></script>
+<script src="match-library-ui.js?v=20260829.0245" defer></script>
+<script src="workspace-manager.js?v=20260829.0245" defer></script>
+<script src="management-controller.js?v=20260829.0245" defer></script>
+<script src="management-ui.js?v=20260829.0245" defer></script>
+<script src="management-visibility.js?v=20260829.0245" defer></script>
+<script src="training-controller.js?v=20260829.0245" defer></script>
+<script src="training-ui.js?v=20260829.0245" defer></script>
+<script src="stored-match-delete-ui.js?v=20260829.0245" defer></script>
+<script src="security-controller.js?v=20260829.0245" defer></script>
+<script src="security-ui.js?v=20260829.0245" defer></script>
+<script src="device-security-ux-v08.js?v=20260829.0245" defer></script>
+<script src="ux-theme.js?v=20260829.0245" defer></script>
+<script src="app.js?v=20260829.0245" defer></script>
 </body>
 </html>
