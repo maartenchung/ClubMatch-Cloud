@@ -33,7 +33,13 @@ function ensureStyles(){
  doc.head.appendChild(s)
 }
 function stampBuild(){const badges=[...doc.querySelectorAll('.badge')];const badge=badges.find(el=>/v0\.8.*build/i.test(el.textContent||''));if(badge)badge.textContent=`v0.8 ONTWIKKELING · build ${BUILD}`;if(global.__ClubMatchShellBoot)global.__ClubMatchShellBoot.build=BUILD;doc.documentElement.dataset.clubmatchBuild=BUILD}
-function markWorkspace(){global.ClubMatchV08LiveWorkspace?.ensureWorkspace?.();const workspace=doc.getElementById('v08LiveMatchWorkspace');if(!workspace)return false;workspace.classList.add('v08TabletMatchday');doc.getElementById('v08Pitch')?.closest('.card')?.classList.add('v08HotfixPitchCard');doc.getElementById('v08Monitor')?.closest('.card')?.classList.add('v08HotfixMonitorCard');doc.getElementById('v08Timeline')?.closest('.card')?.classList.add('v08HotfixEventsCard');return true}
+function markWorkspace(){
+ global.ClubMatchV08LiveWorkspace?.ensureWorkspace?.();
+ const workspace=doc.getElementById('v08LiveMatchWorkspace'),left=doc.getElementById('v08LiveLineupColumn');if(!workspace||!left)return false;
+ const pitchCard=doc.getElementById('v08Pitch')?.closest('.card'),basis=doc.getElementById('v08BasisLineup'),monitor=doc.getElementById('v08Monitor')?.closest('.card'),events=doc.getElementById('v08Timeline')?.closest('.card');
+ if(basis&&basis.parentElement!==left)left.insertBefore(basis,pitchCard||left.firstChild);
+ workspace.classList.add('v08TabletMatchday');pitchCard?.classList.add('v08HotfixPitchCard');monitor?.classList.add('v08HotfixMonitorCard');events?.classList.add('v08HotfixEventsCard');return true
+}
 function forceAnalystMode(){if(live()){try{if(previousMode===undefined)previousMode=global.localStorage?.getItem(MODE_KEY)??null;global.localStorage?.setItem(MODE_KEY,'analyst')}catch{}return true}if(previousMode!==undefined){try{if(previousMode===null)global.localStorage?.removeItem(MODE_KEY);else global.localStorage?.setItem(MODE_KEY,previousMode)}catch{}previousMode=undefined}return false}
 function forceActionField(){if(!forceAnalystMode())return false;const a=api();if(!a?.render)return false;a.render();const panel=doc.getElementById('v08LiveActionField');if(!panel)return false;panel.dataset.tabletHotfix='1';panel.classList.remove('hidden');return true}
 function clampPitchSlots(){const pitch=doc.getElementById('v08Pitch');if(!pitch||pitch.clientWidth<120)return;const width=pitch.clientWidth;pitch.querySelectorAll('.v08PitchSlot').forEach(slot=>{const raw=parseFloat(slot.style.left);if(!Number.isFinite(raw))return;const half=(Math.max(70,slot.offsetWidth||96)/2+5)/width*100;slot.style.left=`${Number(clamp(raw,half,100-half).toFixed(2))}%`})}
