@@ -13,14 +13,14 @@
 <div class="wrap">
   <section class="card">
     <div class="brand">Ontwikkeld door Chungs</div>
-    <h1>ClubMatch Cloud <span class="badge">v0.8 ONTWIKKELING · build 20260829.0410</span></h1>
+    <h1>ClubMatch Cloud <span class="badge">v0.8 ONTWIKKELING · build 20260829.0415</span></h1>
     <div class="muted">v0.7.6 blijft bevroren. Deze versie leest en schrijft uitsluitend via de bevestigde v0.8 Cloud-status.</div>
     <div id="v08Status" class="status">Browser starten…</div>
   </section>
   <script>
   (function(global){
     'use strict';
-    const BUILD='20260829.0410',status=document.getElementById('v08Status'),startedAt=Date.now();
+    const BUILD='20260829.0415',status=document.getElementById('v08Status'),startedAt=Date.now();
     global.__ClubMatchShellBoot={build:BUILD,startedAt,resourceErrors:[]};
     if(status)status.textContent='Browser gestart · ClubMatch modules parallel laden…';
     global.addEventListener('error',event=>{const target=event?.target;if(target?.tagName==='SCRIPT'){const src=target.getAttribute('src')||'onbekend script';global.__ClubMatchShellBoot.resourceErrors.push(src);if(status){status.textContent=`Module kon niet laden: ${src}`;status.classList.add('bad')}}},true);
@@ -81,7 +81,7 @@
 <script src="v08-stabilization.js?v=20260829.0245" defer></script>
 <script src="analyst-live-input-v08.js?v=20260829.0245" defer></script>
 <script src="live-analyst-polish-v08.js?v=20260829.0245" defer></script>
-<script src="tablet-matchday-hotfix-v08.js?v=20260829.0410" defer></script>
+<script src="tablet-matchday-hotfix-v08.js?v=20260829.0415" defer></script>
 <script src="analyst-correction-v08.js?v=20260829.0245" defer></script>
 <script src="fast-resume-v08.js?v=20260829.0245" defer></script>
 <script src="voice-command.js?v=20260829.0245" defer></script>
