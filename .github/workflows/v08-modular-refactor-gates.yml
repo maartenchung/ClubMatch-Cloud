@@ -41,7 +41,7 @@ jobs:
             node --check "$file"
           done
       - name: Modular regression tests
-        run: node cloud-v0.8-rebuild/tests/modular-refactor.test.js
+        run: node cloud-v0.8-rebuild/tests/modular-release-0840.test.js
       - name: Real Chromium browser and infographic render
         run: |
           set -euo pipefail
