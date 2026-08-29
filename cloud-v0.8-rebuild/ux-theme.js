@@ -1,7 +1,7 @@
 /* ClubMatch Cloud v0.8 - semantic button families and branding; visual only */
 (function(global){
 'use strict';
-const BUILD='20260829.0520';
+const BUILD='20260829.0525';
 function stampBuild(doc=global.document){const badge=[...(doc?.querySelectorAll?.('.badge')||[])].find(el=>/v0\.8.*build/i.test(el.textContent||''));if(badge)badge.textContent=`v0.8 ONTWIKKELING · build ${BUILD}`;if(global.__ClubMatchShellBoot)global.__ClubMatchShellBoot.build=BUILD;doc?.documentElement?.setAttribute?.('data-clubmatch-build',BUILD)}
 function ensurePauseGuard(doc=global.document){if(!doc||global.ClubMatchV08PauseActionGuard||doc.getElementById('v08PauseActionGuardScript'))return;const script=doc.createElement('script');script.id='v08PauseActionGuardScript';script.src=`pause-action-guard-v08.js?v=${BUILD}`;script.defer=true;doc.body.appendChild(script)}
 function install(doc=global.document){if(!doc)return;if(!doc.getElementById('v08SemanticTheme')){const s=doc.createElement('style');s.id='v08SemanticTheme';s.textContent=`
@@ -32,5 +32,6 @@ button:focus-visible{outline:3px solid rgba(41,95,159,.35)!important;outline-off
  const brand=doc.querySelector('.brand');if(brand)brand.textContent='Ontwikkeld door Chungs';const header=brand?.closest('.card');if(header&&!header.querySelector('.cmChungsCredit')){const credit=doc.createElement('div');credit.className='cmChungsCredit';credit.textContent='Ontwikkeld door Chungs';header.appendChild(credit)}
  stampBuild(doc);ensurePauseGuard(doc)
 }
-global.ClubMatchV08UxTheme={install,BUILD};install();global.setTimeout(()=>{stampBuild();ensurePauseGuard()},150);
+function reinforce(){stampBuild();ensurePauseGuard();global.ClubMatchV08PauseActionGuard?.sync?.()}
+global.ClubMatchV08UxTheme={install,BUILD};install();global.setTimeout(reinforce,150);global.setTimeout(reinforce,700);global.addEventListener?.('clubmatch:v08-runtime-ready',reinforce);global.addEventListener?.('clubmatch:v08-confirmed',reinforce);global.addEventListener?.('pageshow',reinforce);
 })(typeof window!=='undefined'?window:globalThis);
