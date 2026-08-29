@@ -36,7 +36,7 @@ jobs:
           done
       - name: Modular regression tests
         run: node cloud-v0.8-rebuild/tests/modular-refactor.test.js
-      - name: Real Chromium browser startup
+      - name: Real Chromium browser and infographic render
         run: |
           cd cloud-v0.8-rebuild
           python3 -m http.server 8770 >/tmp/cm-refactor-http.log 2>&1 & echo $! >/tmp/cm-refactor-server.pid
@@ -46,6 +46,8 @@ jobs:
           timeout 30s "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --no-first-run --user-data-dir=/tmp/cm-refactor-browser --window-size=1100,900 --virtual-time-budget=9000 --run-all-compositor-stages-before-draw --dump-dom http://127.0.0.1:8770/index.html >/tmp/cm-refactor-dom.html 2>/tmp/cm-refactor-chrome.log || { cat /tmp/cm-refactor-chrome.log; exit 1; }
           grep -F 'ClubMatch Cloud v0.8 gereed.' /tmp/cm-refactor-dom.html >/dev/null || { echo 'Browser kwam niet voorbij module-bootstrap'; tail -100 /tmp/cm-refactor-dom.html; cat /tmp/cm-refactor-chrome.log; exit 1; }
           ! grep -F 'Start mislukt:' /tmp/cm-refactor-dom.html >/dev/null || { echo 'Start mislukt gevonden'; exit 1; }
+          timeout 20s "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --no-first-run --user-data-dir=/tmp/cm-report-browser --window-size=1240,1754 --virtual-time-budget=5000 --run-all-compositor-stages-before-draw --dump-dom http://127.0.0.1:8770/tests/browser-report-smoke.html >/tmp/cm-report-dom.html 2>/tmp/cm-report-chrome.log || { cat /tmp/cm-report-chrome.log; exit 1; }
+          grep -F 'REPORT_SMOKE_PASS' /tmp/cm-report-dom.html >/dev/null || { echo 'Infographic canvas render faalde'; cat /tmp/cm-report-dom.html; cat /tmp/cm-report-chrome.log; exit 1; }
           kill "$(cat /tmp/cm-refactor-server.pid)" 2>/dev/null || true
       - name: Architecture guard
         run: |
@@ -65,6 +67,7 @@ jobs:
           grep -q "Passes aangekomen" cloud-v0.8-rebuild/dashboard-ui.js
           grep -q "downloadTeamInfographicPdf" cloud-v0.8-rebuild/report-export.js
           grep -q "downloadTeamInfographicPng" cloud-v0.8-rebuild/report-export.js
+          grep -q "REPORT_SMOKE_PASS" cloud-v0.8-rebuild/tests/browser-report-smoke.html
           grep -q "add_match_event_v08" cloud-v0.8-rebuild/match-library-ui.js
           grep -q "edit_match_event_v08" cloud-v0.8-rebuild/match-library-ui.js
           grep -q "void_match_event_v08" cloud-v0.8-rebuild/match-library-ui.js
