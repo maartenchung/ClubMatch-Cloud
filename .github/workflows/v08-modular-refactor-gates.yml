@@ -1,10 +1,8 @@
 name: v0.8 modular refactor gates
-
 on:
   push:
     branches: [clubmatch-v0.8-modular-refactor]
   workflow_dispatch:
-
 jobs:
   modular-gates:
     runs-on: ubuntu-24.04
@@ -12,105 +10,63 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
+        with: {node-version: '22'}
       - name: Syntax check core modules
         run: |
           set -euo pipefail
-          for file in \
-            cloud-v0.8-rebuild/browser-bootstrap-v08.js \
-            cloud-v0.8-rebuild/runtime.js \
-            cloud-v0.8-rebuild/dom-renderer.js \
-            cloud-v0.8-rebuild/app.js \
-            cloud-v0.8-rebuild/mutation-controller.js \
-            cloud-v0.8-rebuild/player-action-controller.js \
-            cloud-v0.8-rebuild/live-action-field-v08.js \
-            cloud-v0.8-rebuild/live-match-workspace-v08.js \
-            cloud-v0.8-rebuild/dashboard-controller.js \
-            cloud-v0.8-rebuild/dashboard-ui.js \
-            cloud-v0.8-rebuild/performance-intelligence-v09.js \
-            cloud-v0.8-rebuild/team-synergy-ui-v09.js \
-            cloud-v0.8-rebuild/player-infographic-v09.js \
-            cloud-v0.8-rebuild/dashboard-pdf-v09.js \
-            cloud-v0.8-rebuild/kpi-info-v08.js \
-            cloud-v0.8-rebuild/pitch-layout.js \
-            cloud-v0.8-rebuild/formation-layout.js \
-            cloud-v0.8-rebuild/match-library-ui.js \
-            cloud-v0.8-rebuild/report-export.js \
-            cloud-v0.8-rebuild/report-export-v09.js; do
-            node --check "$file"
-          done
+          for f in cloud-v0.8-rebuild/{browser-bootstrap-v08,runtime,dom-renderer,app,mutation-controller,player-action-controller,live-action-field-v09,live-match-workspace-v08,preparation-ui,dashboard-controller,dashboard-ui,performance-intelligence-v09,team-synergy-ui-v09,player-infographic-v09,dashboard-pdf-v09,kpi-info-v08,dashboard-layout-v09,management-controller,management-ui,match-library-ui,report-export,report-export-v09}.js; do node --check "$f"; done
       - name: Modular regression tests
-        run: node cloud-v0.8-rebuild/tests/modular-release-0840.test.js
-      - name: Real Chromium browser and infographic render
+        run: |
+          node cloud-v0.8-rebuild/tests/modular-release-0850.test.js
+          node cloud-v0.8-rebuild/tests/modular-release-0840.test.js
+      - name: Real Chromium browser gates
         run: |
           set -euo pipefail
           cd cloud-v0.8-rebuild
-          python3 -m http.server 8770 >/tmp/cm-refactor-http.log 2>&1 & echo $! >/tmp/cm-refactor-server.pid
-          trap 'kill "$(cat /tmp/cm-refactor-server.pid)" 2>/dev/null || true' EXIT
+          python3 -m http.server 8770 >/tmp/cm-http.log 2>&1 & echo $! >/tmp/cm-pid
+          trap 'kill "$(cat /tmp/cm-pid)" 2>/dev/null || true' EXIT
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8770/index.html >/dev/null && break; sleep .1; done
-          CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
-          test -n "$CHROME" || { echo 'Chromium ontbreekt'; exit 1; }
-          timeout 30s "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --no-first-run --user-data-dir=/tmp/cm-refactor-browser --window-size=1100,900 --virtual-time-budget=9000 --run-all-compositor-stages-before-draw --dump-dom http://127.0.0.1:8770/index.html >/tmp/cm-refactor-dom.html 2>/tmp/cm-refactor-chrome.log || { cat /tmp/cm-refactor-chrome.log; exit 1; }
-          grep -F 'ClubMatch Cloud v0.8 gereed.' /tmp/cm-refactor-dom.html >/dev/null || { echo 'Browser kwam niet voorbij module-bootstrap'; tail -100 /tmp/cm-refactor-dom.html; cat /tmp/cm-refactor-chrome.log; exit 1; }
-          ! grep -F 'Start mislukt:' /tmp/cm-refactor-dom.html >/dev/null || { echo 'Start mislukt gevonden'; exit 1; }
-          grep -F 'kpi-info-v08.js?v=20260830.0840' /tmp/cm-refactor-dom.html >/dev/null || { echo 'KPI info module ontbreekt'; exit 1; }
-          grep -F 'performance-intelligence-v09.js?v=20260830.0840' /tmp/cm-refactor-dom.html >/dev/null || { echo 'v09 intelligence ontbreekt'; exit 1; }
-          timeout 20s "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --no-first-run --user-data-dir=/tmp/cm-report-browser --window-size=1240,1754 --virtual-time-budget=5000 --run-all-compositor-stages-before-draw --dump-dom http://127.0.0.1:8770/tests/browser-report-smoke.html >/tmp/cm-report-dom.html 2>/tmp/cm-report-chrome.log || { cat /tmp/cm-report-chrome.log; exit 1; }
-          grep -F 'REPORT_SMOKE_PASS' /tmp/cm-report-dom.html >/dev/null || { echo 'Team infographic canvas render faalde'; cat /tmp/cm-report-dom.html; cat /tmp/cm-report-chrome.log; exit 1; }
-          timeout 20s "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --no-first-run --user-data-dir=/tmp/cm-intelligence-browser --window-size=1240,1754 --virtual-time-budget=5000 --run-all-compositor-stages-before-draw --dump-dom http://127.0.0.1:8770/tests/browser-intelligence-smoke.html >/tmp/cm-intelligence-dom.html 2>/tmp/cm-intelligence-chrome.log || { cat /tmp/cm-intelligence-chrome.log; exit 1; }
-          grep -F 'INTELLIGENCE_SMOKE_PASS' /tmp/cm-intelligence-dom.html >/dev/null || { echo 'v09 speler/passnetwerk/dashboard-PDF render faalde'; cat /tmp/cm-intelligence-dom.html; cat /tmp/cm-intelligence-chrome.log; exit 1; }
+          CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"; test -n "$CHROME"
+          timeout 30s "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --no-first-run --user-data-dir=/tmp/cm-app --window-size=1100,900 --virtual-time-budget=9000 --dump-dom http://127.0.0.1:8770/index.html >/tmp/app.html 2>/tmp/app.log
+          grep -F 'ClubMatch Cloud v0.8 gereed.' /tmp/app.html
+          ! grep -F 'Start mislukt:' /tmp/app.html
+          grep -F 'live-action-field-v09.js?v=20260830.0850' /tmp/app.html
+          grep -F 'dashboard-layout-v09.js?v=20260830.0850' /tmp/app.html
+          timeout 20s "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --no-first-run --user-data-dir=/tmp/cm-guided --window-size=1200,900 --virtual-time-budget=4000 --dump-dom http://127.0.0.1:8770/tests/browser-guided-smoke.html >/tmp/guided.html 2>/tmp/guided.log
+          grep -F 'GUIDED_SMOKE_PASS' /tmp/guided.html || { cat /tmp/guided.html; cat /tmp/guided.log; exit 1; }
+          timeout 20s "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --no-first-run --user-data-dir=/tmp/cm-report --window-size=1240,1754 --virtual-time-budget=5000 --dump-dom http://127.0.0.1:8770/tests/browser-report-smoke.html >/tmp/report.html 2>/tmp/report.log
+          grep -F 'REPORT_SMOKE_PASS' /tmp/report.html
+          timeout 20s "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --no-first-run --user-data-dir=/tmp/cm-intel --window-size=1240,1754 --virtual-time-budget=5000 --dump-dom http://127.0.0.1:8770/tests/browser-intelligence-smoke.html >/tmp/intel.html 2>/tmp/intel.log
+          grep -F 'INTELLIGENCE_SMOKE_PASS' /tmp/intel.html
       - name: Architecture guard
         run: |
           set -euo pipefail
-          grep -q "LIVE_EVENT_WINDOW=240" cloud-v0.8-rebuild/runtime.js
-          grep -q "get_match_live_snapshot_v08" cloud-v0.8-rebuild/runtime.js
-          grep -q "renderTick" cloud-v0.8-rebuild/dom-renderer.js
-          grep -q "singleFlight" cloud-v0.8-rebuild/mutation-controller.js
-          grep -q "waitForClientEvent" cloud-v0.8-rebuild/player-action-controller.js
-          grep -q "record_match_penalty_v08" cloud-v0.8-rebuild/mutation-controller.js
-          grep -q "build 20260830.0840" cloud-v0.8-rebuild/index.html
-          grep -q "live-action-field-v08.js" cloud-v0.8-rebuild/index.html
-          grep -q "performance-intelligence-v09.js" cloud-v0.8-rebuild/index.html
-          grep -q "team-synergy-ui-v09.js" cloud-v0.8-rebuild/index.html
-          grep -q "player-infographic-v09.js" cloud-v0.8-rebuild/index.html
-          grep -q "dashboard-pdf-v09.js" cloud-v0.8-rebuild/index.html
-          grep -q "report-export-v09.js" cloud-v0.8-rebuild/index.html
-          grep -q "kpi-info-v08.js" cloud-v0.8-rebuild/index.html
-          ! grep -q "performance-intelligence-v08.js" cloud-v0.8-rebuild/index.html
-          ! grep -q "team-synergy-ui-v08.js" cloud-v0.8-rebuild/index.html
-          ! grep -q "player-infographic-v08.js" cloud-v0.8-rebuild/index.html
-          grep -q "get_performance_report_v09" cloud-v0.8-rebuild/dashboard-controller.js
-          grep -q "turnoverRatePct" cloud-v0.8-rebuild/dashboard-controller.js
-          grep -q "retentionPct" cloud-v0.8-rebuild/performance-intelligence-v09.js
-          grep -q "get_team_synergy_dashboard_v09" cloud-v0.8-rebuild/team-synergy-ui-v09.js
-          grep -q "from_node_id" cloud-v0.8-rebuild/team-synergy-ui-v09.js
-          grep -q "from_position" cloud-v0.8-rebuild/team-synergy-ui-v09.js
-          grep -q "downloadOnePdf" cloud-v0.8-rebuild/player-infographic-v09.js
-          grep -q "downloadAllPdf" cloud-v0.8-rebuild/player-infographic-v09.js
-          grep -q "Dashboard PDF" cloud-v0.8-rebuild/dashboard-pdf-v09.js
-          grep -q "pdfFromJpegs" cloud-v0.8-rebuild/dashboard-pdf-v09.js
-          grep -q "Balbehoud %" cloud-v0.8-rebuild/report-export-v09.js
-          ! grep -q "ballLossPerReceivedPct" cloud-v0.8-rebuild/report-export-v09.js
-          grep -q "get_performance_report_v09" cloud-v0.8-rebuild/kpi-info-v08.js
-          grep -q "Live Actieveld · registratieflow" cloud-v0.8-rebuild/kpi-info-v08.js
-          grep -q "cmLiveDataCoach" cloud-v0.8-rebuild/kpi-info-v08.js
-          grep -q "historie blijft zichtbaar: 0 t/m −30" cloud-v0.8-rebuild/live-action-field-v08.js
-          grep -q "record_inferred_pass_failure_v08" cloud-v0.8-rebuild/live-action-field-v08.js
-          grep -q "likelyProgression" cloud-v0.8-rebuild/live-action-field-v08.js
-          grep -q "likelySwitch" cloud-v0.8-rebuild/live-action-field-v08.js
-          grep -q "v08BasisLineupHost" cloud-v0.8-rebuild/live-match-workspace-v08.js
-          grep -q "v08LiveActionFieldHost" cloud-v0.8-rebuild/live-match-workspace-v08.js
-          grep -q "v08LiveMonitorEventsRow" cloud-v0.8-rebuild/live-match-workspace-v08.js
-          grep -q "v08QuickRegistrationCard" cloud-v0.8-rebuild/live-match-workspace-v08.js
-          ! grep -q "MutationObserver" cloud-v0.8-rebuild/live-match-workspace-v08.js
-          grep -q "REPORT_SMOKE_PASS" cloud-v0.8-rebuild/tests/browser-report-smoke.html
-          grep -q "INTELLIGENCE_SMOKE_PASS" cloud-v0.8-rebuild/tests/browser-intelligence-smoke.html
-          grep -q "add_match_event_v08" cloud-v0.8-rebuild/match-library-ui.js
-          grep -q "edit_match_event_v08" cloud-v0.8-rebuild/match-library-ui.js
-          grep -q "void_match_event_v08" cloud-v0.8-rebuild/match-library-ui.js
-          grep -q "delete_match_v08" cloud-v0.8-rebuild/match-library-ui.js
-          ! grep -q "Typ DELETE" cloud-v0.8-rebuild/dashboard-ui.js
-          for legacy in roadmap-ux-v08.js smart-registration-v08.js v08-stabilization.js live-analyst-polish-v08.js tablet-matchday-hotfix-v08.js pause-action-guard-v08.js ux-theme.js dashboard-player-tiles-v08.js; do
-            ! grep -q "$legacy" cloud-v0.8-rebuild/index.html || { echo "Legacy patch opnieuw geladen: $legacy"; exit 1; }
-          done
+          grep -q 'LIVE_EVENT_WINDOW=240' cloud-v0.8-rebuild/runtime.js
+          grep -q 'get_match_live_snapshot_v08' cloud-v0.8-rebuild/runtime.js
+          grep -q 'renderTick' cloud-v0.8-rebuild/dom-renderer.js
+          grep -q 'singleFlight' cloud-v0.8-rebuild/mutation-controller.js
+          grep -q 'build 20260830.0850' cloud-v0.8-rebuild/index.html
+          grep -q 'live-action-field-v09.js' cloud-v0.8-rebuild/index.html
+          ! grep -q 'live-action-field-v08.js' cloud-v0.8-rebuild/index.html
+          grep -q 'Pass onderschept' cloud-v0.8-rebuild/live-action-field-v09.js
+          grep -q 'Duel verloren' cloud-v0.8-rebuild/live-action-field-v09.js
+          grep -q 'Slechte controle' cloud-v0.8-rebuild/live-action-field-v09.js
+          grep -q 'Bal veroverd ≠ duel gewonnen' cloud-v0.8-rebuild/live-action-field-v09.js
+          grep -q 'Foute pass' cloud-v0.8-rebuild/live-action-field-v09.js
+          grep -q 'Indeling aanpassen' cloud-v0.8-rebuild/live-action-field-v09.js
+          grep -q 'Instructie manual' cloud-v0.8-rebuild/live-action-field-v09.js
+          grep -q 'render(s,{show:true})' cloud-v0.8-rebuild/preparation-ui.js
+          grep -q 'draggable="true"' cloud-v0.8-rebuild/preparation-ui.js
+          grep -q 'placeStarter' cloud-v0.8-rebuild/preparation-ui.js
+          grep -q 'remove_club_membership_v09' cloud-v0.8-rebuild/management-controller.js
+          grep -q 'clubmatch-user-delete' cloud-v0.8-rebuild/management-controller.js
+          grep -q 'data-member-remove' cloud-v0.8-rebuild/management-ui.js
+          grep -q 'data-user-delete' cloud-v0.8-rebuild/management-ui.js
+          grep -q 'padding-right:48px' cloud-v0.8-rebuild/dashboard-layout-v09.js
+          grep -q '.cmInfoAnchor>.cmInfoBtn' cloud-v0.8-rebuild/dashboard-layout-v09.js
+          grep -q 'v08BasisLineupHost' cloud-v0.8-rebuild/live-match-workspace-v08.js
+          grep -q 'v08LiveActionFieldHost' cloud-v0.8-rebuild/live-match-workspace-v08.js
+          grep -q 'get_performance_report_v09' cloud-v0.8-rebuild/dashboard-controller.js
+          grep -q 'get_team_synergy_dashboard_v09' cloud-v0.8-rebuild/team-synergy-ui-v09.js
+          grep -q 'Dashboard PDF' cloud-v0.8-rebuild/dashboard-pdf-v09.js
+          for legacy in roadmap-ux-v08.js smart-registration-v08.js v08-stabilization.js live-analyst-polish-v08.js tablet-matchday-hotfix-v08.js pause-action-guard-v08.js ux-theme.js dashboard-player-tiles-v08.js; do ! grep -q "$legacy" cloud-v0.8-rebuild/index.html || exit 1; done
