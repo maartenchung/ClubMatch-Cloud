@@ -13,14 +13,14 @@
 <div class="wrap">
   <section class="card">
     <div class="brand">Ontwikkeld door Chungs</div>
-    <h1>ClubMatch Cloud <span class="badge">v0.8 ONTWIKKELING · build 20260829.0510</span></h1>
+    <h1>ClubMatch Cloud <span class="badge">v0.8 ONTWIKKELING · build 20260829.0515</span></h1>
     <div class="muted">v0.7.6 blijft bevroren. Deze versie leest en schrijft uitsluitend via de bevestigde v0.8 Cloud-status.</div>
     <div id="v08Status" class="status">Browser starten…</div>
   </section>
   <script>
   (function(global){
     'use strict';
-    const BUILD='20260829.0510',status=document.getElementById('v08Status'),startedAt=Date.now();
+    const BUILD='20260829.0515',status=document.getElementById('v08Status'),startedAt=Date.now();
     global.__ClubMatchShellBoot={build:BUILD,startedAt,resourceErrors:[]};
     if(status)status.textContent='Browser gestart · ClubMatch modules parallel laden…';
     global.addEventListener('error',event=>{const target=event?.target;if(target?.tagName==='SCRIPT'){const src=target.getAttribute('src')||'onbekend script';global.__ClubMatchShellBoot.resourceErrors.push(src);if(status){status.textContent=`Module kon niet laden: ${src}`;status.classList.add('bad')}}},true);
@@ -101,7 +101,7 @@
 <script src="security-controller.js?v=20260829.0245" defer></script>
 <script src="security-ui.js?v=20260829.0245" defer></script>
 <script src="device-security-ux-v08.js?v=20260829.0245" defer></script>
-<script src="ux-theme.js?v=20260829.0245" defer></script>
+<script src="ux-theme.js?v=20260829.0515" defer></script>
 <script src="app.js?v=20260829.0245" defer></script>
 </body>
 </html>
