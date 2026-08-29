@@ -1,0 +1,2 @@
+ClubMatch Cloud v0.8 build 20260829.0220
+Release candidate after green full regression, Live Workspace/Favorites/Player360 gates and real Chromium desktop/tablet device smoke.
