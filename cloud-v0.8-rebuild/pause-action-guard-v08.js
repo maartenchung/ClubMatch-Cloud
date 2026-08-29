@@ -2,7 +2,7 @@
 (function(global){
 'use strict';
 const doc=global.document;
-const BUILD='20260829.0520';
+const BUILD='20260829.0525';
 let snapshot=null,bound=false;
 function currentSnapshot(){return snapshot||global.ClubMatchV08AnalystLiveInput?.state?.snapshot||null}
 function status(){return String(currentSnapshot()?.match?.status||'')}
@@ -11,7 +11,9 @@ function matchOpen(){return ['live','halftime'].includes(status())}
 function pausedLabel(){return status()==='halftime'?'Rust':'Pauze'}
 function stampBuild(){const badge=[...doc.querySelectorAll('.badge')].find(el=>/v0\.8.*build/i.test(el.textContent||''));if(badge)badge.textContent=`v0.8 ONTWIKKELING · build ${BUILD}`;if(global.__ClubMatchShellBoot)global.__ClubMatchShellBoot.build=BUILD;doc.documentElement.dataset.clubmatchBuild=BUILD}
 function ensureStyle(){if(doc.getElementById('v08PauseActionGuardStyles'))return;const s=doc.createElement('style');s.id='v08PauseActionGuardStyles';s.textContent=`
-#v08LiveActionField[data-pause-visible="1"],#v08LiveActionField[data-pause-visible="1"].hidden{display:block!important;visibility:visible!important;opacity:1!important;width:100%!important}
+#v08LiveActionField[data-tablet-hotfix="1"][data-pause-visible="1"],
+#v08LiveActionField[data-tablet-hotfix="1"][data-pause-visible="1"].hidden,
+#v08LiveActionField[data-pause-visible="1"][data-registration-locked="1"]{display:block!important;visibility:visible!important;opacity:1!important;width:100%!important}
 #v08LiveActionField[data-registration-locked="1"] .lafActionDock button,#v08LiveActionField[data-registration-locked="1"] .lafContext button,#v08LiveActionField[data-registration-locked="1"] .lafGoal button,#v08LiveActionField[data-registration-locked="1"] .lafGoalTypes button{opacity:.48!important;filter:saturate(.65);cursor:not-allowed!important}
 #v08PauseActionNotice{margin:0 0 9px;padding:9px 11px;border-radius:10px;border:1px solid #e2c77e;background:#fff8e8;color:#765716;font-size:11px;font-weight:800}
 `;
