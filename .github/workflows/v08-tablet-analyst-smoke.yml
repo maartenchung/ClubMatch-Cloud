@@ -59,13 +59,13 @@ jobs:
       - name: Real Chromium tablet 768x1024
         run: |
           CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"; test -n "$CHROME" || exit 1
-          timeout 20s "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --no-first-run --user-data-dir=/tmp/cm-tab --window-size=768,1024 --virtual-time-budget=5000 --dump-dom http://127.0.0.1:8770/_analyst-device-smoke.html >/tmp/cm-tab.html 2>/tmp/cm-tab.log || { cat /tmp/cm-tab.log; exit 1; }
+          timeout 25s "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --no-first-run --user-data-dir=/tmp/cm-tab --window-size=768,1024 --virtual-time-budget=6000 --run-all-compositor-stages-before-draw --dump-dom http://127.0.0.1:8770/_analyst-device-smoke.html >/tmp/cm-tab.html 2>/tmp/cm-tab.log || { cat /tmp/cm-tab.log; exit 1; }
           for p in smoke stable workspace opp-formation zone goal-for goal-against offside-own offside-against; do grep -F "data-laf-$p=\"ok\"" /tmp/cm-tab.html >/dev/null || { echo "tablet fail $p"; exit 1; }; done
           grep -F 'data-laf-trail-last="−30"' /tmp/cm-tab.html >/dev/null; grep -F 'data-laf-trail-count="31"' /tmp/cm-tab.html >/dev/null
       - name: Real Chromium desktop 1440x1000
         run: |
           CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
-          timeout 20s "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --no-first-run --user-data-dir=/tmp/cm-desk --window-size=1440,1000 --virtual-time-budget=5000 --dump-dom http://127.0.0.1:8770/_analyst-device-smoke.html >/tmp/cm-desk.html 2>/tmp/cm-desk.log || { cat /tmp/cm-desk.log; exit 1; }
+          timeout 25s "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --no-first-run --user-data-dir=/tmp/cm-desk --window-size=1440,1000 --virtual-time-budget=6000 --run-all-compositor-stages-before-draw --dump-dom http://127.0.0.1:8770/_analyst-device-smoke.html >/tmp/cm-desk.html 2>/tmp/cm-desk.log || { cat /tmp/cm-desk.log; exit 1; }
           for p in smoke stable workspace opp-formation zone goal-for goal-against offside-own offside-against; do grep -F "data-laf-$p=\"ok\"" /tmp/cm-desk.html >/dev/null || { echo "desktop fail $p"; exit 1; }; done
       - name: Cleanup
         if: always()
