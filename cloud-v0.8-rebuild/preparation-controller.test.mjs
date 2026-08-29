@@ -11,6 +11,7 @@ let savedParams=null,startParams=null;
 const client={async rpc(name,params={}){
   if(name==='get_my_team_seasons')return {data:[{team_season_id:'ts1',team_name:'O16'}],error:null};
   if(name==='get_team_cloud_setup')return {data:{team_season_id:'ts1',club_name:'Club',team_name:'O16',players:roster},error:null};
+  if(name==='get_lineup_favorites_v08')return {data:[],error:null};
   if(name==='get_match_snapshot')return {data:{match:{id:'m1',team_season_id:'ts1',opponent_name:'DEM',official_duration_minutes:80,formation_code:'4-3-3',status:'draft'},players:roster.map((p,i)=>({...p,attendance_status:'present',selected:i<12,is_starter:i<11,starting_position:i<11?['GK','RB','RCB','LCB','LB','DM','RCM','LCM','RW','ST','LW'][i]:null}))},error:null};
   if(name==='save_match_preparation'){savedParams=params;return {data:{match:{id:params.p_match_id||'m-new'},players:[]},error:null}}
   if(name==='start_match'){startParams=params;return {data:{ok:true,status:'live'},error:null}}
@@ -18,7 +19,7 @@ const client={async rpc(name,params={}){
 }};
 const P=context.ClubMatchV08Preparation.createPreparationController({client,makeId:()=> 'evt-start'});
 await P.loadTeamSeasons();assert.equal(P.state.teamSeasons.length,1);
-await P.loadTeam('ts1');assert.equal(P.state.players.length,13);assert.equal(P.state.validation.starterCount,0);assert.equal(P.state.dirty,true);
+await P.loadTeam('ts1');assert.equal(P.state.players.length,13);assert.equal(P.state.favorites.length,0);assert.equal(P.state.validation.starterCount,0);assert.equal(P.state.dirty,true);
 P.setMeta({opponentName:'DEM',matchDate:'2026-08-29',scheduledTime:'11:15',officialDurationMinutes:80});
 P.selectAllPresent();assert.equal(P.state.players.filter(p=>p.selected).length,13);
 P.makeSelectedStarters();assert.equal(P.state.players.filter(p=>p.starter).length,11);
@@ -37,4 +38,4 @@ P.clearSelection();assert.equal(P.state.players.filter(p=>p.selected).length,0);
 await P.openExisting({match_id:'m1',match_date:'2026-08-30',scheduled_time:'10:30:00'});assert.equal(P.state.meta.matchId,'m1');assert.equal(P.state.players.filter(p=>p.starter).length,11);assert.equal(P.state.players.filter(p=>p.selected).length,12);assert.equal(P.state.meta.scheduledTime,'10:30');assert.equal(P.validate().ok,true);assert.equal(P.state.dirty,false);
 P.setMeta({opponentName:'DEM',matchDate:'2026-08-30',scheduledTime:'10:30',officialDurationMinutes:80});assert.equal(P.state.dirty,false,'syncing identical form values must not dirty a reopened saved preparation');await P.start();assert.equal(startParams.p_match_id,'m1','reopened saved preparation must start directly when nothing changed');
 P.setFormation('4-2-3-1');assert.equal(P.state.dirty,true);assert.equal(P.validate().ok,false,'new formation intentionally clears incompatible slots before reassignment');P.applyFormation('4-2-3-1');assert.equal(P.validate().ok,true,P.validate().errors.join(' · '));await assert.rejects(()=>P.start(),/laatste wijzigingen eerst op/,'valid but dirty saved preparation cannot start until saved');
-console.log('PASS preparation-controller: roster + formation-scoped positions + drag placement + replacement/swap + save-before-start + saved-reopen direct start + restore');
+console.log('PASS preparation-controller: roster + formation-scoped positions + drag placement + replacement/swap + save-before-start + saved-reopen direct start + Cloud favorites compatibility');
