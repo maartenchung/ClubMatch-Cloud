@@ -28,6 +28,7 @@ jobs:
             cloud-v0.8-rebuild/live-match-workspace-v08.js \
             cloud-v0.8-rebuild/dashboard-controller.js \
             cloud-v0.8-rebuild/dashboard-ui.js \
+            cloud-v0.8-rebuild/performance-insights-v08.js \
             cloud-v0.8-rebuild/pitch-layout.js \
             cloud-v0.8-rebuild/formation-layout.js \
             cloud-v0.8-rebuild/match-library-ui.js \
@@ -60,11 +61,15 @@ jobs:
           grep -q "record_match_penalty_v08" cloud-v0.8-rebuild/mutation-controller.js
           grep -q "browser-bootstrap-v08.js" cloud-v0.8-rebuild/index.html
           grep -q "report-export.js" cloud-v0.8-rebuild/index.html
-          grep -q "build 20260829.0800" cloud-v0.8-rebuild/index.html
-          grep -q "get_team_performance_dashboard_v08" cloud-v0.8-rebuild/dashboard-controller.js
+          grep -q "performance-insights-v08.js" cloud-v0.8-rebuild/index.html
+          grep -q "build 20260829.0810" cloud-v0.8-rebuild/index.html
+          grep -q "get_performance_report_v08" cloud-v0.8-rebuild/dashboard-controller.js
+          grep -q "loadPerformanceScope" cloud-v0.8-rebuild/dashboard-controller.js
+          grep -q "Totale Team Performance Rating" cloud-v0.8-rebuild/performance-insights-v08.js
+          grep -q "Prioriteiten voor verbetering" cloud-v0.8-rebuild/performance-insights-v08.js
+          grep -q "Individuele performance-analyse" cloud-v0.8-rebuild/performance-insights-v08.js
           grep -q "Team Performance %" cloud-v0.8-rebuild/dashboard-ui.js
           grep -q "Samenspel %" cloud-v0.8-rebuild/dashboard-ui.js
-          grep -q "Passes aangekomen" cloud-v0.8-rebuild/dashboard-ui.js
           grep -q "downloadTeamInfographicPdf" cloud-v0.8-rebuild/report-export.js
           grep -q "downloadTeamInfographicPng" cloud-v0.8-rebuild/report-export.js
           grep -q "REPORT_SMOKE_PASS" cloud-v0.8-rebuild/tests/browser-report-smoke.html
