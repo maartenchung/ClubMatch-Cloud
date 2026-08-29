@@ -1,0 +1,13 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+const src=fs.readFileSync(new URL('./live-analyst-polish-v08.js',import.meta.url),'utf8');
+assert.match(src,/set_opponent_formation_v08/,'opponent formation must persist through Cloud RPC');
+for(const formation of ['4-3-3','4-2-3-1','4-4-2','3-5-2','3-4-3','5-3-2'])assert.ok(src.includes(`'${formation}'`),`missing opponent formation ${formation}`);
+assert.match(src,/Actiezone:/,'raw field coordinates must be translated to a human zone');
+assert.match(src,/aanvallende derde/);assert.match(src,/midden derde/);assert.match(src,/verdedigende derde/);
+assert.match(src,/p_action:'offside'/,'offside must be an explicit spatial action');
+assert.match(src,/p_player_id:side==='for'\?selected\.id:null/,'own offside must bind to last selected own player');
+assert.match(src,/Buitenspel tegenstander/,'opponent offside must retain selected opponent context');
+assert.match(src,/data-primary-goal="for"/);assert.match(src,/data-primary-goal="against"/);
+assert.match(src,/1 tik scorer · 2 tik Goal · 3 kies direct het goaltype/,'goal flow must be visually explicit');
+console.log('PASS analyst polish contract: logical goals + Cloud opponent formation + readable zones + player-bound offside');
