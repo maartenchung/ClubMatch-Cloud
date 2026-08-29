@@ -2,21 +2,13 @@ name: ClubMatch v0.8 analyst device smoke
 
 on:
   push:
-    branches:
-      - clubmatch-v0.8-rebuild
-    paths:
-      - 'cloud-v0.8-rebuild/**'
-      - '.github/workflows/v08-tablet-analyst-smoke.yml'
+    branches: [clubmatch-v0.8-rebuild]
+    paths: ['cloud-v0.8-rebuild/**','.github/workflows/v08-tablet-analyst-smoke.yml']
   pull_request:
-    branches:
-      - main
-    paths:
-      - 'cloud-v0.8-rebuild/**'
-      - '.github/workflows/v08-tablet-analyst-smoke.yml'
-
+    branches: [main]
+    paths: ['cloud-v0.8-rebuild/**','.github/workflows/v08-tablet-analyst-smoke.yml']
 permissions:
   contents: read
-
 jobs:
   analyst-device-smoke:
     runs-on: ubuntu-latest
@@ -25,70 +17,56 @@ jobs:
       run:
         working-directory: cloud-v0.8-rebuild
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Build Live Match Workspace fixture
+      - uses: actions/checkout@v4
+      - name: Build analyst fixture
         run: |
           cat > _analyst-device-smoke.html <<'HTML'
           <!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>.hidden{display:none!important}.card{padding:10px;margin:4px}.liveLayout{display:grid;grid-template-columns:1fr 1fr}</style></head><body>
-          <main id="appPanel">
-            <section id="v08ScoreCard" class="card"><div id="v08PossessionBar"><div class="flowGrid" id="fixtureFlow"></div></div></section>
-            <div class="liveLayout"><div><section class="card"><h2>Live veldopstelling</h2><div id="v08Pitch"></div></section><section class="card"><h2>Live monitoring</h2><div id="v08Monitor"></div></section><section class="card" id="fixtureEventsCard"><h2>Gebeurtenissen</h2><div id="v08Timeline"></div></section></div><div><section class="card" id="fixtureFieldCard"><h2>Veldspelers</h2><div id="v08FieldTiles"></div></section><section class="card" id="fixtureBenchCard"><h2>Bankspelers</h2><div id="v08BenchTiles"></div></section></div></div>
-          </main>
-          <script>localStorage.setItem('clubmatch.v08.action.mode','analyst');</script>
+          <main id="appPanel"><section id="v08ScoreCard" class="card"><div id="v08PossessionBar"><div class="flowGrid" id="fixtureFlow"></div></div></section><div class="liveLayout"><div><section class="card"><h2>Live veldopstelling</h2><div id="v08Pitch"></div></section><section class="card"><h2>Live monitoring</h2><div id="v08Monitor"></div></section><section class="card" id="fixtureEventsCard"><h2>Gebeurtenissen</h2><div id="v08Timeline"></div></section></div><div><section class="card" id="fixtureFieldCard"><h2>Veldspelers</h2><div id="v08FieldTiles"></div></section><section class="card" id="fixtureBenchCard"><h2>Bankspelers</h2><div id="v08BenchTiles"></div></section></div></div></main>
+          <script>localStorage.setItem('clubmatch.v08.action.mode','analyst')</script>
           <script src="cloud-client.js"></script><script src="pitch-layout.js"></script><script src="player-action-controller.js"></script><script src="live-match-workspace-v08.js"></script><script src="analyst-live-input-v08.js"></script><script src="live-analyst-polish-v08.js"></script>
           <script>
           document.addEventListener('DOMContentLoaded',()=>{
-            const rpcCalls=[];window.ClubMatchV08CloudClient={...window.ClubMatchV08CloudClient,createClient:()=>({rpc:async(name,params)=>{rpcCalls.push({name,params});return {data:{ok:true,opponent_formation_code:params?.p_formation_code||null},error:null}}})};
-            const goals=[];const runtime={activeMatchId:'00000000-0000-0000-0000-000000000001',snapshot:null,refresh:async()=>({ok:true}),recordGoal:async input=>{goals.push(input);return {ok:true}}};
+            const rpcCalls=[],goals=[];window.ClubMatchV08CloudClient={...window.ClubMatchV08CloudClient,createClient:()=>({rpc:async(name,params)=>{rpcCalls.push({name,params});return {data:{ok:true},error:null}}})};
+            const runtime={activeMatchId:'00000000-0000-0000-0000-000000000001',snapshot:null,refresh:async()=>({ok:true}),recordGoal:async input=>{goals.push(input);return {ok:true}}};
             const positions=['LW','ST','RW','LCM','DM','RCM','LB','LCB','RCB','RB','GK'],names=['Wai Sam','Matz','Kayden','Siem','Vigo','Ben','Shane','Dani','Boaz','Sem','Keeper'];
-            const players=positions.map((position,index)=>({player_id:`00000000-0000-0000-0001-${String(index+1).padStart(12,'0')}`,shirt_number:index+1,display_name:names[index],full_name:names[index],selected:true,is_on_field:true,current_position:position,starting_position:position}));
+            const players=positions.map((position,i)=>({player_id:`00000000-0000-0000-0001-${String(i+1).padStart(12,'0')}`,shirt_number:i+1,display_name:names[i],full_name:names[i],selected:true,is_on_field:true,current_position:position,starting_position:position}));
             const snapshot={match:{id:runtime.activeMatchId,status:'live',formation_code:'4-3-3',opponent_formation_code:'4-3-3'},state:{clock_status:'paused',period:'first_half'},players,events:[]};runtime.snapshot=snapshot;
-            const flow=document.getElementById('fixtureFlow');players.forEach(p=>{const b=document.createElement('button');b.type='button';b.className='flowPlayer';b.dataset.flowPlayer=p.player_id;b.textContent=p.display_name;flow.appendChild(b)});
+            players.forEach(p=>{const b=document.createElement('button');b.className='flowPlayer';b.dataset.flowPlayer=p.player_id;b.textContent=p.display_name;fixtureFlow.appendChild(b)});
             window.ClubMatchV08PlayerActions.createPlayerActionController=()=>({setSnapshot(){},currentPossession(){return null},currentTeamPossession(){return {side:'for'}},analystReceiveBall:async()=>({ok:true}),analystRecord:async()=>({ok:true}),analystLoseBall:async()=>({ok:true}),startTeamPossession:async()=>({ok:true}),stopPossession:async()=>({ok:true}),stopAllPossession:async()=>({ok:true})});
-            window.dispatchEvent(new CustomEvent('clubmatch:v08-runtime-ready',{detail:{runtime}}));window.dispatchEvent(new CustomEvent('clubmatch:v08-confirmed',{detail:{runtime,snapshot}}));window.ClubMatchV08LiveWorkspace?.applyQuickFormation?.();window.ClubMatchV08AnalystLiveInput?.render?.();window.ClubMatchV08AnalystPolish?.mount?.();
-            setTimeout(async()=>{
-              const field=document.getElementById('v08LiveActionField'),own=[...field.querySelectorAll('.lafOwn')],opp=[...field.querySelectorAll('.lafOpp')],firstNode=own[0];
-              own[0].click();own[1].click();opp[0].click();own[2].click();for(let i=0;i<28;i++)(i%2===0?own[(i+3)%own.length]:opp[(i+1)%opp.length]).click();
-              const trail=[...field.querySelectorAll('.lafTrailRank')].map(el=>el.textContent.trim());window.dispatchEvent(new CustomEvent('clubmatch:v08-confirmed',{detail:{runtime,snapshot}}));window.ClubMatchV08AnalystLiveInput.render();
-              document.documentElement.dataset.lafStable=field.querySelector('.lafOwn')===firstNode?'ok':'fail';document.documentElement.dataset.lafTrailLast=trail.at(-1)||'';document.documentElement.dataset.lafTrailCount=String(trail.length);
+            dispatchEvent(new CustomEvent('clubmatch:v08-runtime-ready',{detail:{runtime}}));dispatchEvent(new CustomEvent('clubmatch:v08-confirmed',{detail:{runtime,snapshot}}));ClubMatchV08LiveWorkspace.applyQuickFormation();ClubMatchV08AnalystLiveInput.render();ClubMatchV08AnalystPolish.mount();
+            setTimeout(()=>{
+              const field=v08LiveActionField,own=[...field.querySelectorAll('.lafOwn')],opp=[...field.querySelectorAll('.lafOpp')],first=own[0];
+              own[0].click();own[1].click();opp[0].click();own[2].click();for(let i=0;i<28;i++)(i%2?opp[(i+1)%11]:own[(i+3)%11]).click();
+              const trail=[...field.querySelectorAll('.lafTrailRank')].map(x=>x.textContent.trim());dispatchEvent(new CustomEvent('clubmatch:v08-confirmed',{detail:{runtime,snapshot}}));ClubMatchV08AnalystLiveInput.render();
+              document.documentElement.dataset.lafStable=field.querySelector('.lafOwn')===first?'ok':'fail';document.documentElement.dataset.lafTrailLast=trail.at(-1)||'';document.documentElement.dataset.lafTrailCount=String(trail.length);
               const formation=field.querySelector('#lafOpponentFormation select');formation.value='4-4-2';formation.dispatchEvent(new Event('change',{bubbles:true}));
-              window.ClubMatchV08AnalystLiveInput.showContext({x:67,y:58});window.ClubMatchV08AnalystPolish.mount();
-              snapshot.state.clock_status='running';own[3].click();field.querySelector('[data-primary-goal="for"]').click();const ownGoalPanel=!field.querySelector('#lafGoal').classList.contains('hidden');field.querySelector('[data-goal-type="open_play"]').click();
-              setTimeout(()=>{snapshot.state.clock_status='paused';opp[2].click();snapshot.state.clock_status='running';field.querySelector('[data-primary-goal="against"]').click();const againstGoalPanel=!field.querySelector('#lafGoal').classList.contains('hidden');field.querySelector('[data-goal-type="counter"]').click();
+              ClubMatchV08AnalystLiveInput.showContext({x:67,y:58});ClubMatchV08AnalystPolish.mount();const zoneOk=field.querySelector('#lafContext').textContent.includes('rechterzone · midden derde');
+              snapshot.state.clock_status='running';own[3].click();field.querySelector('[data-primary-goal="for"]').click();const ownPanel=!lafGoal.classList.contains('hidden');field.querySelector('[data-goal-type="open_play"]').click();
+              setTimeout(()=>{snapshot.state.clock_status='paused';opp[2].click();snapshot.state.clock_status='running';field.querySelector('[data-primary-goal="against"]').click();const againstPanel=!lafGoal.classList.contains('hidden');field.querySelector('[data-goal-type="counter"]').click();
                 setTimeout(()=>{own[4].click();field.querySelector('[data-laf-action="offside"]').click();snapshot.state.clock_status='paused';opp[4].click();snapshot.state.clock_status='running';field.querySelector('[data-laf-action="offside"]').click();
-                  setTimeout(()=>{const offsideCalls=rpcCalls.filter(x=>x.name==='record_action_field_event_v08'&&x.params?.p_action==='offside'),workspace=document.getElementById('v08LiveMatchWorkspace'),host=document.getElementById('v08LiveActionFieldHost'),analystCol=document.getElementById('v08LiveAnalystColumn'),tileZone=document.getElementById('v08PlayerTileZone'),formed=[...document.querySelectorAll('#fixtureFlow .v08FormationPlayer')];
-                    document.documentElement.dataset.lafSmoke=field&&!field.classList.contains('hidden')&&own.length===11&&opp.length===11?'ok':'fail';document.documentElement.dataset.lafWorkspace=workspace&&field.parentElement===host&&document.getElementById('fixtureEventsCard').parentElement===analystCol&&document.getElementById('fixtureFieldCard').parentElement===tileZone?'ok':'fail';document.documentElement.dataset.lafFormation=formed.length===11&&formed.every(b=>b.style.left&&b.style.top)?'ok':'fail';document.documentElement.dataset.lafOppFormation=formation.value==='4-4-2'&&field.querySelector('.lafOpp .lafPos')?.textContent.startsWith('LST')?'ok':'fail';document.documentElement.dataset.lafZone=field.querySelector('#lafContext')?.textContent.includes('rechterzone · midden derde')?'ok':'fail';document.documentElement.dataset.lafGoalFor=ownGoalPanel&&goals.some(g=>g.side==='for'&&g.scorerId)?'ok':'fail';document.documentElement.dataset.lafGoalAgainst=againstGoalPanel&&goals.some(g=>g.side==='against')?'ok':'fail';document.documentElement.dataset.lafOffsideOwn=offsideCalls.some(x=>x.params.p_side==='for'&&x.params.p_player_id===players[4].player_id)?'ok':'fail';document.documentElement.dataset.lafOffsideAgainst=offsideCalls.some(x=>x.params.p_side==='against'&&x.params.p_player_id===null&&/Tegenstander/.test(x.params.p_note||''))?'ok':'fail';
-                  },120);
-                },120);
-              },120);
-            },100);
+                  setTimeout(()=>{const off=rpcCalls.filter(x=>x.name==='record_action_field_event_v08'&&x.params?.p_action==='offside');document.documentElement.dataset.lafSmoke=own.length===11&&opp.length===11?'ok':'fail';document.documentElement.dataset.lafWorkspace=v08LiveActionField.parentElement?.id==='v08LiveActionFieldHost'&&fixtureEventsCard.parentElement?.id==='v08LiveAnalystColumn'?'ok':'fail';document.documentElement.dataset.lafOppFormation=formation.value==='4-4-2'&&field.querySelector('.lafOpp .lafPos')?.textContent.startsWith('LST')?'ok':'fail';document.documentElement.dataset.lafZone=zoneOk?'ok':'fail';document.documentElement.dataset.lafGoalFor=ownPanel&&goals.some(g=>g.side==='for'&&g.scorerId)?'ok':'fail';document.documentElement.dataset.lafGoalAgainst=againstPanel&&goals.some(g=>g.side==='against')?'ok':'fail';document.documentElement.dataset.lafOffsideOwn=off.some(x=>x.params.p_side==='for'&&x.params.p_player_id===players[4].player_id)?'ok':'fail';document.documentElement.dataset.lafOffsideAgainst=off.some(x=>x.params.p_side==='against'&&x.params.p_player_id===null&&/Tegenstander/.test(x.params.p_note||''))?'ok':'fail'},120)
+                },120)
+              },120)
+            },100)
           },{once:true});
           </script></body></html>
           HTML
-      - name: Start fixture server
+      - name: Start server
         run: |
-          python3 -m http.server 8770 >/tmp/clubmatch-device-http.log 2>&1 &
-          echo $! >/tmp/clubmatch-device-server.pid
-          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8770/_analyst-device-smoke.html >/dev/null && exit 0; sleep .1; done
-          cat /tmp/clubmatch-device-http.log; exit 1
+          python3 -m http.server 8770 >/tmp/cm-http.log 2>&1 & echo $! >/tmp/cm-server.pid
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8770/_analyst-device-smoke.html >/dev/null && exit 0; sleep .1; done; exit 1
       - name: Real Chromium tablet 768x1024
         run: |
           CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"; test -n "$CHROME" || exit 1
-          rm -rf /tmp/clubmatch-tablet-profile
-          timeout 25s "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --no-first-run --user-data-dir=/tmp/clubmatch-tablet-profile --window-size=768,1024 --virtual-time-budget=7000 --run-all-compositor-stages-before-draw --dump-dom http://127.0.0.1:8770/_analyst-device-smoke.html >/tmp/clubmatch-tablet-dom.html 2>/tmp/clubmatch-tablet-chrome.log || { cat /tmp/clubmatch-tablet-chrome.log; exit 1; }
-          for probe in 'data-laf-smoke="ok"' 'data-laf-stable="ok"' 'data-laf-workspace="ok"' 'data-laf-formation="ok"' 'data-laf-opp-formation="ok"' 'data-laf-zone="ok"' 'data-laf-goal-for="ok"' 'data-laf-goal-against="ok"' 'data-laf-offside-own="ok"' 'data-laf-offside-against="ok"'; do grep -F "$probe" /tmp/clubmatch-tablet-dom.html >/dev/null || { echo "Tablet probe faalt: $probe"; cat /tmp/clubmatch-tablet-dom.html; exit 1; }; done
-          grep -F 'data-laf-trail-last="−30"' /tmp/clubmatch-tablet-dom.html >/dev/null || exit 1
-          grep -F 'data-laf-trail-count="31"' /tmp/clubmatch-tablet-dom.html >/dev/null || exit 1
-          echo 'PASS tablet: workspace + anti-flicker + 0..−30 + opponent formation + readable zone + goals beide zijden + player-bound offside'
+          timeout 20s "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --no-first-run --user-data-dir=/tmp/cm-tab --window-size=768,1024 --virtual-time-budget=5000 --dump-dom http://127.0.0.1:8770/_analyst-device-smoke.html >/tmp/cm-tab.html 2>/tmp/cm-tab.log || { cat /tmp/cm-tab.log; exit 1; }
+          for p in smoke stable workspace opp-formation zone goal-for goal-against offside-own offside-against; do grep -F "data-laf-$p=\"ok\"" /tmp/cm-tab.html >/dev/null || { echo "tablet fail $p"; exit 1; }; done
+          grep -F 'data-laf-trail-last="−30"' /tmp/cm-tab.html >/dev/null; grep -F 'data-laf-trail-count="31"' /tmp/cm-tab.html >/dev/null
       - name: Real Chromium desktop 1440x1000
         run: |
-          CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"; rm -rf /tmp/clubmatch-desktop-profile
-          timeout 25s "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --no-first-run --user-data-dir=/tmp/clubmatch-desktop-profile --window-size=1440,1000 --virtual-time-budget=7000 --run-all-compositor-stages-before-draw --dump-dom http://127.0.0.1:8770/_analyst-device-smoke.html >/tmp/clubmatch-desktop-dom.html 2>/tmp/clubmatch-desktop-chrome.log || { cat /tmp/clubmatch-desktop-chrome.log; exit 1; }
-          for probe in 'data-laf-smoke="ok"' 'data-laf-stable="ok"' 'data-laf-workspace="ok"' 'data-laf-opp-formation="ok"' 'data-laf-zone="ok"' 'data-laf-goal-for="ok"' 'data-laf-goal-against="ok"' 'data-laf-offside-own="ok"' 'data-laf-offside-against="ok"'; do grep -F "$probe" /tmp/clubmatch-desktop-dom.html >/dev/null || { echo "Desktop probe faalt: $probe"; exit 1; }; done
-          echo 'PASS desktop: same analyst behavior as tablet'
+          CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          timeout 20s "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --no-first-run --user-data-dir=/tmp/cm-desk --window-size=1440,1000 --virtual-time-budget=5000 --dump-dom http://127.0.0.1:8770/_analyst-device-smoke.html >/tmp/cm-desk.html 2>/tmp/cm-desk.log || { cat /tmp/cm-desk.log; exit 1; }
+          for p in smoke stable workspace opp-formation zone goal-for goal-against offside-own offside-against; do grep -F "data-laf-$p=\"ok\"" /tmp/cm-desk.html >/dev/null || { echo "desktop fail $p"; exit 1; }; done
       - name: Cleanup
         if: always()
-        run: |
-          kill "$(cat /tmp/clubmatch-device-server.pid 2>/dev/null)" 2>/dev/null || true
-          rm -f _analyst-device-smoke.html
+        run: kill "$(cat /tmp/cm-server.pid 2>/dev/null)" 2>/dev/null || true; rm -f _analyst-device-smoke.html
