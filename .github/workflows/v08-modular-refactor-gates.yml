@@ -22,6 +22,7 @@ jobs:
             cloud-v0.8-rebuild/dom-renderer.js \
             cloud-v0.8-rebuild/app.js \
             cloud-v0.8-rebuild/mutation-controller.js \
+            cloud-v0.8-rebuild/player-action-controller.js \
             cloud-v0.8-rebuild/analyst-live-input-v08.js \
             cloud-v0.8-rebuild/dashboard-controller.js \
             cloud-v0.8-rebuild/dashboard-ui.js \
@@ -33,10 +34,21 @@ jobs:
           done
       - name: Modular regression tests
         run: node cloud-v0.8-rebuild/tests/modular-refactor.test.js
+      - name: Real Chromium browser startup
+        run: |
+          cd cloud-v0.8-rebuild
+          python3 -m http.server 8770 >/tmp/cm-refactor-http.log 2>&1 & echo $! >/tmp/cm-refactor-server.pid
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8770/index.html >/dev/null && break; sleep .1; done
+          CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          test -n "$CHROME" || { echo 'Chromium ontbreekt'; exit 1; }
+          timeout 30s "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --no-first-run --user-data-dir=/tmp/cm-refactor-browser --window-size=1100,900 --virtual-time-budget=9000 --run-all-compositor-stages-before-draw --dump-dom http://127.0.0.1:8770/index.html >/tmp/cm-refactor-dom.html 2>/tmp/cm-refactor-chrome.log || { cat /tmp/cm-refactor-chrome.log; exit 1; }
+          grep -F 'ClubMatch Cloud v0.8 gereed.' /tmp/cm-refactor-dom.html >/dev/null || { echo 'Browser kwam niet voorbij module-bootstrap'; tail -100 /tmp/cm-refactor-dom.html; cat /tmp/cm-refactor-chrome.log; exit 1; }
+          ! grep -F 'Start mislukt:' /tmp/cm-refactor-dom.html >/dev/null || { echo 'Start mislukt gevonden'; exit 1; }
+          kill "$(cat /tmp/cm-refactor-server.pid)" 2>/dev/null || true
       - name: Architecture guard
         run: |
-          test ! -f cloud-v0.8-rebuild/matchday-resilience-v08.js || echo 'INFO: legacy resilience file exists but must not be loaded by release index'
           grep -q "LIVE_EVENT_WINDOW=240" cloud-v0.8-rebuild/runtime.js
           grep -q "renderTick" cloud-v0.8-rebuild/dom-renderer.js
           grep -q "singleFlight" cloud-v0.8-rebuild/mutation-controller.js
+          grep -q "waitForClientEvent" cloud-v0.8-rebuild/player-action-controller.js
           grep -q "record_match_penalty_v08" cloud-v0.8-rebuild/mutation-controller.js
