@@ -18,12 +18,14 @@ jobs:
         run: |
           set -euo pipefail
           for file in \
+            cloud-v0.8-rebuild/browser-bootstrap-v08.js \
             cloud-v0.8-rebuild/runtime.js \
             cloud-v0.8-rebuild/dom-renderer.js \
             cloud-v0.8-rebuild/app.js \
             cloud-v0.8-rebuild/mutation-controller.js \
             cloud-v0.8-rebuild/player-action-controller.js \
             cloud-v0.8-rebuild/analyst-live-input-v08.js \
+            cloud-v0.8-rebuild/live-match-workspace-v08.js \
             cloud-v0.8-rebuild/dashboard-controller.js \
             cloud-v0.8-rebuild/dashboard-ui.js \
             cloud-v0.8-rebuild/pitch-layout.js \
@@ -47,8 +49,16 @@ jobs:
           kill "$(cat /tmp/cm-refactor-server.pid)" 2>/dev/null || true
       - name: Architecture guard
         run: |
+          set -euo pipefail
           grep -q "LIVE_EVENT_WINDOW=240" cloud-v0.8-rebuild/runtime.js
+          grep -q "get_match_live_snapshot_v08" cloud-v0.8-rebuild/runtime.js
           grep -q "renderTick" cloud-v0.8-rebuild/dom-renderer.js
           grep -q "singleFlight" cloud-v0.8-rebuild/mutation-controller.js
           grep -q "waitForClientEvent" cloud-v0.8-rebuild/player-action-controller.js
           grep -q "record_match_penalty_v08" cloud-v0.8-rebuild/mutation-controller.js
+          grep -q "browser-bootstrap-v08.js" cloud-v0.8-rebuild/index.html
+          grep -q "report-export.js" cloud-v0.8-rebuild/index.html
+          grep -q "build 20260829.0700" cloud-v0.8-rebuild/index.html
+          for legacy in roadmap-ux-v08.js smart-registration-v08.js v08-stabilization.js live-analyst-polish-v08.js tablet-matchday-hotfix-v08.js pause-action-guard-v08.js ux-theme.js dashboard-player-tiles-v08.js; do
+            ! grep -q "$legacy" cloud-v0.8-rebuild/index.html || { echo "Legacy patch opnieuw geladen: $legacy"; exit 1; }
+          done
