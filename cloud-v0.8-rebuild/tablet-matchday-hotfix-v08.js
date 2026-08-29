@@ -1,13 +1,47 @@
-/* ClubMatch Cloud v0.8 - stable tablet matchday layout 20260829.0420 */
+/* ClubMatch Cloud v0.8 - stable tablet matchday layout 20260829.0440 */
 (function(global){
 'use strict';
 const doc=global.document;
-const BUILD='20260829.0420';
+const BUILD='20260829.0440';
 const MODE_KEY='clubmatch.v08.action.mode';
 const FORMATIONS=['4-3-3','4-2-3-1','4-4-2','3-5-2','3-4-3','5-3-2'];
 let runtime=null,lastSnapshot=null,queued=false;
 const clamp=(v,min,max)=>Math.max(min,Math.min(max,Number(v)||0));
 const isLive=()=>['live','halftime'].includes(String(lastSnapshot?.match?.status||''));
+function setText(el,value){const next=String(value??'');if(el&&el.textContent!==next)el.textContent=next}
+function findByPlayer(root,selector,id){return [...(root?.querySelectorAll?.(selector)||[])].find(node=>node.dataset.playerId===id)||null}
+function renderStructureSignature(frame){
+ const players=list=>(list||[]).map(p=>`${p.id}:${p.role||''}:${p.position||''}:${p.cssClass||''}`).join('|');
+ const pitch=(frame?.pitch||[]).map(p=>`${p.id}:${p.position||''}:${p.cssClass||''}`).join('|');
+ const monitor=(frame?.monitor||[]).map(p=>`${p.id}:${p.role||''}:${p.position||''}:${p.cssClass||''}:${p.lastChange||''}`).join('|');
+ const timeline=(frame?.timeline||[]).map(e=>`${e.id}:${e.tone||''}:${e.label||''}:${e.description||''}:${e.minuteLabel||''}:${e.clock||''}`).join('|');
+ const s=frame?.scoreboard||{};
+ return [frame?.formationCode||'',players(frame?.field),players(frame?.bench),pitch,monitor,timeline,s.display||'',s.period||'',s.injuryTimeMinutes||0,frame?.breakActive?'1':'0',frame?.pauseActive?'1':'0'].join('§');
+}
+function patchMetricCard(root,player){
+ const card=findByPlayer(root,'.v08Player[data-player-id]',player.id);if(!card)return;
+ const slots=card.querySelectorAll('.v08Metric');(player.metrics||[]).forEach((metric,index)=>{const slot=slots[index];if(!slot)return;slot.classList.toggle('active',!!metric.active);setText(slot.querySelector('span'),metric.label);setText(slot.querySelector('b'),metric.display)});
+}
+function patchDynamicRenderer(targetDoc,frame){
+ const s=frame?.scoreboard||{};
+ setText(targetDoc.getElementById('v08Clock'),frame?.clock||'0:00');setText(targetDoc.getElementById('v08Score'),s.display||'0–0');
+ const breakWrap=targetDoc.getElementById('v08BreakClockWrap'),breakClock=targetDoc.getElementById('v08BreakClock');setText(breakClock,frame?.breakClock||'0:00');breakWrap?.classList.toggle('hidden',!frame?.breakActive);
+ const pauseWrap=targetDoc.getElementById('v08PauseClockWrap'),pauseClock=targetDoc.getElementById('v08PauseClock');setText(pauseClock,frame?.pauseClock||'0:00');pauseWrap?.classList.toggle('hidden',!frame?.pauseActive);
+ const injuryWrap=targetDoc.getElementById('v08InjuryClockWrap'),injuryClock=targetDoc.getElementById('v08InjuryClock');setText(injuryClock,Number(s.injuryTimeMinutes)>0?`+${s.injuryTimeMinutes} min · ${s.injuryClock} / ${s.injuryTimeMinutes}:00`:'');injuryWrap?.classList.toggle('hidden',!(Number(s.injuryTimeMinutes)>0&&s.period==='second_half'));
+ const fieldRoot=targetDoc.getElementById('v08FieldTiles'),benchRoot=targetDoc.getElementById('v08BenchTiles');(frame?.field||[]).forEach(p=>patchMetricCard(fieldRoot,p));(frame?.bench||[]).forEach(p=>patchMetricCard(benchRoot,p));
+ const livePitch=targetDoc.getElementById('v08Pitch');(frame?.pitch||[]).forEach(p=>{const node=findByPlayer(livePitch,'.v08PitchPlayer[data-player-id]',p.id);if(node)setText(node.querySelector('.v08PitchTime'),`Σ ${p.play} · ▶ ${p.current} · ↕ ${p.substitutions}`)});
+ const pitchBench=targetDoc.getElementById('v08PitchBench');(frame?.bench||[]).forEach(p=>{const node=findByPlayer(pitchBench,'.v08PitchBenchPlayer[data-player-id]',p.id);if(node)setText(node.querySelector('.pbTime'),`Bank ${p.metrics?.[1]?.display||'0:00'} · huidige beurt ${p.metrics?.[3]?.display||'—'} · ↕ ${p.substitutionCount}×`)});
+ const monitorRoot=targetDoc.getElementById('v08Monitor');(frame?.monitor||[]).forEach(row=>{const node=findByPlayer(monitorRoot,'.v08MonitorRow[data-player-id]',row.id);if(!node)return;setText(node.querySelector('.mCurrent'),row.currentStint);setText(node.querySelector('.mTotal'),row.total);setText(node.querySelector('.mChange'),row.lastChange||'—')});
+}
+function installNoFlickerRenderer(){
+ const base=global.ClubMatchV08DomRenderer;if(!base?.createRenderer||base.__clubmatchNoFlicker)return false;
+ const originalCreate=base.createRenderer;
+ global.ClubMatchV08DomRenderer={...base,__clubmatchNoFlicker:true,createRenderer(targetDoc){
+   const renderer=originalCreate(targetDoc);let signature='';
+   return Object.freeze({render(frame){const next=renderStructureSignature(frame);if(next!==signature){signature=next;return renderer.render(frame)}patchDynamicRenderer(targetDoc,frame);return frame},clear(){signature='';return renderer.clear()}})
+ }};return true
+}
+installNoFlickerRenderer();
 function ensureStyles(){
  if(!doc||doc.getElementById('v08TabletHotfixStyles'))return;
  const s=doc.createElement('style');s.id='v08TabletHotfixStyles';s.textContent=`
@@ -21,7 +55,7 @@ function ensureStyles(){
 #v08LiveMatchWorkspace.v08TabletMatchday .v08HotfixEventsCard{grid-column:2!important;grid-row:3!important;min-width:0!important}
 #v08LiveMatchWorkspace.v08TabletMatchday #v08QuickRegistrationCard{grid-column:1/-1!important;grid-row:4!important;margin:0 0 12px!important;min-width:0!important}
 .v08HotfixPitchCard #v08Pitch{overflow:hidden!important;padding:5px!important;min-width:0!important}.v08HotfixPitchCard .v08PitchSlot{width:104px!important;min-height:74px!important}.v08HotfixPitchCard .v08PitchPlayer{min-height:70px!important;padding:5px!important}.v08HotfixPitchCard .v08PitchName{font-size:10px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}.v08HotfixPitchCard .v08PitchPos{font-size:9px!important}.v08HotfixPitchCard .v08PitchTime{font-size:8px!important}.v08HotfixPitchCard .v08SlotLabel{font-size:7px!important;max-width:104px!important;overflow:hidden!important;text-overflow:ellipsis!important}
-#v08LiveActionField .lafOwn,#v08LiveActionField .lafOpp{width:126px!important;min-height:54px!important;padding:6px 8px!important;border-radius:11px!important;transition:none!important}#v08LiveActionField .lafName{font-size:11px!important;line-height:1.12!important}#v08LiveActionField .lafPos{font-size:8px!important;line-height:1.1!important}#v08LiveActionField .lafNo{font-size:11px!important}#v08LiveActionField .lafDir{font-size:10px!important;font-weight:900!important}
+#v08LiveActionField .lafOwn,#v08LiveActionField .lafOpp{width:126px!important;min-height:54px!important;padding:6px 8px!important;border-radius:11px!important;transition:none!important;left:var(--cm-match-left)!important;top:var(--cm-match-top)!important}#v08LiveActionField .lafName{font-size:11px!important;line-height:1.12!important}#v08LiveActionField .lafPos{font-size:8px!important;line-height:1.1!important}#v08LiveActionField .lafNo{font-size:11px!important}#v08LiveActionField .lafDir{font-size:10px!important;font-weight:900!important}
 .v08LiveFormationControl{margin:8px 0 10px;padding:10px;border:1px solid #d8c4ef;border-radius:12px;background:#faf7fd}.v08LiveFormationControlHead{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}.v08LiveFormationControlHead b{color:#4b2672}.v08LiveFormationControlRow{display:grid;grid-template-columns:minmax(150px,220px) auto minmax(180px,1fr);gap:7px;align-items:center;margin-top:7px}.v08LiveFormationControl button{border:0;background:#6f42c1;color:#fff;font-weight:900;border-radius:10px;padding:10px 13px;min-height:42px}.v08LiveFormationStatus{font-size:10px;color:#6b5877}.v08LiveFormationStatus.ok{color:#1f6638}.v08LiveFormationStatus.bad{color:#8b1f1f}
 #v08QuickRegistrationCard h2{margin-bottom:3px}#v08QuickRegistrationCard .v08QuickRegistrationHint{font-size:11px;color:#6b5877;margin-bottom:7px}#v08QuickRegistrationCard #v08PossessionBar{margin-top:0!important}
 @media(pointer:coarse){#v08LiveActionField .lafActionDock button{min-height:52px!important}#v08LiveActionField .lafOwn,#v08LiveActionField .lafOpp{width:128px!important;min-height:56px!important}.v08LiveFormationControl button{min-height:48px}}
@@ -41,24 +75,25 @@ function forceActionField(){
  try{global.localStorage?.setItem(MODE_KEY,'analyst')}catch{}
  const api=global.ClubMatchV08AnalystLiveInput;let panel=doc.getElementById('v08LiveActionField');
  if(!panel&&api?.render){try{api.render()}catch(error){console.error('Live Actieveld render',error)}}
- panel=doc.getElementById('v08LiveActionField');if(!panel)return false;panel.dataset.tabletHotfix='1';panel.classList.remove('hidden');return true
+ panel=doc.getElementById('v08LiveActionField');if(!panel)return false;panel.dataset.tabletHotfix='1';panel.dataset.matchupManaged='1';panel.classList.remove('hidden');return true
 }
 function clampPitchSlots(){const pitch=doc.getElementById('v08Pitch');if(!pitch||pitch.clientWidth<120)return;const width=pitch.clientWidth;pitch.querySelectorAll('.v08PitchSlot').forEach(slot=>{const raw=parseFloat(slot.style.left);if(!Number.isFinite(raw))return;const half=(Math.max(76,slot.offsetWidth||104)/2+5)/width*100;const next=`${Number(clamp(raw,half,100-half).toFixed(2))}%`;if(slot.style.left!==next)slot.style.left=next})}
 function posCode(node){const txt=String(node.querySelector('.lafPos')?.textContent||'').trim().toUpperCase();return txt.match(/^(GK|RB|RWB|RCB|CB|LCB|LB|LWB|RDM|LDM|DM|RM|RCM|CM|LCM|LM|AM|RW|LW|RST|ST|LST)\b/)?.[1]||''}
-function opponentFormation(){return doc.querySelector('#lafOpponentFormation select')?.value||'4-3-3'}
+function opponentFormation(){return doc.querySelector('#lafOpponentFormation select')?.value||lastSnapshot?.match?.opponent_formation_code||'4-3-3'}
 function tacticalY(slot,geom,side){
  if(!slot)return 50;if(slot.position==='GK')return side==='own'?91:7;
  const lastOut=Math.max(0,(geom?.rows?.length||2)-2),t=lastOut?clamp(slot.row,0,lastOut)/lastOut:0;
  return side==='own'?32+t*40:61-t*38
 }
-function setNodePoint(node,x,y){const left=`${Number(clamp(x,8,92).toFixed(2))}%`,top=`${Number(clamp(y,6,94).toFixed(2))}%`;if(node.style.left!==left)node.style.left=left;if(node.style.top!==top)node.style.top=top}
+function setNodePoint(node,x,y){const left=`${Number(clamp(x,8,92).toFixed(2))}%`,top=`${Number(clamp(y,6,94).toFixed(2))}%`;if(node.style.getPropertyValue('--cm-match-left')!==left)node.style.setProperty('--cm-match-left',left);if(node.style.getPropertyValue('--cm-match-top')!==top)node.style.setProperty('--cm-match-top',top)}
+function syncOpponentState(node,x,y,position){const state=global.ClubMatchV08AnalystLiveInput?.state,oppId=node.dataset.oppId,opp=state?.opponents?.find?.(item=>item.id===oppId);if(!opp)return;opp.x=clamp(x,8,92);opp.y=clamp(y,6,94);opp.position=position}
 function relayoutActionField(){
  const pitch=doc.querySelector('#v08LiveActionField #lafPitch');if(!pitch||pitch.clientWidth<200)return;
  const ownGeom=global.ClubMatchV08PitchLayout?.geometry?.(lastSnapshot?.match?.formation_code||'4-3-3'),oppGeom=global.ClubMatchV08PitchLayout?.geometry?.(opponentFormation());if(!ownGeom?.slots||!oppGeom?.slots)return;
  const ownMap=new Map(ownGeom.slots.map(s=>[s.position,s])),oppMap=new Map(oppGeom.slots.map(s=>[s.position,s]));
  pitch.querySelectorAll('.lafOwn').forEach(node=>{const slot=ownMap.get(posCode(node));if(slot)setNodePoint(node,slot.x,tacticalY(slot,ownGeom,'own'))});
- pitch.querySelectorAll('.lafOpp').forEach(node=>{const slot=oppMap.get(posCode(node));if(slot)setNodePoint(node,100-slot.x,tacticalY(slot,oppGeom,'opp'))});
- const dir=pitch.querySelector('.lafDir');if(dir)dir.textContent='↑ ONS AANVALSRICHTING · DOEL TEGENSTANDER'
+ pitch.querySelectorAll('.lafOpp').forEach(node=>{const slot=oppMap.get(posCode(node));if(!slot)return;const x=100-slot.x,y=tacticalY(slot,oppGeom,'opp');setNodePoint(node,x,y);syncOpponentState(node,x,y,slot.position)});
+ const dir=pitch.querySelector('.lafDir');if(dir&&dir.textContent!=='↑ ONS AANVALSRICHTING · DOEL TEGENSTANDER')dir.textContent='↑ ONS AANVALSRICHTING · DOEL TEGENSTANDER'
 }
 function nearestAssignments(code){
  const players=(lastSnapshot?.players||[]).filter(p=>p.selected&&p.is_on_field);if(players.length!==11)throw new Error(`Formatie wijzigen vereist 11 veldspelers; nu ${players.length}`);
@@ -78,7 +113,7 @@ function moveQuickRegistration(){const bar=doc.getElementById('v08PossessionBar'
 function sync(){if(!isLive())return;ensureStyles();markWorkspace();forceActionField();ensureFormationControl();syncFormationControl();moveQuickRegistration();clampPitchSlots();relayoutActionField()}
 function schedule(){if(queued)return;queued=true;(global.requestAnimationFrame||global.setTimeout)(()=>{queued=false;sync()},0)}
 function onConfirmed(event){runtime=event?.detail?.runtime||runtime;lastSnapshot=event?.detail?.snapshot||runtime?.snapshot||lastSnapshot;if(isLive())schedule()}
-function boot(){ensureStyles();stampBuild();global.addEventListener?.('clubmatch:v08-runtime-ready',event=>{runtime=event?.detail?.runtime||runtime});global.addEventListener?.('clubmatch:v08-confirmed',onConfirmed);global.addEventListener?.('pageshow',()=>{if(isLive())schedule()});global.addEventListener?.('resize',()=>{if(isLive())global.setTimeout?.(schedule,100)});doc?.addEventListener?.('change',event=>{if(event.target?.closest?.('#lafOpponentFormation select')&&isLive())schedule()},true)}
+function boot(){ensureStyles();stampBuild();installNoFlickerRenderer();global.addEventListener?.('clubmatch:v08-runtime-ready',event=>{runtime=event?.detail?.runtime||runtime});global.addEventListener?.('clubmatch:v08-confirmed',onConfirmed);global.addEventListener?.('pageshow',()=>{if(isLive())schedule()});global.addEventListener?.('resize',()=>{if(isLive())global.setTimeout?.(schedule,100)});doc?.addEventListener?.('change',event=>{if(event.target?.closest?.('#lafOpponentFormation select')&&isLive())schedule()},true)}
 if(doc?.readyState==='loading')doc.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-global.ClubMatchV08TabletHotfix=Object.freeze({BUILD,sync,forceActionField,relayoutActionField,nearestAssignments,moveQuickRegistration,tacticalY});
+global.ClubMatchV08TabletHotfix=Object.freeze({BUILD,sync,forceActionField,relayoutActionField,nearestAssignments,moveQuickRegistration,tacticalY,installNoFlickerRenderer});
 })(typeof window!=='undefined'?window:globalThis);
