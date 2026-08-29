@@ -1,0 +1,52 @@
+name: ClubMatch v0.8 Live Workspace gates
+
+on:
+  push:
+    branches:
+      - clubmatch-v0.8-rebuild
+    paths:
+      - 'cloud-v0.8-rebuild/**'
+      - '.github/workflows/v08-live-workspace-tests.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'cloud-v0.8-rebuild/**'
+      - '.github/workflows/v08-live-workspace-tests.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  live-workspace-gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    defaults:
+      run:
+        working-directory: cloud-v0.8-rebuild
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: New browser module syntax
+        run: |
+          node --check live-match-workspace-v08.js
+          node --check dashboard-player-tiles-v08.js
+          node --check analyst-live-input-v08.js
+          node --check preparation-controller.js
+          node --check preparation-ui.js
+      - name: Unified Live Match Workspace
+        run: node live-match-workspace.test.mjs
+      - name: Cloud favorite basisopstellingen
+        run: node lineup-favorites.test.mjs
+      - name: Dashboard player KPI tiles and Player 360
+        run: node dashboard-player-tiles.test.mjs
+      - name: Stable analyst field contract
+        run: node analyst-live-input.test.mjs
+      - name: Build asset and Live UX contract
+        run: |
+          node asset-versioning.test.mjs
+          node live-ux-fixes.test.mjs

@@ -1,0 +1,7 @@
+import fs from 'node:fs';import assert from 'node:assert/strict';
+const read=f=>fs.readFileSync(new URL(`./${f}`,import.meta.url),'utf8');
+const tiles=read('dashboard-player-tiles-v08.js'),dashboard=read('dashboard-ui.js'),controller=read('dashboard-controller.js'),html=read('index.html');
+assert.match(tiles,/dashPlayerTiles/);assert.match(tiles,/dashPlayerTileRating/);assert.match(tiles,/Speeltijd/);assert.match(tiles,/Goals/);assert.match(tiles,/Assists/);assert.match(tiles,/Acties/);assert.match(tiles,/Bezit/);assert.match(tiles,/Speler 360 openen/);assert.match(tiles,/\[data-player360\]/);assert.match(tiles,/source\.click\(\)/,'tegel moet bestaande Player 360 flow hergebruiken');
+assert.match(tiles,/bootstrapObserver\.observe\(app,\{childList:true,subtree:false\}\)/,'bootstrap observer mag alleen top-level app children volgen');assert.match(tiles,/observer\.observe\(root,\{childList:true,subtree:true\}\)/,'dashboard observer moet alleen Dashboard volgen');assert.doesNotMatch(tiles,/observe\(doc\.body/);assert.doesNotMatch(tiles,/setInterval/);
+assert.match(dashboard,/data-player360/);assert.match(controller,/get_player_overview_v08/);assert.match(dashboard,/Speler 360/);assert.match(dashboard,/Recente spelergebeurtenissen/);assert.match(html,/dashboard-player-tiles-v08\.js\?v=/);new Function(tiles);
+console.log('PASS dashboard-player-tiles: visual KPI tiles proxy to complete Player 360 analysis');
