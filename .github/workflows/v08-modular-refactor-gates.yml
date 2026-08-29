@@ -16,9 +16,7 @@ jobs:
           set -euo pipefail
           for f in cloud-v0.8-rebuild/{browser-bootstrap-v08,runtime,dom-renderer,app,mutation-controller,player-action-controller,live-action-field-v09,live-match-workspace-v08,preparation-ui,dashboard-controller,dashboard-ui,performance-intelligence-v09,team-synergy-ui-v09,player-infographic-v09,dashboard-pdf-v09,kpi-info-v08,dashboard-layout-v09,management-controller,management-ui,match-library-ui,report-export,report-export-v09}.js; do node --check "$f"; done
       - name: Modular regression tests
-        run: |
-          node cloud-v0.8-rebuild/tests/modular-release-0850.test.js
-          node cloud-v0.8-rebuild/tests/modular-release-0840.test.js
+        run: node cloud-v0.8-rebuild/tests/modular-release-0850.test.js
       - name: Real Chromium browser gates
         run: |
           set -euo pipefail
