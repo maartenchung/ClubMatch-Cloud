@@ -13,14 +13,14 @@
 <div class="wrap">
   <section class="card">
     <div class="brand">Ontwikkeld door Chungs</div>
-    <h1>ClubMatch Cloud <span class="badge">v0.8 · build 20260829.0810</span></h1>
+    <h1>ClubMatch Cloud <span class="badge">v0.8 · build 20260829.0820</span></h1>
     <div class="muted">v0.7.6 blijft bevroren. v0.8 gebruikt een schone modulaire bootstrap zonder matchday-hotfixlagen.</div>
     <div id="v08Status" class="status">Browser starten…</div>
   </section>
   <script>
   (function(global){
     'use strict';
-    const BUILD='20260829.0810',status=document.getElementById('v08Status'),startedAt=Date.now();
+    const BUILD='20260829.0820',status=document.getElementById('v08Status'),startedAt=Date.now();
     global.__ClubMatchShellBoot={build:BUILD,startedAt,resourceErrors:[]};
     if(status)status.textContent='Browser gestart · ClubMatch modules laden…';
     global.addEventListener('error',event=>{const target=event?.target;if(target?.tagName==='SCRIPT'){const src=target.getAttribute('src')||'onbekend script';global.__ClubMatchShellBoot.resourceErrors.push(src);if(status){status.textContent=`Module kon niet laden: ${src}`;status.classList.add('bad')}}},true);
@@ -42,59 +42,61 @@
     <div class="liveLayout"><div><section class="card"><h2>Live veldopstelling</h2><div class="muted" style="margin-bottom:6px">Sleep een veldspeler naar een andere positie. Bezet slot = atomaire positieruil.</div><div id="v08Pitch" class="pitch"></div></section><section class="card"><h2>Live monitoring</h2><div class="v08MonitorRow"><b>Speler</b><b>Status</b><b>Positie</b><b>Huidige beurt</b><b>Totaal</b><b>Laatste wijziging</b></div><div id="v08Monitor"></div></section><section class="card"><h2>Gebeurtenissen</h2><div id="v08Timeline"></div></section></div><div><section class="card"><h2>Veldspelers</h2><div id="v08FieldTiles" class="v08Tiles"></div></section><section class="card"><h2>Bankspelers</h2><div id="v08BenchTiles" class="v08Tiles"></div></section></div></div>
   </main>
 </div>
-<script src="cloud-client.js?v=20260829.0810" defer></script>
-<script src="realtime-native.js?v=20260829.0810" defer></script>
-<script src="browser-bootstrap-v08.js?v=20260829.0810" defer></script>
-<script src="pitch-layout.js?v=20260829.0810" defer></script>
-<script src="event-describer.js?v=20260829.0810" defer></script>
-<script src="action-field-event-describer.js?v=20260829.0810" defer></script>
-<script src="live-input-event-describer-v08.js?v=20260829.0810" defer></script>
-<script src="live-state.js?v=20260829.0810" defer></script>
-<script src="snapshot-adapter.js?v=20260829.0810" defer></script>
-<script src="view-model.js?v=20260829.0810" defer></script>
-<script src="mutation-controller.js?v=20260829.0810" defer></script>
-<script src="clock-projector.js?v=20260829.0810" defer></script>
-<script src="runtime.js?v=20260829.0810" defer></script>
-<script src="realtime-status-ui.js?v=20260829.0810" defer></script>
-<script src="ui-frame.js?v=20260829.0810" defer></script>
-<script src="dom-renderer.js?v=20260829.0810" defer></script>
-<script src="action-policy.js?v=20260829.0810" defer></script>
-<script src="lifecycle-sync.js?v=20260829.0810" defer></script>
-<script src="match-selection.js?v=20260829.0810" defer></script>
-<script src="formation-layout.js?v=20260829.0810" defer></script>
-<script src="preparation-controller.js?v=20260829.0810" defer></script>
-<script src="preparation-ui.js?v=20260829.0810" defer></script>
-<script src="correction-ui.js?v=20260829.0810" defer></script>
-<script src="basis-lineup-ui.js?v=20260829.0810" defer></script>
-<script src="live-pitch-controller.js?v=20260829.0810" defer></script>
-<script src="match-phase-controller.js?v=20260829.0810" defer></script>
-<script src="match-phase-ui.js?v=20260829.0810" defer></script>
-<script src="live-controls-ui.js?v=20260829.0810" defer></script>
-<script src="player-action-controller.js?v=20260829.0810" defer></script>
-<script src="player-action-ui.js?v=20260829.0810" defer></script>
-<script src="live-match-workspace-v08.js?v=20260829.0810" defer></script>
-<script src="event-feed-ui.js?v=20260829.0810" defer></script>
-<script src="live-notice-ui.js?v=20260829.0810" defer></script>
-<script src="analyst-live-input-v08.js?v=20260829.0810" defer></script>
-<script src="fast-resume-v08.js?v=20260829.0810" defer></script>
-<script src="voice-command.js?v=20260829.0810" defer></script>
-<script src="voice-controller.js?v=20260829.0810" defer></script>
-<script src="voice-ui.js?v=20260829.0810" defer></script>
-<script src="dashboard-controller.js?v=20260829.0810" defer></script>
-<script src="report-export.js?v=20260829.0810" defer></script>
-<script src="dashboard-ui.js?v=20260829.0810" defer></script>
-<script src="performance-insights-v08.js?v=20260829.0810" defer></script>
-<script src="match-library-ui.js?v=20260829.0810" defer></script>
-<script src="workspace-manager.js?v=20260829.0810" defer></script>
-<script src="management-controller.js?v=20260829.0810" defer></script>
-<script src="management-ui.js?v=20260829.0810" defer></script>
-<script src="management-visibility.js?v=20260829.0810" defer></script>
-<script src="training-controller.js?v=20260829.0810" defer></script>
-<script src="training-ui.js?v=20260829.0810" defer></script>
-<script src="stored-match-delete-ui.js?v=20260829.0810" defer></script>
-<script src="security-controller.js?v=20260829.0810" defer></script>
-<script src="security-ui.js?v=20260829.0810" defer></script>
-<script src="device-security-ux-v08.js?v=20260829.0810" defer></script>
-<script src="app.js?v=20260829.0810" defer></script>
+<script src="cloud-client.js?v=20260829.0820" defer></script>
+<script src="realtime-native.js?v=20260829.0820" defer></script>
+<script src="browser-bootstrap-v08.js?v=20260829.0820" defer></script>
+<script src="pitch-layout.js?v=20260829.0820" defer></script>
+<script src="event-describer.js?v=20260829.0820" defer></script>
+<script src="action-field-event-describer.js?v=20260829.0820" defer></script>
+<script src="live-input-event-describer-v08.js?v=20260829.0820" defer></script>
+<script src="live-state.js?v=20260829.0820" defer></script>
+<script src="snapshot-adapter.js?v=20260829.0820" defer></script>
+<script src="view-model.js?v=20260829.0820" defer></script>
+<script src="mutation-controller.js?v=20260829.0820" defer></script>
+<script src="clock-projector.js?v=20260829.0820" defer></script>
+<script src="runtime.js?v=20260829.0820" defer></script>
+<script src="realtime-status-ui.js?v=20260829.0820" defer></script>
+<script src="ui-frame.js?v=20260829.0820" defer></script>
+<script src="dom-renderer.js?v=20260829.0820" defer></script>
+<script src="action-policy.js?v=20260829.0820" defer></script>
+<script src="lifecycle-sync.js?v=20260829.0820" defer></script>
+<script src="match-selection.js?v=20260829.0820" defer></script>
+<script src="formation-layout.js?v=20260829.0820" defer></script>
+<script src="preparation-controller.js?v=20260829.0820" defer></script>
+<script src="preparation-ui.js?v=20260829.0820" defer></script>
+<script src="correction-ui.js?v=20260829.0820" defer></script>
+<script src="basis-lineup-ui.js?v=20260829.0820" defer></script>
+<script src="live-pitch-controller.js?v=20260829.0820" defer></script>
+<script src="match-phase-controller.js?v=20260829.0820" defer></script>
+<script src="match-phase-ui.js?v=20260829.0820" defer></script>
+<script src="live-controls-ui.js?v=20260829.0820" defer></script>
+<script src="player-action-controller.js?v=20260829.0820" defer></script>
+<script src="player-action-ui.js?v=20260829.0820" defer></script>
+<script src="live-match-workspace-v08.js?v=20260829.0820" defer></script>
+<script src="event-feed-ui.js?v=20260829.0820" defer></script>
+<script src="live-notice-ui.js?v=20260829.0820" defer></script>
+<script src="live-action-field-v08.js?v=20260829.0820" defer></script>
+<script src="fast-resume-v08.js?v=20260829.0820" defer></script>
+<script src="voice-command.js?v=20260829.0820" defer></script>
+<script src="voice-controller.js?v=20260829.0820" defer></script>
+<script src="voice-ui.js?v=20260829.0820" defer></script>
+<script src="dashboard-controller.js?v=20260829.0820" defer></script>
+<script src="report-export.js?v=20260829.0820" defer></script>
+<script src="dashboard-ui.js?v=20260829.0820" defer></script>
+<script src="performance-intelligence-v08.js?v=20260829.0820" defer></script>
+<script src="team-synergy-ui-v08.js?v=20260829.0820" defer></script>
+<script src="player-infographic-v08.js?v=20260829.0820" defer></script>
+<script src="match-library-ui.js?v=20260829.0820" defer></script>
+<script src="workspace-manager.js?v=20260829.0820" defer></script>
+<script src="management-controller.js?v=20260829.0820" defer></script>
+<script src="management-ui.js?v=20260829.0820" defer></script>
+<script src="management-visibility.js?v=20260829.0820" defer></script>
+<script src="training-controller.js?v=20260829.0820" defer></script>
+<script src="training-ui.js?v=20260829.0820" defer></script>
+<script src="stored-match-delete-ui.js?v=20260829.0820" defer></script>
+<script src="security-controller.js?v=20260829.0820" defer></script>
+<script src="security-ui.js?v=20260829.0820" defer></script>
+<script src="device-security-ux-v08.js?v=20260829.0820" defer></script>
+<script src="app.js?v=20260829.0820" defer></script>
 </body>
 </html>
