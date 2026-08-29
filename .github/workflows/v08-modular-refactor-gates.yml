@@ -1,0 +1,42 @@
+name: v0.8 modular refactor gates
+
+on:
+  push:
+    branches: [clubmatch-v0.8-modular-refactor]
+  workflow_dispatch:
+
+jobs:
+  modular-gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check core modules
+        run: |
+          set -euo pipefail
+          for file in \
+            cloud-v0.8-rebuild/runtime.js \
+            cloud-v0.8-rebuild/dom-renderer.js \
+            cloud-v0.8-rebuild/app.js \
+            cloud-v0.8-rebuild/mutation-controller.js \
+            cloud-v0.8-rebuild/analyst-live-input-v08.js \
+            cloud-v0.8-rebuild/dashboard-controller.js \
+            cloud-v0.8-rebuild/dashboard-ui.js \
+            cloud-v0.8-rebuild/pitch-layout.js \
+            cloud-v0.8-rebuild/formation-layout.js \
+            cloud-v0.8-rebuild/match-library-ui.js \
+            cloud-v0.8-rebuild/report-export.js; do
+            node --check "$file"
+          done
+      - name: Modular regression tests
+        run: node cloud-v0.8-rebuild/tests/modular-refactor.test.js
+      - name: Architecture guard
+        run: |
+          test ! -f cloud-v0.8-rebuild/matchday-resilience-v08.js || echo 'INFO: legacy resilience file exists but must not be loaded by release index'
+          grep -q "LIVE_EVENT_WINDOW=240" cloud-v0.8-rebuild/runtime.js
+          grep -q "renderTick" cloud-v0.8-rebuild/dom-renderer.js
+          grep -q "singleFlight" cloud-v0.8-rebuild/mutation-controller.js
+          grep -q "record_match_penalty_v08" cloud-v0.8-rebuild/mutation-controller.js
