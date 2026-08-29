@@ -36,6 +36,8 @@ jobs:
           node --check live-match-workspace-v08.js
           node --check dashboard-player-tiles-v08.js
           node --check analyst-live-input-v08.js
+          node --check live-analyst-polish-v08.js
+          node --check event-feed-ui.js
           node --check preparation-controller.js
           node --check preparation-ui.js
       - name: Unified Live Match Workspace
@@ -46,6 +48,10 @@ jobs:
         run: node dashboard-player-tiles.test.mjs
       - name: Stable analyst field contract
         run: node analyst-live-input.test.mjs
+      - name: Analyst usability polish
+        run: node live-analyst-polish.test.mjs
+      - name: Scrollable event history
+        run: node event-feed-scroll.test.mjs
       - name: Build asset and Live UX contract
         run: |
           node asset-versioning.test.mjs
