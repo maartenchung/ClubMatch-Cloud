@@ -1,0 +1,55 @@
+name: ClubMatch v0.8 deployed matchday smoke
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'cloud-v0.8-rebuild/matchday-critical-v08.js'
+      - 'cloud-v0.8-rebuild/dashboard-experience-v08.js'
+      - 'cloud-v0.8-rebuild/roadmap-ux-v08.js'
+      - '.github/workflows/v08-main-matchday-smoke.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  deployed-v08:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: cloud-v0.8-rebuild
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax
+        run: |
+          node --check matchday-critical-v08.js
+          node --check dashboard-experience-v08.js
+          node --check roadmap-ux-v08.js
+      - name: Critical contracts
+        run: |
+          grep -F "panel.classList.remove('hidden')" matchday-critical-v08.js
+          grep -F "#v08LiveActionFieldHost{grid-column:1/-1" matchday-critical-v08.js
+          grep -F "analystRecord(gk.player_id,'save'" matchday-critical-v08.js
+          grep -F "analystRecord(gk.player_id,'ball_recovery'" matchday-critical-v08.js
+          grep -F "dataset.injuryStep" matchday-critical-v08.js
+          grep -F "Actieverdeling & performance-input" dashboard-experience-v08.js
+          grep -F "data-dash-favorite" dashboard-experience-v08.js
+          grep -F "dashSortable" dashboard-experience-v08.js
+          grep -F "ClubMatch-dashboard.xls" dashboard-experience-v08.js
+          grep -F "matchday-critical-v08.js?v=20260829.0340" roadmap-ux-v08.js
+      - name: Browser shell still boots
+        run: |
+          python3 -m http.server 8765 >/tmp/cm-http.log 2>&1 &
+          PID=$!
+          trap 'kill $PID 2>/dev/null || true' EXIT
+          CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          test -n "$CHROME"
+          timeout 30s "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --disable-background-networking --disable-component-update --disable-sync --no-first-run --virtual-time-budget=15000 --dump-dom http://127.0.0.1:8765/index.html >/tmp/cm-dom.html 2>/tmp/cm-chrome.log
+          grep -F 'ClubMatch Cloud v0.8 gereed.' /tmp/cm-dom.html
+          grep -F 'id="v08MatchdayCriticalLoader"' /tmp/cm-dom.html
+          grep -F 'id="v08DashboardExperienceLoader"' /tmp/cm-dom.html
