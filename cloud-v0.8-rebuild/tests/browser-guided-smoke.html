@@ -1,0 +1,36 @@
+<!doctype html><html><body>
+<div id="v08LiveActionFieldHost"></div><main id="appPanel"><section data-workspace-persistent></section></main><div id="result">RUNNING</div>
+<script>
+window.ClubMatchV08CloudClient={createClient:()=>({rpc:async()=>({data:{ok:true}})})};
+window.ClubMatchV08PitchLayout={geometry:()=>({slots:[{position:'GK',x:50,y:92},{position:'RB',x:82,y:75},{position:'RCB',x:62,y:77},{position:'LCB',x:38,y:77},{position:'LB',x:18,y:75},{position:'DM',x:50,y:60},{position:'RCM',x:65,y:48},{position:'LCM',x:35,y:48},{position:'RW',x:80,y:28},{position:'ST',x:50,y:20},{position:'LW',x:20,y:28}]}),slotLabel:x=>x};
+window.ClubMatchV08Formation={FORMATIONS:{'4-3-3':['GK','RB','RCB','LCB','LB','DM','RCM','LCM','RW','ST','LW']},getFormation:()=>({slots:['GK','RB','RCB','LCB','LB','DM','RCM','LCM','RW','ST','LW']}),slotLabel:x=>x};
+const actionApi={setSnapshot(){},currentPossession(){return null},analystReceiveBall:async()=>({ok:true}),analystLoseBall:async()=>({ok:true}),record:async()=>({ok:true}),analystRecord:async()=>({ok:true}),startTeamPossession:async()=>({ok:true})};
+window.ClubMatchV08PlayerActions={createPlayerActionController:()=>actionApi};
+const runtime={activeMatchId:'m1',snapshot:null,realtimeConnected:false,refresh:async()=>({}),recordGoal:async()=>({}),recordPenalty:async()=>({})};
+</script>
+<script src="../live-action-field-v09.js"></script><script src="../preparation-ui.js"></script>
+<script>
+const ps=[{player_id:'p1',display_name:'A',shirt_number:1,selected:true,is_on_field:true,current_position:'ST'},{player_id:'p2',display_name:'B',shirt_number:2,selected:true,is_on_field:true,current_position:'RW'}];
+const snap={match:{id:'m1',status:'live',formation_code:'4-3-3',opponent_formation_code:'4-3-3'},state:{clock_status:'running'},players:ps,events:[]};runtime.snapshot=snap;
+window.dispatchEvent(new CustomEvent('clubmatch:v08-runtime-ready',{detail:{runtime}}));window.dispatchEvent(new CustomEvent('clubmatch:v08-confirmed',{detail:{runtime,snapshot:snap}}));
+setTimeout(async()=>{
+ try{
+   ClubMatchV09LiveActionField.render();
+   const panel=document.getElementById('v08LiveActionField');
+   if(!panel||panel.classList.contains('hidden'))throw new Error('Live Actieveld niet zichtbaar');
+   if(!panel.textContent.includes('Foute pass')||!panel.textContent.includes('Indeling aanpassen')||!panel.textContent.includes('Handleiding'))throw new Error('Nieuwe bediening ontbreekt');
+   panel.querySelector('[data-player-id="p1"]').click();
+   await new Promise(r=>setTimeout(r,20));
+   panel.querySelector('[data-opp-id="T1"]').click();
+   await new Promise(r=>setTimeout(r,20));
+   const guide=document.getElementById('lafGuide').textContent;
+   for(const x of ['Pass onderschept','Duel verloren','Slechte controle'])if(!guide.includes(x))throw new Error('Begeleide A→T keuze ontbreekt: '+x);
+   const players=Array.from({length:11},(_,i)=>({playerId:'x'+i,name:'Speler '+i,shirtNumber:i+1,preferredPositions:[],attendance:true,selected:true,starter:true,position:['GK','RB','RCB','LCB','LB','DM','RCM','LCM','RW','ST','LW'][i]}));
+   const prepState={teamSeasons:[{team_season_id:'ts',club_name:'Club',team_name:'O16',season_name:'2026'}],setup:{},meta:{matchId:'mx',teamSeasonId:'ts',opponentName:'Opp',matchDate:'2026-08-30',scheduledTime:'10:00',officialDurationMinutes:80,formationCode:'4-3-3'},players,favorites:[],dirty:false,validation:{ok:true,selectedCount:11,starterCount:11,benchCount:0,errors:[]}};
+   const controller={state:prepState,setMeta(){},setFormation(){},patchPlayer(){},placeStarter(){},moveToBench(){},selectAllPresent(){},makeSelectedStarters(){},applyFormation(){},clearSelection(){},clear(){},saveFavorite:async()=>{},deleteFavorite:async()=>{},applyFavorite(){},save:async()=>({match:{id:'mx'}}),start:async()=>({}),openExisting:async()=>prepState,loadTeam:async()=>prepState};
+   const ui=ClubMatchV08PreparationUi.createPreparationUi({document,controller});ui.renderCurrent();
+   const prep=document.getElementById('v08Preparation');if(!prep||prep.classList.contains('hidden'))throw new Error('Voorbereiding bleef verborgen');if(!prep.querySelector('.prepPitch')||!prep.querySelector('.prepSlot[draggable="true"]'))throw new Error('Visuele drag voorbereiding ontbreekt');
+   document.getElementById('result').textContent='GUIDED_SMOKE_PASS';
+ }catch(e){document.getElementById('result').textContent='GUIDED_SMOKE_FAIL '+e.message}
+},80);
+</script></body></html>
