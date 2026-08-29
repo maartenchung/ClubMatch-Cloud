@@ -1,4 +1,4 @@
-/* ClubMatch Cloud v0.8 - shared Cloud client guard; Action Field UI retired */
+/* ClubMatch Cloud v0.8 - shared Cloud client guard + additive v0.8 enhancement loader */
 (function(global){
 'use strict';
 const doc=global.document;
@@ -21,7 +21,17 @@ function installSharedCloudClient(){
 }
 
 function retireActionField(){doc?.getElementById?.('v08ActionField')?.remove?.()}
-function boot(){retireActionField()}
+function loadEnhancement(src,id){
+  if(!doc||doc.getElementById(id))return;
+  const script=doc.createElement('script');script.id=id;script.src=src;script.async=false;
+  script.onerror=()=>{const status=doc.getElementById('v08Status');if(status){status.textContent=`Module kon niet laden: ${src}`;status.classList.add('bad')}};
+  doc.head.appendChild(script);
+}
+function loadEnhancements(){
+  loadEnhancement('matchday-critical-v08.js?v=20260829.0340','v08MatchdayCriticalLoader');
+  loadEnhancement('dashboard-experience-v08.js?v=20260829.0340','v08DashboardExperienceLoader');
+}
+function boot(){retireActionField();loadEnhancements()}
 
 /* Install synchronously, before DOMContentLoaded boots stabilization, Fast Resume and app.js. */
 installSharedCloudClient();
