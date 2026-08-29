@@ -5,15 +5,23 @@ const FORMATIONS=Object.freeze({
   '4-3-3':Object.freeze(['GK','RB','RCB','LCB','LB','DM','RCM','LCM','RW','ST','LW']),
   '4-2-3-1':Object.freeze(['GK','RB','RCB','LCB','LB','RDM','LDM','RW','AM','LW','ST']),
   '4-4-2':Object.freeze(['GK','RB','RCB','LCB','LB','RM','RCM','LCM','LM','RST','LST']),
+  '4-1-4-1':Object.freeze(['GK','RB','RCB','LCB','LB','DM','RM','RCM','LCM','LM','ST']),
+  '4-5-1':Object.freeze(['GK','RB','RCB','LCB','LB','RM','RCM','CM','LCM','LM','ST']),
+  '4-4-1-1':Object.freeze(['GK','RB','RCB','LCB','LB','RM','RCM','LCM','LM','AM','ST']),
+  '4-3-1-2':Object.freeze(['GK','RB','RCB','LCB','LB','DM','RCM','LCM','AM','RST','LST']),
   '3-5-2':Object.freeze(['GK','RCB','CB','LCB','RWB','RCM','CM','LCM','LWB','RST','LST']),
   '3-4-3':Object.freeze(['GK','RCB','CB','LCB','RM','RCM','LCM','LM','RW','ST','LW']),
-  '5-3-2':Object.freeze(['GK','RWB','RCB','CB','LCB','LWB','RCM','CM','LCM','RST','LST'])
+  '3-4-2-1':Object.freeze(['GK','RCB','CB','LCB','RWB','RCM','LCM','LWB','RAM','LAM','ST']),
+  '3-4-1-2':Object.freeze(['GK','RCB','CB','LCB','RWB','RCM','LCM','LWB','AM','RST','LST']),
+  '5-3-2':Object.freeze(['GK','RWB','RCB','CB','LCB','LWB','RCM','CM','LCM','RST','LST']),
+  '5-4-1':Object.freeze(['GK','RWB','RCB','CB','LCB','LWB','RM','RCM','LCM','LM','ST']),
+  '5-2-3':Object.freeze(['GK','RWB','RCB','CB','LCB','LWB','RCM','LCM','RW','ST','LW'])
 });
 const FAMILIES={
   GK:['GK'],RB:['RB','RWB'],RWB:['RWB','RB','RM'],LB:['LB','LWB'],LWB:['LWB','LB','LM'],
   RCB:['RCB','CB','RB'],CB:['CB','RCB','LCB'],LCB:['LCB','CB','LB'],
   RDM:['DM','RDM','CM','RCM'],LDM:['DM','LDM','CM','LCM'],DM:['DM','CM'],
-  RM:['RM','RW','RWB'],LM:['LM','LW','LWB'],RCM:['RCM','CM','DM','AM'],LCM:['LCM','CM','DM','AM'],CM:['CM','DM','AM'],AM:['AM','CM','ST'],
+  RM:['RM','RW','RWB'],LM:['LM','LW','LWB'],RCM:['RCM','CM','DM','AM'],LCM:['LCM','CM','DM','AM'],CM:['CM','DM','AM'],AM:['AM','CM','ST'],RAM:['AM','RW','RCM'],LAM:['AM','LW','LCM'],
   RW:['RW','RM','ST'],LW:['LW','LM','ST'],ST:['ST','AM'],RST:['ST','RST','RW'],LST:['ST','LST','LW']
 };
 function normalized(value){return String(value||'').trim().toUpperCase()}
@@ -43,7 +51,7 @@ function assignFormation(players=[],code='4-3-3'){
 function pitchRows(code='4-3-3'){
   if(global.ClubMatchV08PitchLayout?.formationRows)return global.ClubMatchV08PitchLayout.formationRows(getFormation(code).code);
   const slots=getFormation(code).slots;
-  const rowFor=slot=>slot==='GK'?4:/^(RB|RWB|RCB|CB|LCB|LB|LWB)$/.test(slot)?3:/^(DM|RDM|LDM|RM|LM|RCM|CM|LCM|AM)$/.test(slot)?2:1;
+  const rowFor=slot=>slot==='GK'?4:/^(RB|RWB|RCB|CB|LCB|LB|LWB)$/.test(slot)?3:/^(DM|RDM|LDM|RM|LM|RCM|CM|LCM|AM|RAM|LAM)$/.test(slot)?2:1;
   return Object.freeze([1,2,3,4].map(row=>Object.freeze(slots.filter(slot=>rowFor(slot)===row))));
 }
 function positionLabel(code){return global.ClubMatchV08PitchLayout?.positionLabel?.(code)||normalized(code)}
