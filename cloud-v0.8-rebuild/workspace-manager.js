@@ -15,21 +15,24 @@ function createWorkspaceManager(options={}){
     });
     app.dataset.workspace=activeName;
   }
-  function enter(name,panel){
-    if(!panel)throw new Error('Workspacepaneel ontbreekt');
-    if(saved)exit(false);
-    saved=new Map([...app.children].map(el=>[el,el.classList.contains('hidden')]));
-    activeName=String(name||'workspace');activePanel=panel;apply();
-    if(global.MutationObserver){observer=new global.MutationObserver(apply);observer.observe(app,{childList:true,attributes:true,subtree:false,attributeFilter:['class']})}
-    return activeName;
-  }
   function exit(restore=true){
     observer?.disconnect();observer=null;
     if(restore&&saved){saved.forEach((wasHidden,el)=>{if(!el?.classList)return;el.classList.toggle('hidden',!!wasHidden)})}
     saved=null;activePanel=null;activeName='matches';delete app.dataset.workspace;return activeName;
   }
+  function enter(name,panel){
+    if(!panel)throw new Error('Workspacepaneel ontbreekt');
+    /* Always restore the previous workspace first. Otherwise History opened from Dashboard
+       stores Dashboard's hidden state as its return target and Back appears to do nothing. */
+    if(saved)exit(true);
+    saved=new Map([...app.children].map(el=>[el,el.classList.contains('hidden')]));
+    activeName=String(name||'workspace');activePanel=panel;apply();
+    if(global.MutationObserver){observer=new global.MutationObserver(apply);observer.observe(app,{childList:true,attributes:true,subtree:false,attributeFilter:['class']})}
+    return activeName;
+  }
   function is(name){return activeName===name}
-  return Object.freeze({enter,exit,is,get active(){return activeName}})
+  function backToMatches(){return exit(true)}
+  return Object.freeze({enter,exit,backToMatches,is,get active(){return activeName}})
 }
 let singleton=null;
 function get(){if(!singleton)singleton=createWorkspaceManager();return singleton}
