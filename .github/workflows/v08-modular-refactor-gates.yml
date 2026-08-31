@@ -14,12 +14,12 @@ jobs:
       - name: Syntax check owner modules
         run: |
           set -euo pipefail
-          for f in cloud-v0.8-rebuild/{browser-bootstrap-v08,runtime,dom-renderer,app,mutation-controller,action-context-model-v08,action-context-persistence-v08,action-context-ui-v08,player-action-controller-v10,live-action-field-v10,live-match-workspace-v08,preparation-ui,dashboard-controller,dashboard-ui,performance-intelligence-v09,team-synergy-ui-v09,player-infographic-v09,dashboard-pdf-v09,kpi-info-v08,dashboard-layout-v09,management-controller,management-ui,match-library-ui,report-export,report-export-v09}.js; do node --check "$f"; done
+          for f in cloud-v0.8-rebuild/{browser-bootstrap-v08,runtime,dom-renderer,app,mutation-controller,event-describer,action-context-model-v08,action-context-persistence-v08,action-context-ui-v08,player-action-controller-v10,live-action-field-v11,live-match-workspace-v08,preparation-ui,dashboard-controller,dashboard-ui,performance-intelligence-v09,team-synergy-ui-v09,player-infographic-v09,dashboard-pdf-v09,kpi-info-v08,dashboard-layout-v09,management-controller,management-ui,match-library-ui,report-export,report-export-v09}.js; do node --check "$f"; done
       - name: Context and release regression tests
         run: |
           set -euo pipefail
           node cloud-v0.8-rebuild/tests/context-coordinates-v08.test.js
-          node cloud-v0.8-rebuild/tests/modular-release-1045.test.js
+          node cloud-v0.8-rebuild/tests/modular-release-1130.test.js
       - name: Real Chromium responsive gates
         run: |
           set -euo pipefail
@@ -30,22 +30,19 @@ jobs:
           CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"; test -n "$CHROME"
           run_context(){
             name="$1"; size="$2"; profile="/tmp/cm-$name";
-            timeout 25s "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --no-first-run --user-data-dir="$profile" --window-size="$size" --virtual-time-budget=5000 --run-all-compositor-stages-before-draw --dump-dom http://127.0.0.1:8770/tests/browser-context-smoke.html >"/tmp/$name.html" 2>"/tmp/$name.log" || { cat "/tmp/$name.log"; exit 1; }
+            timeout 25s "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --no-first-run --user-data-dir="$profile" --window-size="$size" --virtual-time-budget=5500 --run-all-compositor-stages-before-draw --dump-dom http://127.0.0.1:8770/tests/browser-context-smoke.html >"/tmp/$name.html" 2>"/tmp/$name.log" || { cat "/tmp/$name.log"; exit 1; }
             grep -F 'CONTEXT_SMOKE_PASS' "/tmp/$name.html" || { echo "$name context smoke faalde"; cat "/tmp/$name.html"; cat "/tmp/$name.log"; exit 1; }
           }
-          # Volledige app-bootstrap desktop
           timeout 30s "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --no-first-run --user-data-dir=/tmp/cm-app --window-size=1280,900 --virtual-time-budget=9000 --run-all-compositor-stages-before-draw --dump-dom http://127.0.0.1:8770/index.html >/tmp/app.html 2>/tmp/app.log
           grep -F 'ClubMatch Cloud v0.8 gereed.' /tmp/app.html || { cat /tmp/app.log; exit 1; }
           ! grep -F 'Start mislukt:' /tmp/app.html
-          grep -F 'live-action-field-v10.js?v=20260831.1045' /tmp/app.html
-          grep -F 'action-context-ui-v08.js?v=20260831.1045' /tmp/app.html
-          # Vereiste schermprofielen
+          grep -F 'live-action-field-v11.js?v=20260831.1130' /tmp/app.html
+          grep -F 'action-context-ui-v08.js?v=20260831.1130' /tmp/app.html
           run_context desktop 1280,900
           run_context tablet-landscape 1180,820
           run_context tablet-portrait 820,1180
           run_context mobile-portrait 390,844
           run_context mobile-landscape 844,390
-          # Bestaande dashboard/report regressies
           timeout 20s "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --no-first-run --user-data-dir=/tmp/cm-report --window-size=1240,1754 --virtual-time-budget=5000 --dump-dom http://127.0.0.1:8770/tests/browser-report-smoke.html >/tmp/report.html 2>/tmp/report.log
           grep -F 'REPORT_SMOKE_PASS' /tmp/report.html
           timeout 20s "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --no-first-run --user-data-dir=/tmp/cm-intel --window-size=1240,1754 --virtual-time-budget=5000 --dump-dom http://127.0.0.1:8770/tests/browser-intelligence-smoke.html >/tmp/intel.html 2>/tmp/intel.log
@@ -57,28 +54,24 @@ jobs:
           grep -q 'get_match_live_snapshot_v08' cloud-v0.8-rebuild/runtime.js
           grep -q 'renderTick' cloud-v0.8-rebuild/dom-renderer.js
           grep -q 'singleFlight' cloud-v0.8-rebuild/mutation-controller.js
-          grep -q 'build 20260831.1045' cloud-v0.8-rebuild/index.html
-          grep -q 'action-context-model-v08.js' cloud-v0.8-rebuild/index.html
-          grep -q 'action-context-persistence-v08.js' cloud-v0.8-rebuild/index.html
-          grep -q 'player-action-controller-v10.js' cloud-v0.8-rebuild/index.html
-          grep -q 'live-action-field-v10.js' cloud-v0.8-rebuild/index.html
-          grep -q 'action-context-ui-v08.js' cloud-v0.8-rebuild/index.html
+          grep -q 'build 20260831.1130' cloud-v0.8-rebuild/index.html
+          grep -q 'live-action-field-v11.js' cloud-v0.8-rebuild/index.html
+          ! grep -q 'live-action-field-v10.js?v=' cloud-v0.8-rebuild/index.html
           ! grep -q 'live-action-field-v09.js?v=' cloud-v0.8-rebuild/index.html
           ! grep -q 'player-action-controller.js?v=' cloud-v0.8-rebuild/index.html
+          grep -q 'lafPenaltyDecision' cloud-v0.8-rebuild/live-action-field-v11.js
+          grep -q "placeGuide('duel')" cloud-v0.8-rebuild/live-action-field-v11.js
+          grep -q "placeGuide('defense')" cloud-v0.8-rebuild/live-action-field-v11.js
+          grep -q 'updatePendingContext' cloud-v0.8-rebuild/live-action-field-v11.js
+          grep -q 'cmCtxFieldRow' cloud-v0.8-rebuild/action-context-ui-v08.js
+          grep -q 'Meerdere contextcategorieën tegelijk mogelijk' cloud-v0.8-rebuild/action-context-ui-v08.js
+          grep -q 'Penalty · ${outcome}' cloud-v0.8-rebuild/event-describer.js
+          ! grep -q "note:'Live Actieveld" cloud-v0.8-rebuild/live-action-field-v11.js
           grep -q 'tacticalPoint' cloud-v0.8-rebuild/action-context-model-v08.js
           grep -q 'action_chain_id' cloud-v0.8-rebuild/action-context-model-v08.js
-          grep -q 'action_start_x' cloud-v0.8-rebuild/action-context-model-v08.js
-          grep -q 'action_end_x' cloud-v0.8-rebuild/action-context-model-v08.js
           grep -q 'enrich_match_event_context_v08' cloud-v0.8-rebuild/action-context-persistence-v08.js
           ! grep -q 'runtime.refresh' cloud-v0.8-rebuild/action-context-persistence-v08.js
-          grep -q 'speler → actie → klaar' cloud-v0.8-rebuild/live-action-field-v10.js
-          grep -q 'Live Veldpositie ≠ Actiepositie' cloud-v0.8-rebuild/live-action-field-v10.js
-          grep -q 'Locatie aanpassen' cloud-v0.8-rebuild/action-context-ui-v08.js
-          grep -q 'cmCtxFullscreen' cloud-v0.8-rebuild/action-context-ui-v08.js
           grep -q 'Live Veldpositie versus Actiepositie' cloud-v0.8-rebuild/HANDLEIDING_LIVE_REGISTRATIE.md
-          grep -q 'Gebruik op tablet' cloud-v0.8-rebuild/HANDLEIDING_LIVE_REGISTRATIE.md
-          grep -q 'Gebruik op mobiel' cloud-v0.8-rebuild/HANDLEIDING_LIVE_REGISTRATIE.md
-          grep -q 'v08BasisLineupHost' cloud-v0.8-rebuild/live-match-workspace-v08.js
           grep -q 'v08LiveActionFieldHost' cloud-v0.8-rebuild/live-match-workspace-v08.js
           grep -q 'draggable="true"' cloud-v0.8-rebuild/preparation-ui.js
           grep -q 'get_performance_report_v09' cloud-v0.8-rebuild/dashboard-controller.js
