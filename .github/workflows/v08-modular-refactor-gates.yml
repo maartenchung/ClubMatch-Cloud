@@ -19,7 +19,7 @@ jobs:
         run: |
           set -euo pipefail
           node cloud-v0.8-rebuild/tests/context-coordinates-v08.test.js
-          node cloud-v0.8-rebuild/tests/modular-refactor.test.js
+          node cloud-v0.8-rebuild/tests/core-regressions-1700.test.js
           node cloud-v0.8-rebuild/tests/modular-release-1700.test.js
       - name: Real Chromium responsive gates
         run: |
