@@ -1,6 +1,7 @@
 <!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>.hidden{display:none!important}.badge{padding:2px 5px}.card{padding:8px}.lafPitch{position:relative}.lafOwn,.lafOpp{position:absolute}</style></head><body>
 <div id="v08LiveActionFieldHost"></div><div id="result">RUNNING</div>
 <script>
+localStorage.setItem('clubmatch.v08.action.mode','coach');
 const rpcLog=[];
 const client={rpc:async(name,params)=>{rpcLog.push({name,params});return {data:{ok:true,event_id:'e-'+rpcLog.length,client_event_id:params?.p_client_event_id||null}}}};
 window.ClubMatchV08CloudClient={createClient:()=>client};
@@ -13,7 +14,8 @@ const snap={match:{id:'m1',status:'live',formation_code:'4-3-3',opponent_formati
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 window.dispatchEvent(new CustomEvent('clubmatch:v08-runtime-ready',{detail:{runtime}}));window.dispatchEvent(new CustomEvent('clubmatch:v08-confirmed',{detail:{runtime,snapshot:snap}}));
 setTimeout(async()=>{try{
- const panel=document.getElementById('v08LiveActionField');if(!panel||panel.classList.contains('hidden'))throw new Error('Live Actieveld ontbreekt');
+ const panel=document.getElementById('v08LiveActionField');if(!panel||panel.classList.contains('hidden'))throw new Error('Live Actieveld ontbreekt in coachmodus');
+ if(localStorage.getItem('clubmatch.v08.action.mode')!=='coach')throw new Error('coachmodus testfixture ongeldig');
  const own=panel.querySelector('[data-player-id="p1"]'),opp=panel.querySelector('[data-opp-id="T1"]');if(!own||!opp)throw new Error('veldspelers/tegenstander ontbreken');
  own.click();await wait(20);opp.click();await wait(30);
  const pending=window.ClubMatchV08ActionContextBridge.pendingChoice;if(!pending||pending.type!=='loss')throw new Error('A→T classificatie niet geopend');
