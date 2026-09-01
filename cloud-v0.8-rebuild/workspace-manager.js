@@ -22,10 +22,14 @@ function createWorkspaceManager(options={}){
   }
   function enter(name,panel){
     if(!panel)throw new Error('Workspacepaneel ontbreekt');
-    /* Capture the original match screen only once. Switching Dashboard -> History must
-       not replace that return target with Dashboard's temporary hidden/visible state. */
+    /* Capture the original match screen only once. Workspace owners often render their
+       panel before calling enter(), so force workspace panels to hidden in the return
+       snapshot. Nested Dashboard -> History keeps the same original matches target. */
     observer?.disconnect();observer=null;
-    if(!saved)saved=new Map([...app.children].map(el=>[el,el.classList.contains('hidden')]));
+    if(!saved){
+      saved=new Map([...app.children].map(el=>[el,el.classList.contains('hidden')]));
+      saved.set(panel,true);
+    }else if(!saved.has(panel))saved.set(panel,true);
     activeName=String(name||'workspace');activePanel=panel;apply();
     if(global.MutationObserver){observer=new global.MutationObserver(apply);observer.observe(app,{childList:true,attributes:true,subtree:false,attributeFilter:['class']})}
     return activeName;
