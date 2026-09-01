@@ -22,10 +22,10 @@ function createWorkspaceManager(options={}){
   }
   function enter(name,panel){
     if(!panel)throw new Error('Workspacepaneel ontbreekt');
-    /* Always restore the previous workspace first. Otherwise History opened from Dashboard
-       stores Dashboard's hidden state as its return target and Back appears to do nothing. */
-    if(saved)exit(true);
-    saved=new Map([...app.children].map(el=>[el,el.classList.contains('hidden')]));
+    /* Capture the original match screen only once. Switching Dashboard -> History must
+       not replace that return target with Dashboard's temporary hidden/visible state. */
+    observer?.disconnect();observer=null;
+    if(!saved)saved=new Map([...app.children].map(el=>[el,el.classList.contains('hidden')]));
     activeName=String(name||'workspace');activePanel=panel;apply();
     if(global.MutationObserver){observer=new global.MutationObserver(apply);observer.observe(app,{childList:true,attributes:true,subtree:false,attributeFilter:['class']})}
     return activeName;
