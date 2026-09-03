@@ -2,7 +2,7 @@
 (function(global){
 'use strict';
 const doc=global.document,STORE='clubmatch.v08.last.notice';let box=null,text=null,actions=null,lastSignal='';
-function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]))}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function fmt(e){const total=Math.max(0,(Number(e?.match_minute)||0)*60+(Number(e?.match_second)||0));return `${Math.floor(total/60)}:${String(total%60).padStart(2,'0')}`}
 function ensure(){if(box?.isConnected)return box;const score=doc?.getElementById('v08ScoreCard');if(!score)return null;box=doc.createElement('div');box.id='v08LastNotice';box.style.cssText='margin-top:9px;padding:10px 12px;border-radius:11px;border:2px solid #d8c4ef;background:#faf7fd;color:#4b2672;font-size:12px;font-weight:800';box.innerHTML='<div style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;opacity:.7">Laatste melding</div><div id="v08LastNoticeText" style="margin-top:3px"></div><div id="v08LastNoticeActions" class="controls hidden" style="margin-top:8px"></div>';score.appendChild(box);text=box.querySelector('#v08LastNoticeText');actions=box.querySelector('#v08LastNoticeActions');try{const saved=global.sessionStorage?.getItem(STORE);if(saved)text.textContent=saved}catch{}return box}
 function persist(message){try{global.sessionStorage?.setItem(STORE,String(message||''))}catch{}}
