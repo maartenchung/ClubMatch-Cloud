@@ -14,13 +14,13 @@ jobs:
       - name: Syntax check owner modules
         run: |
           set -euo pipefail
-          for f in cloud-v0.8-rebuild/{browser-bootstrap-v08,runtime,dom-renderer,app,mutation-controller,event-describer,live-input-event-describer-v08,action-context-model-v08,action-context-persistence-v08,action-context-ui-v08,player-action-controller-v10,live-action-field-v13,live-match-workspace-v08,preparation-ui,dashboard-controller,dashboard-ui,performance-intelligence-v10,team-synergy-ui-v09,match-intelligence-v11,player-infographic-v09,dashboard-pdf-v10,kpi-info-v10,dashboard-layout-v09,workspace-manager,management-controller,management-ui,match-library-ui,report-export,report-export-v09}.js; do node --check "$f"; done
-      - name: Build 1700 regression tests
+          for f in cloud-v0.8-rebuild/{browser-bootstrap-v08,runtime,dom-renderer,app,mutation-controller,event-describer,live-input-event-describer-v08,action-context-model-v08,action-context-persistence-v08,action-context-ui-v08,player-action-controller-v10,live-action-field-v13,live-match-workspace-v08,preparation-ui,dashboard-controller,dashboard-ui,performance-intelligence-v10,team-synergy-ui-v09,match-intelligence-v11,player-infographic-v09,dashboard-pdf-v10,kpi-info-v10,dashboard-layout-v09,product-navigation-v10,youth-development-v10,workspace-manager,management-controller,management-ui,match-library-ui,stored-match-delete-ui,report-export,report-export-v09}.js; do node --check "$f"; done
+      - name: Build 1800 regression tests
         run: |
           set -euo pipefail
           node cloud-v0.8-rebuild/tests/context-coordinates-v08.test.js
           node cloud-v0.8-rebuild/tests/core-regressions-1700.test.js
-          node cloud-v0.8-rebuild/tests/modular-release-1700.test.js
+          node cloud-v0.8-rebuild/tests/modular-release-1800.test.js
       - name: Real Chromium responsive gates
         run: |
           set -euo pipefail
@@ -37,16 +37,20 @@ jobs:
           timeout 30s "$CHROME" --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --no-first-run --user-data-dir=/tmp/cm-app --window-size=1280,900 --virtual-time-budget=9000 --run-all-compositor-stages-before-draw --dump-dom http://127.0.0.1:8770/index.html >/tmp/app.html 2>/tmp/app.log
           grep -F 'ClubMatch Cloud v0.8 gereed.' /tmp/app.html || { cat /tmp/app.html; cat /tmp/app.log; exit 1; }
           ! grep -F 'Start mislukt:' /tmp/app.html
-          grep -F 'live-action-field-v13.js?v=20260831.1700' /tmp/app.html
-          grep -F 'performance-intelligence-v10.js?v=20260831.1700' /tmp/app.html
-          grep -F 'dashboard-pdf-v10.js?v=20260831.1700' /tmp/app.html
-          grep -F 'kpi-info-v10.js?v=20260831.1700' /tmp/app.html
+          grep -F 'live-action-field-v13.js?v=20260903.1800' /tmp/app.html
+          grep -F 'product-navigation-v10.js?v=20260903.1800' /tmp/app.html
+          grep -F 'youth-development-v10.js?v=20260903.1800' /tmp/app.html
+          grep -F 'dashboard-pdf-v10.js?v=20260903.1800' /tmp/app.html
           run_page release-desktop tests/browser-release-1700-smoke.html BUILD_1700_BROWSER_PASS 1280,900 5000
           run_page release-tablet tests/browser-release-1700-smoke.html BUILD_1700_BROWSER_PASS 820,1180 5000
           run_page release-mobile tests/browser-release-1700-smoke.html BUILD_1700_BROWSER_PASS 390,844 5000
           run_page context-desktop tests/browser-context-1700-smoke.html CONTEXT_1700_PASS 1280,900 6000
           run_page context-tablet tests/browser-context-1700-smoke.html CONTEXT_1700_PASS 820,1180 6000
           run_page context-mobile tests/browser-context-1700-smoke.html CONTEXT_1700_PASS 390,844 6000
+          run_page live1800-desktop tests/browser-live-field-1800-smoke.html LIVE_FIELD_1800_PASS 1280,900 6500
+          run_page live1800-mobile tests/browser-live-field-1800-smoke.html LIVE_FIELD_1800_PASS 390,844 6500
+          run_page product1800 tests/browser-product-navigation-1800-smoke.html PRODUCT_NAV_1800_PASS 900,1000 5000
+          run_page delete1800 tests/browser-delete-1800-smoke.html DELETE_1800_PASS 900,700 5000
           run_page report tests/browser-report-smoke.html REPORT_SMOKE_PASS 1240,1754 5000
           run_page match-intelligence tests/browser-match-intelligence-v11-smoke.html MATCH_INTELLIGENCE_V11_PASS 1240,1754 6000
       - name: Architecture guard
@@ -57,18 +61,21 @@ jobs:
           grep -q 'get_match_live_snapshot_v08' cloud-v0.8-rebuild/runtime.js
           grep -q 'renderTick' cloud-v0.8-rebuild/dom-renderer.js
           grep -q 'singleFlight' cloud-v0.8-rebuild/mutation-controller.js
-          grep -q 'build 20260831.1700' "$INDEX"
-          grep -q 'live-action-field-v13.js?v=20260831.1700' "$INDEX"
-          grep -q 'performance-intelligence-v10.js?v=20260831.1700' "$INDEX"
-          grep -q 'dashboard-pdf-v10.js?v=20260831.1700' "$INDEX"
-          grep -q 'kpi-info-v10.js?v=20260831.1700' "$INDEX"
-          grep -q 'match-intelligence-v11.js?v=20260831.1700' "$INDEX"
+          grep -q 'build 20260903.1800' "$INDEX"
+          grep -q 'live-action-field-v13.js?v=20260903.1800' "$INDEX"
+          grep -q 'product-navigation-v10.js?v=20260903.1800' "$INDEX"
+          grep -q 'youth-development-v10.js?v=20260903.1800' "$INDEX"
+          grep -q 'dashboard-pdf-v10.js?v=20260903.1800' "$INDEX"
+          grep -q 'kpi-info-v10.js?v=20260903.1800' "$INDEX"
+          grep -q 'match-intelligence-v11.js?v=20260903.1800' "$INDEX"
           ! grep -q 'performance-intelligence-v09.js?v=' "$INDEX"
           ! grep -q 'dashboard-pdf-v09.js?v=' "$INDEX"
           ! grep -q 'kpi-info-v08.js?v=' "$INDEX"
           grep -q "LAYOUT_PREFIX='clubmatch.v08.laf.layout'" cloud-v0.8-rebuild/live-action-field-v13.js
           grep -q 'updatePendingContext' cloud-v0.8-rebuild/live-action-field-v13.js
           grep -q 'poor_control' cloud-v0.8-rebuild/live-action-field-v13.js
+          grep -q 'Rolpositie ≠ actiepositie' cloud-v0.8-rebuild/live-action-field-v13.js
+          ! grep -q 'global.innerWidth<=600||e.target.closest' cloud-v0.8-rebuild/live-action-field-v13.js
           grep -q 'upsert_match_event_context_v09' cloud-v0.8-rebuild/action-context-persistence-v08.js
           ! grep -q 'enrich_match_event_context_v08' cloud-v0.8-rebuild/action-context-persistence-v08.js
           ! grep -q 'runtime.refresh' cloud-v0.8-rebuild/action-context-persistence-v08.js
@@ -95,7 +102,15 @@ jobs:
           grep -q 'buildPdfBytes' cloud-v0.8-rebuild/dashboard-pdf-v10.js
           grep -q 'rawCalculationPage' cloud-v0.8-rebuild/dashboard-pdf-v10.js
           ! grep -q 'window.print' cloud-v0.8-rebuild/dashboard-pdf-v10.js
-          grep -q 'Live Veldpositie versus Actiepositie' cloud-v0.8-rebuild/HANDLEIDING_LIVE_REGISTRATIE.md
+          grep -q 'get_late_arrival_candidates_v10' cloud-v0.8-rebuild/app.js
+          grep -q 'add_late_player_to_match_v10' cloud-v0.8-rebuild/app.js
+          grep -q 'Sportlink competitie-sync' cloud-v0.8-rebuild/product-navigation-v10.js
+          grep -q "'25-50-65'" cloud-v0.8-rebuild/youth-development-v10.js
+          grep -q 'Van wedstrijd naar training' cloud-v0.8-rebuild/youth-development-v10.js
+          grep -q 'verifyGone' cloud-v0.8-rebuild/stored-match-delete-ui.js
+          grep -q 'get_my_match_library_v08' cloud-v0.8-rebuild/stored-match-delete-ui.js
+          grep -q 'Sportlink competitie-sync' cloud-v0.8-rebuild/ROADMAP_1800_ADDENDUM.md
+          grep -q 'Stannet VPS' cloud-v0.8-rebuild/ROADMAP_1800_ADDENDUM.md
           grep -q 'v08LiveActionFieldHost' cloud-v0.8-rebuild/live-match-workspace-v08.js
           grep -q 'draggable="true"' cloud-v0.8-rebuild/preparation-ui.js
           grep -q 'get_performance_report_v09' cloud-v0.8-rebuild/dashboard-controller.js
