@@ -12,14 +12,14 @@ function sortEvents(events){return [...(events||[])].sort((a,b)=>String(a?.occur
 function onConfirmed(detail){ensure();const snapshot=detail?.snapshot||{},events=sortEvents(snapshot.events),latest=events.at(-1);const stopIndex=events.map(e=>e.event_type).lastIndexOf('automatic_deadline_stop');if(stopIndex>=0){const stop=events[stopIndex],resolved=events.slice(stopIndex+1).some(e=>['injury_time_set','extra_time_started','penalties_started','match_finished','match_closed'].includes(e.event_type));if(!resolved&&snapshot?.match?.status!=='finished'){show(`⏱ Wedstrijdklok automatisch gestopt op ${fmt(stop)}. Kies nu blessuretijd, verlenging/strafschoppen of beëindig de wedstrijd.`,'danger',{deadline:true});signalDeadline(stop);return}}
  if(latest&&!['player_action','team_possession'].includes(latest.event_type)){const described=global.ClubMatchV08EventDescriber?.describeEvent?.(latest,Object.fromEntries((snapshot.players||[]).map(p=>[p.player_id,{name:p.display_name||p.full_name,shirt_number:p.shirt_number}])))||{};if(described.description)show(`${described.label||'Gebeurtenis'} · ${described.description}`,latest.event_type==='match_finished'?'ok':latest.event_type==='match_paused'?'amber':'normal')}
 }
-function watchStatus(){const status=doc?.getElementById('v08Status');if(!status)return;let last='';new MutationObserver(()=>{const value=(status.textContent||'').trim();if(!value||value===last)return;last=value;if(/gereed|laden|hervatten duurt|cloud-synchronisatie|live-status verversen|wedstrijden verversen/i.test(value))return;if(/✓|mislukt|gestopt|opgeslagen|toegevoegd|gewijzigd/i.test(value))show(value,/mislukt/i.test(value)?'danger':'ok')}).observe(status,{childList:true,subtree:true,characterData:true})}
+function watchStatus(){const status=doc?.getElementById('v08Status');if(!status)return;let last='';new MutationObserver(()=>{const value=(status.textContent||'').trim();if(!value||value===last)return;last=value;if(/gereed|laden|hervatten duurt|cloud-synchronisatie|live-status verversen|wedstrijden verversen/i.test(value))return;if(/✓|mislukt|gestopt|opgeslagen|toegevoegd|gewijzigd|verwijderd/i.test(value))show(value,/mislukt/i.test(value)?'danger':'ok')}).observe(status,{childList:true,subtree:true,characterData:true})}
 function boot(){ensure();watchStatus();global.addEventListener?.('clubmatch:v08-confirmed',e=>onConfirmed(e.detail));global.addEventListener?.('clubmatch:v08-notice',e=>show(e?.detail?.message||'',e?.detail?.tone||'normal'))}
 if(doc?.readyState==='loading')doc.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 global.ClubMatchV08LiveNotice={show};
 })(typeof window!=='undefined'?window:globalThis);
 
-/* ClubMatch Cloud v0.8 - Live Actieveld 4-3-3 default layout enhancer.
-   Visual only: role/formation data and action coordinates stay unchanged. */
+/* ClubMatch Cloud v0.8 - stable formation layouts for the Live Action Field.
+   Visual only: role/formation data and registered action coordinates stay unchanged. */
 (function(global){
 'use strict';
 const doc=global.document;if(!doc)return;
@@ -36,18 +36,28 @@ const OPP_433=Object.freeze({
  LB:{x:87,y:25},LCB:{x:69,y:22},RCB:{x:34,y:20},RB:{x:10,y:23},
  GK:{x:50,y:9}
 });
+const Y_OWN_4=Object.freeze([28,52,83,94]),Y_OPP_4=Object.freeze([70,42,19,7]);
+const Y_OWN_5=Object.freeze([25,46,66,84,94]),Y_OPP_5=Object.freeze([72,53,34,18,7]);
+const X={1:[50],2:[35,65],3:[22,50,78],4:[14,38,62,86],5:[9,29,50,71,91]};
 function matchId(){return runtime?.activeMatchId||snapshot?.match?.id||null}
 function hasSaved(side,id){const m=matchId();if(!m||!id)return false;try{return [`clubmatch.v08.laf.layout.${m}.${side}.${id}`,`clubmatch.v12.laf.layout.${m}.${side}.${id}`,`clubmatch.v11.laf.layout.${m}.${side}.${id}`,`clubmatch.v10.laf.layout.${m}.${side}.${id}`].some(k=>!!global.localStorage?.getItem(k))}catch{return false}}
+function rows(code){return global.ClubMatchV08PitchLayout?.formationRows?.(code)||global.ClubMatchV08PitchLayout?.formationRows?.('4-3-3')||[['LW','ST','RW'],['LCM','DM','RCM'],['LB','LCB','RCB','RB'],['GK']]}
+function xs(count,side){const base=X[count]||Array.from({length:count},(_,i)=>count===1?50:10+(80*i/(count-1)));return side==='against'?[...base].reverse():base}
+function generatedLayout(code,side){const r=rows(code),n=r.length,ys=side==='against'?(n===5?Y_OPP_5:Y_OPP_4):(n===5?Y_OWN_5:Y_OWN_4),out={};r.forEach((row,ri)=>{const xx=xs(row.length,side),y=ys[Math.min(ri,ys.length-1)];row.forEach((pos,i)=>out[String(pos).toUpperCase()]={x:xx[i],y})});return out}
+function layoutFor(code,side){const normalized=String(code||'4-3-3');if(normalized==='4-3-3')return side==='against'?OPP_433:OWN_433;return generatedLayout(normalized,side)}
+function supported(){return Object.keys(global.ClubMatchV08PitchLayout?.FORMATION_ROWS||{'4-3-3':true})}
 function positionOfPlayer(id){const p=(snapshot?.players||[]).find(x=>x.player_id===id);return String(p?.current_position||p?.starting_position||'').toUpperCase()}
 function setPoint(el,p){if(!el||!p)return;el.style.left=`${p.x}%`;el.style.top=`${p.y}%`}
-function apply(){queued=false;const panel=doc.getElementById('v08LiveActionField');if(!panel||panel.classList.contains('layout'))return false;const snap=snapshot||runtime?.snapshot;if(!snap)return false;snapshot=snap;let changed=false;
- if(String(snap?.match?.formation_code||'4-3-3')==='4-3-3')panel.querySelectorAll('.lafOwn[data-player-id]').forEach(el=>{if(hasSaved('for',el.dataset.playerId))return;const p=OWN_433[positionOfPlayer(el.dataset.playerId)];if(p){setPoint(el,p);changed=true}});
- if(String(snap?.match?.opponent_formation_code||'4-3-3')==='4-3-3')panel.querySelectorAll('.lafOpp[data-opp-id]').forEach(el=>{if(hasSaved('against',el.dataset.oppId))return;const pos=String(el.querySelector('.lafPos')?.textContent||'').trim().toUpperCase(),p=OPP_433[pos];if(p){setPoint(el,p);changed=true}});
- if(changed){panel.dataset.defaultFormationLayout='4-3-3-screenshot';panel.querySelector('#lafPitch')?.setAttribute('data-default-formation','4-3-3')}
+function apply(){queued=false;const panel=doc.getElementById('v08LiveActionField');if(!panel||panel.classList.contains('layout'))return false;const snap=snapshot||runtime?.snapshot;if(!snap)return false;snapshot=snap;const ownCode=String(snap?.match?.formation_code||'4-3-3'),oppCode=String(snap?.match?.opponent_formation_code||'4-3-3'),own=layoutFor(ownCode,'for'),opp=layoutFor(oppCode,'against');let changed=false;
+ panel.querySelectorAll('.lafOwn[data-player-id]').forEach(el=>{if(hasSaved('for',el.dataset.playerId))return;const p=own[positionOfPlayer(el.dataset.playerId)];if(p){setPoint(el,p);changed=true}});
+ panel.querySelectorAll('.lafOpp[data-opp-id]').forEach(el=>{if(hasSaved('against',el.dataset.oppId))return;const pos=String(el.querySelector('.lafPos')?.textContent||'').trim().toUpperCase(),p=opp[pos];if(p){setPoint(el,p);changed=true}});
+ if(changed){panel.dataset.defaultFormationLayout=`${ownCode}|${oppCode}`;panel.querySelector('#lafPitch')?.setAttribute('data-own-formation',ownCode);panel.querySelector('#lafPitch')?.setAttribute('data-opponent-formation',oppCode)}
  return changed}
 function schedule(){if(queued)return;queued=true;(global.requestAnimationFrame||global.setTimeout)(()=>{apply();global.setTimeout?.(apply,30)},0)}
 function capture(e){runtime=e?.detail?.runtime||runtime;snapshot=e?.detail?.snapshot||runtime?.snapshot||snapshot;schedule()}
+function validate(){return supported().map(code=>({code,own:Object.keys(layoutFor(code,'for')).length,opponent:Object.keys(layoutFor(code,'against')).length})).filter(x=>x.own!==11||x.opponent!==11)}
 function bootLayout(){global.addEventListener?.('clubmatch:v08-runtime-ready',capture);global.addEventListener?.('clubmatch:v08-confirmed',capture);global.addEventListener?.('pageshow',schedule);doc.addEventListener('click',e=>{if(e.target.closest?.('#v08LiveActionField [data-layout],#v08LiveActionField [data-reset-layout]'))global.setTimeout?.(schedule,60)},true);new MutationObserver(m=>{if(m.some(x=>[...x.addedNodes].some(n=>n?.nodeType===1&&(n.id==='v08LiveActionField'||n.querySelector?.('#v08LiveActionField')))))schedule()}).observe(doc.documentElement,{childList:true,subtree:true});schedule()}
 if(doc.readyState==='loading')doc.addEventListener('DOMContentLoaded',bootLayout,{once:true});else bootLayout();
-global.ClubMatchV08ActionFieldDefault433=Object.freeze({apply,schedule,own:OWN_433,opponent:OPP_433});
+global.ClubMatchV08ActionFieldFormationLayout=Object.freeze({apply,schedule,layoutFor,supported,validate,own433:OWN_433,opponent433:OPP_433});
+global.ClubMatchV08ActionFieldDefault433=global.ClubMatchV08ActionFieldFormationLayout;
 })(typeof window!=='undefined'?window:globalThis);
